@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+    <table>
+        <thead>
+            <tr>
+                <th scope="col">order      </th>
+                <th scope="col">new #      </th>
+                <th scope="col">new amt    </th>
+                <th scope="col">trans #    </th>
+                <th scope="col">trans amt  </th>
+                <th scope="col">avg.price  </th>
+                <th scope="col">beg #      </th>
+                <th scope="col">beg amt    </th>
+                <th scope="col">balance #  </th>
+                <th scope="col">balance amt</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for object in object_list %}
+            <tr>
+                <td>{{ object.order }}</td>
+                <td>{{ object.purchased_units }}</td>
+                <td>{{ object.purchased_amount|floatformat:"2" }}</td>
+                <td>{{ object.transferred_units }}</td>
+                <td>{{ object.transferred_amount|floatformat:"2" }}</td>
+                <td>{{ object.avg_price|floatformat:"5" }}</td>
+                <td>{{ object.starting_units }}</td>
+                <td>{{ object.starting_amount|floatformat:"2" }}</td>
+                <td>{{ object.remaining_units }}</td>
+                <td>{{ object.balance|floatformat:"2" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+{% endblock %}

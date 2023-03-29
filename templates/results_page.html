@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+
+    <h2>{{ report_title }}</h2>
+
+    {% if res_details|length > 0 %}
+         {% block details %}
+         {% endblock %}
+    {% elif res_summary %}
+        <p>{{ res_summary }}</p>
+    {% else %}
+        <p>No results</p>
+    {% endif %}
+
+{% endblock %}

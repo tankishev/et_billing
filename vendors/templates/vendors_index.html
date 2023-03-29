@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}DB Operations{% endblock %}
+{% block content %}
+    <h2>DB Update Index</h2>
+    <h5>Vendor operations</h5>
+    <ul>
+        <li><a href="{% url 'calc_vendor_usage' %}">Calculate usage for specific <b>vendor_id</b></a></li>
+        <li><a href="{% url 'calc_usage_all' %}">Calculate usage for <b>all</b> vendors</a></li>
+        <li><a href="{% url 'list_vendor_files' %}">View vendor files</a></li>
+    </ul>
+    <h5>Handle Iteco ZIP files</h5>
+    <ul>
+        <li><a href="{% url 'vendor_zip_upload' %}">Upload Iteco ZIP</a></li>
+        <li><a href="{% url 'vendor_zip_extract' %}">Extract Iteco ZIP</a></li>
+    </ul>
+{% endblock %}

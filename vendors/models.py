@@ -1,0 +1,77 @@
+from django.db import models
+from clients.models import Client
+from services.models import Service, Filter
+from shared.models import PeriodField
+import os
+
+
+class Vendor(models.Model):
+    """ A Vendor is a object in Iteco to link a client to an API key """
+
+    vendor_id = models.IntegerField(primary_key=True, verbose_name='Vendor ID')
+    description = models.CharField(max_length=100, verbose_name='Description EN')
+    is_reconciled = models.BooleanField(default=False)
+    client = models.ForeignKey(
+        Client, on_delete=models.RESTRICT, verbose_name='Client', related_name='vendors')
+    iteco_name = models.CharField(max_length=100, verbose_name='Iteco name')
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f'{self.vendor_id}_{self.description}'
+
+    class Meta:
+        db_table = 'vendors'
+
+
+class VendorService(models.Model):
+    """ VendorService objects hold the link which services are enabled for each Vendor """
+
+    vendor = models.ForeignKey(
+        Vendor, on_delete=models.CASCADE, db_column='vendor_id', related_name='vendor_services')
+    service = models.ForeignKey(
+        Service, on_delete=models.RESTRICT, db_column='service_id', related_name='vendor_services')
+
+    def __str__(self):
+        return f'{self.vendor.vendor_id} - {self.service}'
+
+    class Meta:
+        db_table = 'vendor_services'
+        ordering = ('service__service_order',)
+
+
+class VendorFilterOverride(models.Model):
+    """ VendorFilterOverride object tracks the ServiceFilters overrides for respective Vendors """
+
+    vendor = models.ForeignKey(
+        Vendor, on_delete=models.CASCADE, db_column='vendor_id', related_name='filter_overrides')
+    service = models.ForeignKey(
+        Service, on_delete=models.CASCADE, db_column='service_id', related_name='filter_overrides')
+    filter = models.ForeignKey(
+        Filter, on_delete=models.RESTRICT, db_column='filter_id', related_name='filter_overrides')
+
+    class Meta:
+        db_table = 'vendor_filters_overrides'
+
+
+def content_vendor_input_filename(instance, filename):
+    return os.path.join('input/%s/%s' % (instance.period, filename))
+
+
+class VendorInputFile(models.Model):
+    """ An object to record the Iteco vendor files """
+    period = PeriodField()
+    file = models.FileField(max_length=255, upload_to=content_vendor_input_filename)
+    vendor = models.ForeignKey(
+        Vendor, on_delete=models.RESTRICT, db_column='vendor_id', related_name='input_files'
+    )
+    is_active = models.BooleanField(default=True)
+
+    @property
+    def filename(self):
+        return os.path.basename(self.file.name)
+
+    def __str__(self):
+        return f'{self.period} - {self.vendor}'
+
+    class Meta:
+        db_table = 'vendor_input_files'

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+    <h2>{{ form_title }}</h2>
+    {% if form_subtitle %}
+    <h4>{{ form_subtitle }}</h4>
+    {% endif %}
+    <div>
+        <form action="{{ form_address }}" method="post" {% if form_enctype %} enctype="{{ form_enctype }}" {% endif %}>
+            {% csrf_token %}
+            {{ form.as_div }}
+            <div class="mt-3"><input type="submit" class="btn btn-outline-success" value="Submit"></div>
+        </form>
+    </div>
+    {% if form.errors %}
+    <div class="mt-3 p-3 bg-danger-subtle text-danger-emphasis">
+        {% for err in form.errors.values %}
+        <p>{{ err }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if err_message %}
+    <div class="mt-3 p-3 bg-danger-subtle text-danger-emphasis">
+        <p>{{ err_message }}</p>
+    </div>
+    {% endif %}
+{% endblock %}
