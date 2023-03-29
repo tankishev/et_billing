@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}File Downloads{% endblock %}
+{% block content %}
+    <h2>Report files</h2>
+    <h4>List of report files for {{ period }}</h4>
+    <div>
+        <ul>
+            {% for file in files %}
+                <li>(<a download="{{ file.filename }}" href="{{ file.file.url }}" target="_blank">download</a>) {{ file.period }} - {{ file.filename }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Report Results{% endblock %}
+{% block content %}
+    <h2>Report results</h2>
+    <div>
+        Processed reports: {{ res|length }}
+        <ul>
+            {% if res_zoho %}
+                {% for filename in res %}
+                <li>{{ filename }} - <a href="{% url 'download_zoho_report' period=period filename=filename %}">download</a></li>
+                {% endfor %}
+            {% else %}
+                {% for report_file in res %}
+                <li>{{ report_file.filename }} - <a href="{% url 'download_billing_report' pk=report_file.pk %}">download</a></li>
+                {% endfor %}
+            {% endif %}
+        </ul>
+    </div>
+    <div>
+        <p><a href="{% url 'reports_index' %}">Back to Reports</a></p>
+    </div>
+{% endblock %}
