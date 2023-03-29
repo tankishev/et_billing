@@ -10,6 +10,7 @@ from .table_mixin import TableRenderMixin, FormatMixin
 
 
 class BaseReportRenderer(FormatMixin):
+    """ A base report renderer class """
 
     def __init__(self):
         self._wb = None
@@ -34,6 +35,7 @@ class BaseReportRenderer(FormatMixin):
 
 
 class ReportRenderer(TableRenderMixin, BaseReportRenderer):
+    """ A class for rendering XLSX file from a Report object """
 
     _DETAILS_COLUMN_HEADERS = [
         'Date created', 'VendorID', 'Vendor name', 'ThreadID', 'TransactionID',	'GroupTransactionID', 'Description',
@@ -52,10 +54,15 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
         self._resources_dir = str(settings.MEDIA_ROOT / self._RESOURCES_DIR)
 
     def close_workbook(self):
+        """ Closes the XLSX file """
+
         if self._wb:
             self._wb.close()
 
     def render(self, report, **kwargs):
+        """ Creates XLSX file and renders data in it given a Report object.
+        :param report: Report object
+        """
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as temp_file:
             wb = xlsxwriter.Workbook(temp_file.name)
@@ -99,47 +106,11 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
             os.remove(temp_file.name)
             return report_file
 
-    def _render_header(self, report):
-        layout = report.layout
-        ws = self._ws
-
-        if layout and ws:
-
-            self._apply_cell_format(layout.cell_formats)
-            self._apply_row_sizes(layout.rows_size)
-            self._apply_col_sizes(layout.cols_size)
-
-            if layout.logo_filename is not None:
-                row, col = layout.logo_location
-                path = os.path.join(self._resources_dir, layout.logo_filename)
-                path.strip()
-                ws.insert_image(row, col, path)
-                if len(report.transactions) != 0 and report.is_reconciled is False:
-                    self._apply_cell_format((((row, row, col, col + 6), 'bold-warning'),))
-
-            if layout.labeled_cells:
-                for cell in layout.labeled_cells:
-                    label_name, row, col = cell
-                    label = getattr(layout, f'label_{label_name}')
-                    xl_format = self._get_format(layout.format_header_label)
-                    ws.write_string(row, col, label, xl_format)
-
-            if layout.value_cells:
-                contract_date = [el for el in report.client_data.contract_date.split('-')]
-                contract_date.reverse()
-                data_to_render = {
-                    'client_name': report.client.legal_name,
-                    'reporting_period': report.reporting_period.get('period'),
-                    'contract_date': '.'.join(contract_date)
-                }
-                for field, value in data_to_render.items():
-                    if field in layout.value_cells:
-                        row, col = layout.value_cells.get(field)
-                        if type(value) != str:
-                            value = str(value)
-                        ws.write_string(row, col, value, self._get_format(layout.format_header_values))
-
     def _render_details(self, report):
+        """ Render Details sheet in an XLSX report.
+        :param report: Report object
+        """
+
         ws = self._wb.add_worksheet(self._DETAILS_SHEET_NAME)
         xl_format_headers = self._get_format(report.layout.format_table_titles)
         xl_format_int = self._get_format(report.layout.format_details_int)
@@ -179,8 +150,54 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
                 if data.stype:
                     ws.write_string(row + 1, col + 2 - skipped_cols, data.stype)
 
+    def _render_header(self, report):
+        """ Render the header in the Summary sheet of the XLSX report.
+        :param report: Report object
+        """
+
+        layout = report.layout
+        ws = self._ws
+
+        if layout and ws:
+
+            self._apply_cell_format(layout.cell_formats)
+            self._apply_row_sizes(layout.rows_size)
+            self._apply_col_sizes(layout.cols_size)
+
+            if layout.logo_filename is not None:
+                row, col = layout.logo_location
+                path = os.path.join(self._resources_dir, layout.logo_filename)
+                path.strip()
+                ws.insert_image(row, col, path)
+                if len(report.transactions) != 0 and report.is_reconciled is False:
+                    self._apply_cell_format((((row, row, col, col + 6), 'bold-warning'),))
+
+            if layout.labeled_cells:
+                for cell in layout.labeled_cells:
+                    label_name, row, col = cell
+                    label = getattr(layout, f'label_{label_name}')
+                    xl_format = self._get_format(layout.format_header_label)
+                    ws.write_string(row, col, label, xl_format)
+
+            if layout.value_cells:
+                contract_date = [el for el in report.client_data.contract_date.split('-')]
+                contract_date.reverse()
+                data_to_render = {
+                    'client_name': report.client.legal_name,
+                    'reporting_period': report.reporting_period.get('period'),
+                    'contract_date': '.'.join(contract_date)
+                }
+                for field, value in data_to_render.items():
+                    if field in layout.value_cells:
+                        row, col = layout.value_cells.get(field)
+                        if type(value) != str:
+                            value = str(value)
+                        ws.write_string(row, col, value, self._get_format(layout.format_header_values))
+
     def _render_tables(self, report):
-        """ Renders a table for each billing summary in the given report """
+        """ Renders a table for each billing summary in the given report object.
+        :param report: Report object
+        """
 
         init_kwargs = {
             'wb': self._wb,

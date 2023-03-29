@@ -6,8 +6,6 @@ from .utils import ReportClient, Report
 
 class DBReportFactory:
 
-    # _REPORT_DIR = '/report_files/br_output/'
-
     def __init__(self, period: str, db_report, layout_factory, renderer) -> None:
         """ Class that generates billing reports
 
@@ -17,10 +15,8 @@ class DBReportFactory:
         """
         self.period = period
         self.dbr = db_report
-        # self._output_dir = self._REPORT_DIR + self._get_period(dir_format=True) + '/'
         self._layout_factory = layout_factory
         self._renderer = renderer
-        # self._renderer.reports_dir = self._REPORT_DIR + self._get_period(dir_format=True) + '/'
         self._reporting_period = self._calc_period()
         self.services = self.dbr.get_report_services()
 
@@ -36,12 +32,14 @@ class DBReportFactory:
 
     def generate_report_by_report_id(self, report_id: int) -> list or None:
         """ Generates a specific report given its report_id """
+
         report_data = self.dbr.get_report_data(self.period, report_id=report_id)
         if len(report_data) > 0:
             return self.generate_reports(report_data)
 
     def generate_reports(self, report_data=None, verbose=True) -> list or None:
         """ Generates a specific report given its DB data or all reports if report_data is None """
+
         if report_data is None:
             report_data = self.dbr.get_report_data(self.period)
         if report_data is not None:
@@ -50,21 +48,15 @@ class DBReportFactory:
                 print(f'Generating {len(report_data)} reports:')
             for data in report_data:
                 if data.report_type is not None:
-                    report = self._generate_report(data)
+                    report = self._generate_report_obj(data)
                     report_file = self._render_report(report, data.render_details)
                     retval.append(report_file)
                     if verbose:
                         print(f'\t{report_file.filename} - Complete')
             return sorted(retval, key=lambda x: x.report.client.client_id)
 
-    def _render_report(self, report, with_details=True):
-        # filename = report.output_file_name
-        # self._renderer.create_workbook(filename)
-        report_file = self._renderer.render(report, with_details=with_details, period=self.period)
-        return report_file
-
     # Private methods used to generate Report
-    def _generate_report(self, data) -> Report:
+    def _generate_report_obj(self, data) -> Report:
         """ Generates Report object from DB data """
 
         client_data = ReportClient(data.legal_name, data.client_id, data.contract_date)
@@ -91,16 +83,6 @@ class DBReportFactory:
             'report_id': data.report_id
         })
 
-    def _calc_period(self):
-        start_dt = dt.strptime(self.period, '%Y-%m')
-        year = start_dt.year
-        month = (start_dt.month + 1) % 12
-        month = 12 if month == 0 else month
-        year = year + 1 if month == 1 else year
-        next_month = dt.strptime(f'{year}-{month}', '%Y-%m')
-        end_dt = next_month - td(days=1)
-        return {'period': f'{start_dt.strftime("%d.%m.%Y")} - {end_dt.strftime("%d.%m.%Y")}'}
-
     def _generate_summaries(self, report_id, language) -> list:
         """ Generates a list of BillingSummaries for the report """
 
@@ -111,6 +93,20 @@ class DBReportFactory:
             order_summary.load_layout(self._layout_factory)
             summaries.append(order_summary)
         return summaries
+
+    def _render_report(self, report, with_details=True):
+        return self._renderer.render(report, with_details=with_details, period=self.period)
+
+    # Private utility methods
+    def _calc_period(self):
+        start_dt = dt.strptime(self.period, '%Y-%m')
+        year = start_dt.year
+        month = (start_dt.month + 1) % 12
+        month = 12 if month == 0 else month
+        year = year + 1 if month == 1 else year
+        next_month = dt.strptime(f'{year}-{month}', '%Y-%m')
+        end_dt = next_month - td(days=1)
+        return {'period': f'{start_dt.strftime("%d.%m.%Y")} - {end_dt.strftime("%d.%m.%Y")}'}
 
     def _get_output_filename(self, data) -> str:
         return f'{data.file_name}_{self._get_period()}.xlsx'

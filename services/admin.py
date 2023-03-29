@@ -36,8 +36,8 @@ class FilterAdmin(admin.ModelAdmin):
 
 
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ['service_id', 'service', 'stype', 'desc_en', 'filter', 'service_order']
-    list_filter = ['service']
+    list_display = ['service_order', 'service', 'stype', 'desc_en', 'filter', 'usage_based']
+    list_filter = ['service', 'usage_based']
     list_display_links = ['desc_en']
     list_editable = ['service_order']
     ordering = ['service_order']

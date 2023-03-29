@@ -44,9 +44,9 @@ class Service(models.Model):
     stype = models.CharField(max_length=20, verbose_name='Service type', null=True, blank=True)
     desc_bg = models.CharField(max_length=255, verbose_name='Description BG')
     desc_en = models.CharField(max_length=255, verbose_name='Description EN')
-    tu_cost = models.DecimalField(max_digits=6, decimal_places=2, default=0, verbose_name='TU cost')
+    tu_cost = models.DecimalField(max_digits=6, decimal_places=2, default=0, verbose_name='TU cost')  # depreciated
     usage_based = models.BooleanField(default=False, verbose_name='Transaction based')
-    skip_service_render = models.BooleanField(default=False, verbose_name='Hide in reports')
+    skip_service_render = models.BooleanField(default=False, verbose_name='Hide in reports')  # depreciated
     filter = models.ForeignKey(
         Filter, on_delete=models.RESTRICT, null=True, blank=True, related_name='filter_services')
     service_order = models.IntegerField(unique=True)

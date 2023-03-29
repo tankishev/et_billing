@@ -2,14 +2,16 @@ from xlsxwriter import worksheet, workbook
 
 
 class FormatMixin:
+    """ A mixin class to add format methods to renderer classes """
+
     worksheet: worksheet
     workbook: workbook
 
     def _apply_cell_format(self, cells_formats: tuple):
-        """
-        Apply formats to cell or range of cells
+        """ Apply formats to cell or range of cells
         :param cells_formats: tuple in the format (row, col, format_name) or ((row, row, col, col), format_name).
         """
+
         if not cells_formats:
             return
 
@@ -33,20 +35,20 @@ class FormatMixin:
                     ws.write_blank(r, c, None, xf_format)
 
     def _apply_row_sizes(self, sizes: tuple):
-        """
-        Change row size
+        """ Change row size
         :param sizes: tuple in the format ((row_number, row_size),)
         """
+
         ws = self.worksheet
         if sizes:
             for row, size in sizes:
                 ws.set_row(row, size)
 
     def _apply_col_sizes(self, sizes: tuple):
-        """
-        Change col size
+        """ Change col size
         :param sizes: tuple in the format ((row_number, row_size),)
         """
+
         ws = self.worksheet
         if sizes:
             for col, size in sizes:

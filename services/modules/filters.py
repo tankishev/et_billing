@@ -1,4 +1,5 @@
 class FieldFilter:
+    """ A factory class to generage FieldFilters from given config """
 
     _ACCEPTED_FIELDS = ['transaction_type', 'transaction_status', 'description', 'cost', 'signing_type', 'receiver_pid']
 
@@ -26,6 +27,7 @@ class FieldFilter:
             filter_obj = cls(field_name, match_func_name, filter_value)
             return filter_obj
 
+    # Filter functions
     def _match_gt(self, field_value):
         return field_value > self.lookup_value
 
@@ -49,6 +51,7 @@ class FieldFilter:
 
 
 class FilterGroup:
+    """ A class to hold a list of FieldFilters and method to apply them to a transaction """
 
     def __init__(self, filters_config=None):
         self.filters = []
@@ -57,16 +60,19 @@ class FilterGroup:
                 if filter_config is not None:
                     self._add_filters_from_config(filter_config)
 
-    def add_filter(self, field_filter):
-        self.filters.append(field_filter)
+    def apply_all(self, transaction) -> bool:
+        """ Returns True if the transaction matches all filters in the FilterGroup else returns False """
 
-    def _add_filters_from_config(self, filter_config):
-        field_filter = FieldFilter.create_filter(*filter_config)
-        if field_filter:
-            self.add_filter(field_filter)
-
-    def apply_all(self, transaction):
         for field_filter in self.filters:
             if not field_filter.apply(transaction):
                 return False
         return True
+
+    def _add_filters_from_config(self, filter_config):
+        """ Adds filters to the FieldGroup given the config
+        :param filter_config: a tuple of (field_name__func_name, filter_value)
+        """
+
+        field_filter = FieldFilter.create_filter(*filter_config)
+        if field_filter:
+            self.filters.append(field_filter)

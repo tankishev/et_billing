@@ -1,3 +1,4 @@
+# Commented sections below
 from .formats_mixin import FormatMixin
 
 
@@ -18,8 +19,8 @@ class TableRenderMixin:
             return InvoiceTable(**kwargs)
         elif billing_type == 'subscription':
             return SubscriptionTable(**kwargs)
-        elif billing_type == 'users_summary':
-            return UsersSummaryTable(**kwargs)
+        # elif billing_type == 'users_summary':
+        #     return UsersSummaryTable(**kwargs)
 
 
 class BaseTableRenderer(FormatMixin):
@@ -338,7 +339,7 @@ class SubscriptionTable(BaseTableRenderer):
                 ws.write_string(row, start_col + i, value, formats['str'])
             elif type(value) == int:
                 ws.write_number(row, start_col + i, value, formats['int'])
-
-
-class UsersSummaryTable(BaseTableRenderer):
-    pass
+#
+#
+# class UsersSummaryTable(BaseTableRenderer):
+#     pass

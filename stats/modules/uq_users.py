@@ -1,4 +1,3 @@
-
 from datetime import datetime as dt
 from clients.models import Client
 from vendors.modules.input_files import InputFilesMixin
