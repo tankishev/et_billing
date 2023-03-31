@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 
 from clients.models import Client
 from vendors.models import Vendor
@@ -14,10 +15,12 @@ from . import modules as m
 import os
 
 
+@login_required
 def index(request):
     return render(request, 'reports_index.html')
 
 
+@login_required
 def download_billing_report(request, pk):
     try:
         report_file = ReportFile.objects.get(pk=pk)
@@ -27,12 +30,14 @@ def download_billing_report(request, pk):
         return HttpResponse('No report file with such id')
 
 
+@login_required
 def download_zoho_report(request, period, filename):
     filepath = str(settings.MEDIA_ROOT / f'output/zoho/{period}/{filename}')
     if os.path.exists(filepath):
         return _download_report(filepath)
 
 
+@login_required
 def list_report_files(request):
     context = {
         'page_title': 'Manage Report Files',
@@ -49,6 +54,7 @@ def list_report_files(request):
     return render(request, 'base_form.html', context)
 
 
+@login_required
 def list_report_files_period(request, period):
     files = ReportFile.objects.filter(period=period, type_id=1).order_by('report__client_id')
     if files.exists():
@@ -57,6 +63,7 @@ def list_report_files_period(request, period):
     return HttpResponse('No vendor files for this period')
 
 
+@login_required
 def render_period(request):
     context = {
         'page_title': 'Generate Reports',
@@ -68,6 +75,7 @@ def render_period(request):
     return _period_report(request, context, m.gen_reports)
 
 
+@login_required
 def render_period_client(request):
     context = {
         'page_title': 'Generate Reports',
@@ -90,6 +98,7 @@ def render_period_client(request):
     return render(request, 'base_form.html', context)
 
 
+@login_required
 def render_period_report(request):
     context = {
         'page_title': 'Generate Reports',
@@ -115,6 +124,7 @@ def render_period_report(request):
     return render(request, 'base_form.html', context)
 
 
+@login_required
 def reconciliation(request):
     billable_vendors = [el for el in Vendor.objects.filter(
         reports__vendors__reports__isnull=True,
@@ -144,6 +154,7 @@ def reconciliation(request):
     return render(request, 'results_collapse.html', context)
 
 
+@login_required
 def zoho_service_usage(request):
     context = {
         'page_title': 'Generate Reports',
@@ -155,6 +166,7 @@ def zoho_service_usage(request):
     return _period_report(request, context, m.gen_zoho_usage_summary, zoho=True)
 
 
+@login_required
 def _download_report(filepath):
     with open(filepath, 'rb') as f:
         response = HttpResponse(f.read(), content_type="application/ms-excel")
@@ -162,6 +174,7 @@ def _download_report(filepath):
         return response
 
 
+@login_required
 def _period_report(request, context, func, zoho=False):
     if request.method == 'POST':
         form = PeriodForm(request.POST)
