@@ -12,11 +12,11 @@
                             {% csrf_token %}
                             <div class="input-group mb-3">
                               <span class="input-group-text" id="basic-addon1"><i class="fa-solid fa-user text-muted"></i></span>
-                              <input id="username" type="text" class="form-control" placeholder="Username" autofocus="">
+                              {{ form.username }}
                             </div>
                             <div class="input-group mb-3">
                               <span class="input-group-text" id="basic-addon2"><i class="fa-solid fa-lock text-muted"></i></span>
-                              <input id="password" type="password" class="form-control" placeholder="Password">
+                              {{ form.password }}
                             </div>
                             <div class="mt-3">
                                 <button type="submit" class="btn btn-outline-success w-100">Log in</button>

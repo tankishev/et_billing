@@ -1,15 +1,20 @@
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+
+
 from .forms import VendorPeriodForm, PeriodForm, FileUploadForm
 from .models import Vendor, VendorInputFile
 from .modules import recalc_vendor, recalc_all_vendors, \
     handle_uploaded_file, list_archive, handle_extract_zip, delete_inactive_input_files
 
 
+@login_required
 def index(request):
     return render(request, 'vendors_index.html')
 
 
+@login_required
 def res_result(res_id):
     """ Return verbose names for the results of the calc_vendor functions """
     update_vendor_legend = {
@@ -22,6 +27,7 @@ def res_result(res_id):
     return update_vendor_legend.get(res_id, 'Not defined')
 
 
+@login_required
 def calc_vendor_usage(request):
     context = {
         'page_title': 'Calculate Usage',
@@ -45,6 +51,7 @@ def calc_vendor_usage(request):
     return render(request, 'base_form.html', context)
 
 
+@login_required
 def calc_usage_all_vendors(request):
     context = {
         'page_title': 'Calculate Usage',
@@ -66,6 +73,7 @@ def calc_usage_all_vendors(request):
     return render(request, 'base_form.html', context)
 
 
+@login_required
 def list_vendor_files(request):
     context = {
         'page_title': 'Manage Vendor Files',
@@ -82,6 +90,7 @@ def list_vendor_files(request):
     return render(request, 'base_form.html', context)
 
 
+@login_required
 def list_vendor_files_period(request, period):
     files = VendorInputFile.objects.filter(period=period, is_active=True).order_by('vendor')
     if files.exists():
@@ -90,6 +99,7 @@ def list_vendor_files_period(request, period):
     return HttpResponse('No vendor files for this period')
 
 
+@login_required
 def upload_zip(request):
     context = {
         'page_title': 'Vendor Input ZIP',
@@ -113,6 +123,7 @@ def upload_zip(request):
     return render(request, 'base_form.html', context)
 
 
+@login_required
 def extract_zip(request):
     zip_content = list_archive()
     if zip_content is None:
@@ -143,6 +154,7 @@ def extract_zip(request):
         return render(request, 'result_zip_upload.html', context)
 
 
+@login_required
 def delete_unused_vendor_input_files(request):
     deleted_files = delete_inactive_input_files()
     return HttpResponse(deleted_files)
