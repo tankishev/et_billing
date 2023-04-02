@@ -28,8 +28,9 @@ def handle_uploaded_file(f):
     os.remove(filepath)
 
 
-def list_archive():
-    """ Lists the CSV files in ZipFile """
+def list_archive() -> list or None:
+    """ Lists the CSV files in last uploaded zip file located at /media/temp_upload.zip """
+
     f = validate_zip(TEMP_ZIP_FILENAME)
     if f:
         retval = []
@@ -40,8 +41,11 @@ def list_archive():
         return sorted(retval)
 
 
-def validate_zip(filepath):
-    """ Validates the file is a valid ZIP """
+def validate_zip(filepath) -> z.ZipFile or None:
+    """ Tests that the file is a ZipFile and it is valid
+        :returns ZipFile or None
+    """
+
     if z.is_zipfile(filepath):
         z_file = z.ZipFile(filepath)
         if z_file.testzip() is None:

@@ -1,0 +1,16 @@
+{% extends 'header.html' %}
+{% block title %}404 Page Not Found{% endblock %}
+{% block body %}
+    <div class="container">
+        <div class="d-flex vh-100 justify-content-center">
+            <div class="vw-50 align-self-center text-center" style="width: 50%">
+                <div class="notfound-404">
+                    <h1 class="display-1 fw-bold">4<span>0</span>4</h1>
+                </div>
+                <h3 class="text-uppercase fw-bold">Oops! Page Not Be Found</h3>
+                <p class="fw-lighter">Sorry but the page you are looking for does not exist, has been removed, has its name changed or is temporarily unavailable</p>
+                <a class="btn btn-outline-warning" href="/">Back to homepage</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

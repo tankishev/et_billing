@@ -125,7 +125,11 @@ def upload_zip(request):
 
 @login_required
 def extract_zip(request):
+    """ Extract the contents of the last uploaded Iteco achive """
+
+    # Get the content of the last uploaded archive
     zip_content = list_archive()
+
     if zip_content is None:
         return HttpResponse("No zip file found!")
     elif len(zip_content) == 0:
