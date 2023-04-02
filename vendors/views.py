@@ -1,8 +1,6 @@
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-
-
 from .forms import VendorPeriodForm, PeriodForm, FileUploadForm
 from .models import Vendor, VendorInputFile
 from .modules import recalc_vendor, recalc_all_vendors, \
@@ -14,7 +12,6 @@ def index(request):
     return render(request, 'vendors_index.html')
 
 
-@login_required
 def res_result(res_id):
     """ Return verbose names for the results of the calc_vendor functions """
     update_vendor_legend = {

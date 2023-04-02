@@ -8,7 +8,6 @@ from .models import UniqueUser
 from .modules import store_unique_users
 
 from reports.modules import gen_zoho_uqu_period, gen_zoho_uqu_clients, gen_zoho_uqu_vendors
-
 from .modules.uq_users import store_uqu_client, store_uqu_vendors, store_uqu_periods
 
 
@@ -57,25 +56,21 @@ def save_unique_users(request):
     return render(request, 'results_collapse.html', context)
 
 
-@login_required
 def read_unique_users(request):
     unique_users = UniqueUser.objects.filter(month='2020-02')
     return HttpResponse(unique_users)
 
 
-@login_required
 def get_uqu_data():
     uqu_data = UniqueUser.objects.values('month', 'vendor_id').distinct()
     return HttpResponse(len(uqu_data.filter(month='2020-10')) > 0)
 
 
-@login_required
 def remove_unique_users(period):
     UniqueUser.objects.filter(month=period).delete()
     return HttpResponse('OK')
 
 
-@login_required
 def get_uqu(client_id=None, start_period=None, end_period=None):
     if client_id is None:
         if start_period is None and end_period is None:
