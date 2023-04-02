@@ -5,9 +5,9 @@
 {% block content %}
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-5">
+            <div class="col-md-4">
                 <div class="row justify-content-center">
-                    <div class="col mh-5 mt-5 p-5 rounded">
+                    <div class="col mt-5 p-5 rounded">
                         <form class="form-signin" method="post" action="{% url 'login' %}">
                             {% csrf_token %}
                             <div class="input-group mb-3">
