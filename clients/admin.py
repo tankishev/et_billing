@@ -11,6 +11,7 @@ class ClientVendorInline(admin.TabularInline):
     extra = 0
     show_change_link = True
     readonly_fields = ['is_reconciled']
+    max_num = 0
 
 
 class ClientContractsInline(admin.TabularInline):
