@@ -28,8 +28,10 @@ def download_billing_report(request, pk):
     try:
         report_file = ReportFile.objects.get(pk=pk)
         filepath = report_file.file.path
+        logger.debug(f'Requested file to download: {filepath}')
         return _download_report(filepath)
     except ReportFile.DoesNotExist:
+        logger.warning(f'Does Not Exist: ReportFile with id {pk}')
         return HttpResponse('No report file with such id')
 
 
@@ -39,7 +41,7 @@ def download_zoho_report(request, period, filename):
     logger.debug(f'Requested file to download: {filepath}')
     if os.path.exists(filepath):
         return _download_report(filepath)
-    logger.critical(f'Path does not exist: {filepath}')
+    logger.warning(f'Does Not Exists: {filepath}')
 
 
 @login_required
