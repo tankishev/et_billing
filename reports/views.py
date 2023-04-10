@@ -13,6 +13,9 @@ from .models import ReportFile
 from . import modules as m
 
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -33,8 +36,10 @@ def download_billing_report(request, pk):
 @login_required
 def download_zoho_report(request, period, filename):
     filepath = str(settings.MEDIA_ROOT / f'output/zoho/{period}/{filename}')
+    logger.debug(f'Requested file to download: {filepath}')
     if os.path.exists(filepath):
         return _download_report(filepath)
+    logger.critical(f'Path does not exist: {filepath}')
 
 
 @login_required
@@ -166,7 +171,6 @@ def zoho_service_usage(request):
     return _period_report(request, context, m.gen_zoho_usage_summary, zoho=True)
 
 
-@login_required
 def _download_report(filepath):
     with open(filepath, 'rb') as f:
         response = HttpResponse(f.read(), content_type="application/ms-excel")
@@ -174,7 +178,6 @@ def _download_report(filepath):
         return response
 
 
-@login_required
 def _period_report(request, context, func, zoho=False):
     if request.method == 'POST':
         form = PeriodForm(request.POST)
