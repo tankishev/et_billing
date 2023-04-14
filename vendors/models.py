@@ -75,3 +75,15 @@ class VendorInputFile(models.Model):
 
     class Meta:
         db_table = 'vendor_input_files'
+
+
+class VendorUsage(models.Model):
+    period = PeriodField()
+    vendor = models.ForeignKey(
+        Vendor, on_delete=models.RESTRICT, db_column='vendor_id', related_name='vendor_usage')
+    service = models.ForeignKey(
+        Service, on_delete=models.RESTRICT, db_column='service_id', related_name='vendor_usage')
+    unit_count = models.IntegerField()
+
+    class Meta:
+        db_table = 'vendor_usage'

@@ -12,7 +12,13 @@ class ServiceUsageMixin:
         return transactions, res
 
     @staticmethod
-    def _calc_usage(df, services):
+    def _calc_usage(df, services) -> tuple:
+        """ Maps services dictionary to each row in a dataframe to calculate service usage.
+            :param df: Pandas dataframe from Iteco vendor file
+            :param services: dictionary with filters for mapping transaction based services
+            :returns tuple: dataframe, list of transactions, boolean if all transactions were mappped
+        """
+
         transactions = []
         headers = df.columns.tolist()
         trans_f = TransactionFactory(headers)
@@ -28,3 +34,4 @@ class ServiceUsageMixin:
 
         res = df.service_id.value_counts()
         return df, transactions, sum(res) == len(df)
+
