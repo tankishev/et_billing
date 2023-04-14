@@ -3,6 +3,10 @@ from .report import DBReport, DBReportFactory
 from .renderer import ReportRenderer
 from .layouts import LayoutFactory
 from .report_layouts import layout as report_layout
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def set_up(period: str) -> DBReportFactory:
@@ -35,10 +39,13 @@ def gen_report_for_client(period, client):
     return res
 
 
-def gen_reports(period):
+def gen_reports(period) -> list:
+    """ Creates a DBReportFactory instance and calls it to generate reports for a given period """
+    logger.info(f"Starting billing report generation for ALL clients for {period}")
     start = dt.now()
     dbf = set_up(period)
     res = dbf.generate_reports()
     dbf.close()
-    print(dt.now() - start)
+    execution_time = dt.now() - start
+    logger.info(f'Execution time: {execution_time}')
     return res

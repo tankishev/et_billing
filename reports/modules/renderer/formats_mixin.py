@@ -7,8 +7,8 @@ class FormatMixin:
     worksheet: worksheet
     workbook: workbook
 
-    def _apply_cell_format(self, cells_formats: tuple):
-        """ Apply formats to cell or range of cells
+    def _apply_cell_format(self, cells_formats: tuple) -> None:
+        """ Apply formats to cell or range of cells based on provided tuple.
         :param cells_formats: tuple in the format (row, col, format_name) or ((row, row, col, col), format_name).
         """
 
@@ -34,8 +34,8 @@ class FormatMixin:
                 for c in range(cs, ce + 1):
                     ws.write_blank(r, c, None, xf_format)
 
-    def _apply_row_sizes(self, sizes: tuple):
-        """ Change row size
+    def _apply_row_sizes(self, sizes: tuple) -> None:
+        """ Change row sizes based on provided tuple.
         :param sizes: tuple in the format ((row_number, row_size),)
         """
 
@@ -44,8 +44,8 @@ class FormatMixin:
             for row, size in sizes:
                 ws.set_row(row, size)
 
-    def _apply_col_sizes(self, sizes: tuple):
-        """ Change col size
+    def _apply_col_sizes(self, sizes: tuple) -> None:
+        """ Change col size based on provided tuple.
         :param sizes: tuple in the format ((row_number, row_size),)
         """
 
@@ -54,9 +54,15 @@ class FormatMixin:
             for col, size in sizes:
                 ws.set_column(col, col, size)
 
-    def _get_format(self, format_name):
+    def _get_format(self, format_name) -> xlsxwriter.workbook.Format:
+        """ Returns a xlsxwriter.workbook.Format from the child object's _wb_formats property """
+
         return self._wb_formats.get(format_name, None)
 
-    def _load_formats(self, wb_formats):
+    def _load_formats(self, wb_formats: dict) -> None:
+        """ Adds a dictionary with xlsxwriter.workbook.Format to the child object
+        :param wb_formats: dictionary with objects
+        """
+
         wb = self.workbook
         self._wb_formats = {name: wb.add_format(params) for (name, params) in wb_formats.items()}

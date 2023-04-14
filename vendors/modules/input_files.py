@@ -59,12 +59,17 @@ class InputFilesMixin:
 
     def mask_pids(self, df) -> pd.DataFrame:
         """ Masks last 4 digits of PIDs with **** """
+
         for c_name in df.columns:
             if c_name in self._ITECO_PID_COLS:
                 df[c_name] = df[c_name].apply(lambda x: f'{str(x)[:-4]}****' if x and len(str(x)) in (9, 10) else x)
         return df
 
     def prep_df_for_service_usage_calc(self, df, skip_status_five=False):
+        """ Takes a dataframe, replaces n/a with blank string, removes rows with status 5
+        and converts preset list of columns from string to numeric representation.
+        """
+
         df.fillna('', inplace=True)
         if skip_status_five and 'Status' in df.columns:
             df.drop(df[df['Status'] == '5'].index, inplace=True)

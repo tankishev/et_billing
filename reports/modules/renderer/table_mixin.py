@@ -7,7 +7,7 @@ class TableRenderMixin:
 
     @staticmethod
     def _get_table(**kwargs):
-        """ Returns the correct table class depending on billing type """
+        """ Returns the correct table renderer class depending on billing type """
 
         billing_type = kwargs.get('billing_type')
 
@@ -40,6 +40,9 @@ class BaseTableRenderer(FormatMixin):
         self.layout = kwargs.get('layout')
 
     def render_table(self, summary, *args, **kwargs) -> int:
+        """ Renders a summary table in the Summary sheet
+        :returns the
+        """
         report = args[0]
         self._load_formats(self.layout.wb_formats)
         num_data_cols = len(getattr(self.layout, f'label_table_headers_{summary.layout_name}', []))

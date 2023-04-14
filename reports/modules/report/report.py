@@ -2,6 +2,10 @@ from datetime import timedelta as td, datetime as dt
 from clients.models import Client
 from .bililng_summary import BillingSummary
 from .utils import ReportClient, Report
+import logging
+
+
+logger = logging.getLogger('report.DBReportFactory')
 
 
 class DBReportFactory:
@@ -23,42 +27,42 @@ class DBReportFactory:
     def close(self) -> None:
         self.dbr.close()
 
-    def generate_report_by_client(self, client_id: int) -> list or None:
+    def generate_report_by_client(self, client_id: int) -> list | None:
         """ Generates all reports for a given client """
 
         report_data = self.dbr.get_report_data(self.period, client_id=client_id)
         if len(report_data) > 0:
             return self.generate_reports(report_data)
 
-    def generate_report_by_report_id(self, report_id: int) -> list or None:
+    def generate_report_by_report_id(self, report_id: int) -> list | None:
         """ Generates a specific report given its report_id """
 
         report_data = self.dbr.get_report_data(self.period, report_id=report_id)
         if len(report_data) > 0:
             return self.generate_reports(report_data)
 
-    def generate_reports(self, report_data=None, verbose=True) -> list or None:
+    def generate_reports(self, report_data=None) -> list | None:
         """ Generates a specific report given its DB data or all reports if report_data is None """
 
         if report_data is None:
             report_data = self.dbr.get_report_data(self.period)
         if report_data is not None:
-            retval = list()
-            if verbose:
-                print(f'Generating {len(report_data)} reports:')
+            retval = []
+            logger.info(f'Reports to generate: {len(report_data)}')
             for data in report_data:
                 if data.report_type is not None:
                     report = self._generate_report_obj(data)
-                    report_file = self._render_report(report, data.render_details)
+                    with_details = data.render_details
+                    report_file = self._renderer.render(report, with_details=with_details, period=self.period)
                     retval.append(report_file)
-                    if verbose:
-                        print(f'\t{report_file.filename} - Complete')
+                    logger.info(f'{report_file.filename} - Complete')
             return sorted(retval, key=lambda x: x.report.client.client_id)
 
     # Private methods used to generate Report
     def _generate_report_obj(self, data) -> Report:
         """ Generates Report object from DB data """
 
+        logger.debug(f'Generating Report object for client_id {data.client_id}')
         client_data = ReportClient(data.legal_name, data.client_id, data.contract_date)
         client = Client.objects.get(client_id=data.client_id)
         output_file_name = self._get_output_filename(data)
@@ -93,9 +97,6 @@ class DBReportFactory:
             order_summary.load_layout(self._layout_factory)
             summaries.append(order_summary)
         return summaries
-
-    def _render_report(self, report, with_details=True):
-        return self._renderer.render(report, with_details=with_details, period=self.period)
 
     # Private utility methods
     def _calc_period(self):

@@ -1,12 +1,14 @@
+from django.conf import settings
+from django.core.files import File
+from reports.models import ReportFile
+from .table_mixin import TableRenderMixin, FormatMixin
+
 import xlsxwriter
 import tempfile
 import os
+import logging
 
-from django.conf import settings
-from django.core.files import File
-
-from reports.models import ReportFile
-from .table_mixin import TableRenderMixin, FormatMixin
+logger = logging.getLogger('report.renderer')
 
 
 class BaseReportRenderer(FormatMixin):
@@ -53,63 +55,72 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
         self.t_col = 0
         self._resources_dir = str(settings.MEDIA_ROOT / self._RESOURCES_DIR)
 
-    def close_workbook(self):
+    def close_workbook(self) -> None:
         """ Closes the XLSX file """
 
         if self._wb:
             self._wb.close()
 
-    def render(self, report, **kwargs):
+    def render(self, report, **kwargs) -> ReportFile | None:
         """ Creates XLSX file and renders data in it given a Report object.
         :param report: Report object
         """
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as temp_file:
-            wb = xlsxwriter.Workbook(temp_file.name)
-            self._ws = wb.add_worksheet(self._TOTAL_SHEET_NAME)
-            self._wb = wb
+        if report.layout.wb_formats:
+            logger.debug(f'Creating tempfile for {report.output_file_name}')
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as temp_file:
+                wb = xlsxwriter.Workbook(temp_file.name)
+                self._ws = wb.add_worksheet(self._TOTAL_SHEET_NAME)
+                self._wb = wb
 
-            with_details = kwargs.get('with_details', False)
+                with_details = kwargs.get('with_details', False)
 
-            # Load formats
-            if not report.layout.wb_formats:
-                return 'workbook formats missing'
-            self._load_formats(report.layout.wb_formats)
-            self.t_row, self.t_col = report.layout.top_rc
+                # Load formats
+                if not report.layout.wb_formats:
+                    return 'workbook formats missing'
+                self._load_formats(report.layout.wb_formats)
+                self.t_row, self.t_col = report.layout.top_rc
 
-            # Render data
-            self._render_header(report)
-            self._render_tables(report)
-            if with_details:
-                self._render_details(report)
-            self.close_workbook()
+                # Render data
+                self._render_header(report)
+                self._render_tables(report)
+                if with_details:
+                    self._render_details(report)
+                self.close_workbook()
 
-        period = kwargs.get('period')
-        report_id = report.report_id
-        filename = report.output_file_name
+            period = kwargs.get('period')
+            report_id = report.report_id
+            filename = report.output_file_name
 
-        file_obj = open(temp_file.name, 'rb')
-        django_file = File(file_obj, name=filename)
-        django_file.seek(0)
-        report_file = None
-        try:
-            report_file = ReportFile.objects.get(period=period, report_id=report_id, type_id=1)
-            if report_file.file:
-                os.remove(report_file.file.path)
-            report_file.file.save(filename, django_file, save=True)
-        except ReportFile.DoesNotExist:
-            report_file = ReportFile.objects.create(
-                period=period, file=django_file, report_id=report.report_id, type_id=1)
-            report_file.save()
-        finally:
-            file_obj.close()
-            os.remove(temp_file.name)
-            return report_file
+            file_obj = open(temp_file.name, 'rb')
+            django_file = File(file_obj, name=filename)
+            django_file.seek(0)
+            report_file = None
+            try:
+                report_file = ReportFile.objects.get(period=period, report_id=report_id, type_id=1)
+                if report_file.file:
+                    os.remove(report_file.file.path)
+                logger.debug(f'Replacing existing ReportFile object for report_id {report_id}, period {period}')
+                report_file.file.save(filename, django_file, save=True)
+            except ReportFile.DoesNotExist:
+                logger.debug(f'Saving ReportFile object for report_id {report_id}, period {period}')
+                report_file = ReportFile.objects.create(
+                    period=period, file=django_file, report_id=report.report_id, type_id=1)
+                report_file.save()
+            finally:
+                file_obj.close()
+                os.remove(temp_file.name)
+                return report_file
 
-    def _render_details(self, report):
+        logger.warning(f'Cannot render report_id {report.report_id}. '
+                       f'ReportFile object does not contain formats. {report.output_file_name}')
+
+    def _render_details(self, report) -> None:
         """ Render Details sheet in an XLSX report.
         :param report: Report object
         """
+
+        logger.debug(f'Rendering details')
 
         ws = self._wb.add_worksheet(self._DETAILS_SHEET_NAME)
         xl_format_headers = self._get_format(report.layout.format_table_titles)
@@ -150,7 +161,7 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
                 if data.stype:
                     ws.write_string(row + 1, col + 2 - skipped_cols, data.stype)
 
-    def _render_header(self, report):
+    def _render_header(self, report) -> None:
         """ Render the header in the Summary sheet of the XLSX report.
         :param report: Report object
         """
@@ -194,10 +205,12 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
                             value = str(value)
                         ws.write_string(row, col, value, self._get_format(layout.format_header_values))
 
-    def _render_tables(self, report):
+    def _render_tables(self, report) -> None:
         """ Renders a table for each billing summary in the given report object.
         :param report: Report object
         """
+
+        logger.debug(f'Rendering tables')
 
         init_kwargs = {
             'wb': self._wb,
