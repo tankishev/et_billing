@@ -9,7 +9,7 @@ from datetime import datetime as dt
 from pathlib import PurePath
 import logging
 
-django_logger = logging.getLogger('vendors_vendors_calc')
+logger = logging.getLogger('et_billing.vendors_vendors_calc')
 celery_logger = get_task_logger('vendors.vendors_calc')
 
 
@@ -81,7 +81,7 @@ def recalc_all_vendors(self, period):
     """ Calculate vendor usage for all vendors for a given period """
 
     start = dt.now()
-    celery_logger.info(f"Starting usage calcs for ALL vendors for {period}.")
+    logger.info(f"Starting usage calcs for ALL vendors for {period}.")
 
     # Create file processing task
     task_status = FileProcessingTask.objects.create(task_id=self.request.id, status='PROGRESS', progress=0)
@@ -93,7 +93,7 @@ def recalc_all_vendors(self, period):
         number_of_files = len(input_files)
         task_status.number_of_files = number_of_files
         task_status.save()
-        celery_logger.debug(f'{number_of_files} input files loaded')
+        logger.debug(f'{number_of_files} input files loaded')
         prior_vendors_list = list(
             VendorInputFile.objects.filter(period__lt=period).values_list('vendor_id', flat=True).distinct()
         )

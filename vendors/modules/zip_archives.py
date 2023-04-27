@@ -106,6 +106,8 @@ def handle_extract_zip(period: str) -> dict:
     unprocessed = Vendor.objects.exclude(vendor_id__in=processed_ids)
     retval[(3, 'Vendors not in archive')] = [el for el in unprocessed]
 
+    logger.info(f'{len(processed_ids)} files extracted')
+
     return retval
 
 
