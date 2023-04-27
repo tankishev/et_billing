@@ -1,9 +1,9 @@
-from django.db import models
-
 from clients.models import Client
+from month.models import MonthField
 from services.models import Service
-from shared.models import PeriodField
 from vendors.models import Vendor
+
+from django.db import models
 
 import os
 
@@ -92,7 +92,7 @@ def content_report_file_filename(instance, filename):
 class ReportFile(models.Model):
     """ An object to record the generated billing report files """
 
-    period = PeriodField()
+    period = MonthField()
     file = models.FileField(max_length=255, upload_to=content_report_file_filename)
     report = models.ForeignKey(
         Report, on_delete=models.RESTRICT, db_column='report_id', related_name='report_files')
@@ -103,8 +103,12 @@ class ReportFile(models.Model):
     def filename(self):
         return os.path.basename(self.file.name)
 
+    @property
+    def list_name(self):
+        return self.filename
+
     def __str__(self):
-        return f'{self.period} - {self.report.file_name}'
+        return f'{self.month} - {self.report.file_name}'
 
     class Meta:
         db_table = 'report_files'

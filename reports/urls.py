@@ -11,11 +11,12 @@ urlpatterns = [
     ])),
     path('view-files/', include([
         path('', views.list_report_files, name='list_report_files'),
-        path('<str:period>/', views.list_report_files_period, name='list_report_files_period')
     ])),
     path('download/', include([
         path('zoho/<str:period>/<str:filename>/', views.download_zoho_report, name='download_zoho_report'),
-        path('billing/<int:pk>/', views.download_billing_report, name='download_billing_report'),
+        path('billing/file/<int:pk>/', views.download_billing_report, name='download_billing_report'),
+        path('billing/all/<str:period>/', views.download_billing_reports_all, name='download_billing_reports_all'),
     ])),
     path('reconciliation/', views.reconciliation, name='db_reconciliation'),
+    path('test/', views.reports_test, name='reports_test'),
 ]

@@ -1,8 +1,9 @@
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
 from django.db.models import Count
-from vendors.models import Vendor
+
 from contracts.models import Contract
+from vendors.models import Vendor
 from .models import Client, Industry, ClientCountry
 
 

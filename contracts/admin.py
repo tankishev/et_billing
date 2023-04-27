@@ -1,10 +1,11 @@
 from django.contrib import admin
 from django.db import models
 from django.forms import Textarea
-from .models import Contract, Order, OrderPrice, OrderService
+
 from services.models import Service
-from vendors.models import VendorService
 from shared.utils import get_parent_object_from_request
+from vendors.models import VendorService
+from .models import Contract, Order, OrderPrice, OrderService
 
 
 class ContractOrderInline(admin.TabularInline):

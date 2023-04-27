@@ -1,8 +1,12 @@
-from services.modules import FiltersMixin
-
-from vendors.modules import ServiceUsageMixin, InputFilesMixin
+# CODE OK
+from services.modules import FiltersMixin, ServicesMixin
 from shared.utils import DictToObjectMixin
-from .db_queries import DBQueries
+from vendors.modules import ServiceUsageMixin, InputFilesMixin
+from .db_proxy import DBProxyReports
+
+import logging
+
+logger = logging.getLogger('et_billing.report.DBReport')
 
 
 class ReportData(DictToObjectMixin):
@@ -12,11 +16,11 @@ class ReportData(DictToObjectMixin):
         self.add_attributes(**data)
 
 
-class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin):
-    """ A class used to access complex queries """
+class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin, ServicesMixin):
+    """ A class used to process and generate different data objects for the Report object """
 
     def __init__(self):
-        self.dba = DBQueries()
+        self.dba = DBProxyReports()
 
     def close(self):
         """ Drops the temp data table and closes the DB session connection """
@@ -25,12 +29,13 @@ class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin):
         self.dba.close()
 
     def get_report_data(self, period: str, client_id=None, report_id=None) -> list:
-        """ Returns a list with ReportData objects for given period
-
+        """ Returns a list with ReportData objects for given period.
         :param period: period to extract data for
         :param client_id: if not none will filter the results only for that client_id
         :param report_id: if not none will filter the results only for this report_id
         """
+
+        logger.info('Generating report data')
 
         # Generate temp_table
         self.dba.create_temp_data_table(period)
@@ -45,29 +50,28 @@ class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin):
 
         # Prepare ReportData list
         retval = []
-        if report_data:
-            for data in report_data:
-                report_id, file_name, report_type, language, skip_cols, details, show_pids, \
-                    client_id, legal_name, contract_id, contract_date = data
+        for data in report_data:
+            report_id, file_name, report_type, language, skip_cols, details, show_pids, \
+                client_id, legal_name, contract_id, contract_date = data
 
-                render_details = details == 1
-                retval.append(ReportData(**{
-                    'report_id': report_id,
-                    'file_name': file_name,
-                    'report_type': report_type,
-                    'language': language,
-                    'skip_cols': skip_cols,
-                    'render_details': render_details,
-                    'show_pids': show_pids,
-                    'client_id': client_id,
-                    'legal_name': legal_name,
-                    'contract_id': contract_id,
-                    'contract_date': contract_date
-                }))
+            render_details = details == 1
+            retval.append(ReportData(**{
+                'report_id': report_id,
+                'file_name': file_name,
+                'report_type': report_type,
+                'language': language,
+                'skip_cols': skip_cols,
+                'render_details': render_details,
+                'show_pids': show_pids,
+                'client_id': client_id,
+                'legal_name': legal_name,
+                'contract_id': contract_id,
+                'contract_date': contract_date
+            }))
         return retval
 
     def get_report_order_details(self, report_id: int, report_language: str) -> list:
-        """ Returns a list of orders (BillingSummaries) to be included in the report """
+        """ Returns a list of Orders (BillingSummaries) to be included in the report """
 
         retval = []
         orders_data = self.dba.get_report_details(report_id)
@@ -90,7 +94,42 @@ class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin):
         retval.sort(key=lambda el: el[0:2])
         return [el[-1] for el in retval]
 
-    def _get_report_order_services(self, report_id: int, order_id: int) -> list or None:
+    def get_report_transactions(self, report_id, hide_pids=True, skip_status_five=True) -> tuple[list, bool]:
+        """ Generates a list of Transactions to be rendered in the Details sheet """
+
+        service_types = self.get_service_types_for_reports()
+        vendor_files = self.dba.get_vendor_files_by_report_id(report_id)
+        retval = []
+        is_reconciled = True
+        for file in vendor_files:
+            df = self.load_data_for_service_usage(file.file.path, skip_status_five)
+            service_filters = self.get_service_filters()
+            services = self.load_vendor_service_filters(file.vendor_id, service_filters)
+            transactions, reconciled = self.calc_transactions(df, services)
+            is_reconciled *= reconciled
+            for transaction in transactions:
+                service_id = transaction.service_id
+                if service_id is None:
+                    print(f'Vendor {file.vendor_id}: transaction {transaction.transaction_id} '
+                          f'not rated (service_id = None)')
+                    continue
+                if hide_pids:
+                    if transaction.receiver_pid != '':
+                        transaction.receiver_pid = self._mask_pid(transaction.receiver_pid)
+                    if transaction.sender_pid != '':
+                        transaction.sender_pid = self._mask_pid(transaction.sender_pid)
+                transaction.service = service_types[service_id].get('service', None)
+                transaction.stype = service_types[service_id].get('stype', None)
+                transaction.vendor_id = int(transaction.vendor_id)
+                transaction.cost = float(transaction.cost)
+                transaction.signing_type = int(transaction.signing_type)
+                transaction.transaction_status = int(transaction.transaction_status)
+                transaction.transaction_type = int(transaction.transaction_type)
+                transaction.render_from_headers = True
+                retval.append(transaction)
+        return retval, is_reconciled
+
+    def _get_report_order_services(self, report_id: int, order_id: int) -> list | None:
         """ Returns a list of services to be included for a given order (BillingSummary) """
 
         services_data = self.dba.get_report_order_services(report_id, order_id)
@@ -110,48 +149,7 @@ class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin):
                  })
             return retval
 
-    def get_report_services(self) -> None or dict[int: dict[str: str]]:
-        """ Returns the list of services in the DB
-        :return: None or {service_id: {service, stype}}
-        """
-
-        services_data = self.dba.get_service_types()
-        if services_data:
-            return {_id: {'service': service, 'stype': stype} for _id, service, stype in services_data}
-
-    def get_report_transactions(self, report_id, hide_pids=True, skip_status_five=True) -> tuple[list, bool]:
-        """ Generates a list of trasactions to be rendered in the Details sheet """
-
-        def mask_pid(pid):
-            return f'{str(pid)[:-4]}****' if pid and len(str(pid)) in (9, 10) else pid
-
-        service_types = self.get_report_services()
-        vendor_files = self.dba.get_vendor_files_by_report_id(report_id)
-        retval = []
-        is_reconciled = True
-        for file in vendor_files:
-            df = self.load_data_for_service_usage(file.file.path, skip_status_five)
-            service_filters = self.get_service_filters()
-            services = self.load_vendor_service_filters(file.vendor_id, service_filters)
-            transactions, reconciled = self.calc_transactions(df, services)
-            is_reconciled *= reconciled
-            for transaction in transactions:
-                service_id = transaction.service_id
-                if service_id is None:
-                    print(f'Vendor {file.vendor_id}: transaction {transaction.transaction_id} not rated (service_id = None)')
-                    continue
-                if hide_pids:
-                    if transaction.receiver_pid != '':
-                        transaction.receiver_pid = mask_pid(transaction.receiver_pid)
-                    if transaction.sender_pid != '':
-                        transaction.sender_pid = mask_pid(transaction.sender_pid)
-                transaction.service = service_types[service_id].get('service', None)
-                transaction.stype = service_types[service_id].get('stype', None)
-                transaction.vendor_id = int(transaction.vendor_id)
-                transaction.cost = float(transaction.cost)
-                transaction.signing_type = int(transaction.signing_type)
-                transaction.transaction_status = int(transaction.transaction_status)
-                transaction.transaction_type = int(transaction.transaction_type)
-                transaction.render_from_headers = True
-                retval.append(transaction)
-        return retval, is_reconciled
+    @staticmethod
+    def _mask_pid(pid: str) -> str:
+        """ Masks the last 4 digits of an identifier by replacing them with **** """
+        return f'{str(pid)[:-4]}****' if pid and len(str(pid)) in (9, 10) else pid

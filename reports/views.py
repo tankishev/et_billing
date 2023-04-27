@@ -1,12 +1,16 @@
+# FIX ZOHO REPORTS
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse
 
 from clients.models import Client
 from vendors.models import Vendor
-from stats.utils import get_stats_usage_not_in_vendor_services as get_su
 from vendors.modules.utils import get_vendor_services_not_in_orders as get_vs
+from shared.modules import create_zip_file
+from shared.views import download_excel_file
+from stats.utils import get_stats_usage_not_in_vendor_services as get_su
 
 from .forms import ReportPeriodForm, ClientPeriodForm, PeriodForm
 from .models import ReportFile
@@ -15,63 +19,20 @@ from . import modules as m
 import os
 import logging
 
-logger = logging.getLogger('reports_views')
+logger = logging.getLogger('et_billing.reports.views')
 
 
 @login_required
 def index(request):
+    """ Returns index page for the reports module """
     return render(request, 'reports_index.html')
 
 
-@login_required
-def download_billing_report(request, pk):
-    try:
-        report_file = ReportFile.objects.get(pk=pk)
-        filepath = report_file.file.path
-        logger.debug(f'Requested file to download: {filepath}')
-        return _download_report(filepath)
-    except ReportFile.DoesNotExist:
-        logger.warning(f'Does Not Exist: ReportFile with id {pk}')
-        return HttpResponse('No report file with such id')
-
-
-@login_required
-def download_zoho_report(request, period, filename):
-    filepath = str(settings.MEDIA_ROOT / f'output/zoho/{period}/{filename}')
-    logger.debug(f'Requested file to download: {filepath}')
-    if os.path.exists(filepath):
-        return _download_report(filepath)
-    logger.warning(f'Does Not Exists: {filepath}')
-
-
-@login_required
-def list_report_files(request):
-    context = {
-        'page_title': 'Manage Report Files',
-        'form_title': 'List billing report files',
-        'form_address': '/reports/view-files/',
-        'form': PeriodForm()
-    }
-    if request.method == 'POST':
-        form = PeriodForm(request.POST)
-        context['form'] = form
-        if form.is_valid():
-            period = form.cleaned_data.get('period')
-            return redirect('list_report_files_period', period)
-    return render(request, 'base_form.html', context)
-
-
-@login_required
-def list_report_files_period(request, period):
-    files = ReportFile.objects.filter(period=period, type_id=1).order_by('report__client_id')
-    if files.exists():
-        context = {'files': files, 'period': period}
-        return render(request, 'report_file_download.html', context)
-    return HttpResponse('No vendor files for this period')
-
-
+# BILLING REPORTS CALCULATIONS
 @login_required
 def render_period(request):
+    """ Triggers the rendering of reports for ALL clients for a given period """
+
     context = {
         'page_title': 'Generate Reports',
         'form_title': 'Generate all configured reports',
@@ -79,34 +40,56 @@ def render_period(request):
         'form_address': '/reports/generate/period-all/',
         'form': PeriodForm()
     }
-    return _period_report(request, context, m.gen_reports)
+
+    if request.method == 'POST':
+        form = PeriodForm(request.POST)
+        if form.is_valid():
+            period = form.cleaned_data.get('period')
+            async_result = m.gen_reports.delay(period)
+            context = {
+                'list_title': f'Generating report for all clients for {period}',
+                'list_subtitle': 'This could take up to 5 minutes',
+                'taskId': async_result.id
+            }
+            return render(request, 'processing_bar.html', context)
+        else:
+            context['form'] = form
+
+    return render(request, 'base_form.html', context)
 
 
 @login_required
 def render_period_client(request):
+    """ Triggers the rendering of report for one client for a given period """
+
     context = {
         'page_title': 'Generate Reports',
         'form_title': 'Generate all reports for a client',
         'form_address': '/reports/generate/period-client/',
         'form': ClientPeriodForm()
     }
+
     if request.method == 'POST':
         form = ClientPeriodForm(request.POST)
         if form.is_valid():
             period = form.cleaned_data.get('period')
             client = form.cleaned_data.get('client')
-            if client:
-                res = m.gen_report_for_client(period, client.client_id)
+            if client and period:
+                async_result = m.gen_report_for_client.delay(period, client.client_id)
                 context = {
-                    'res': res,
-                    'period': period
+                    'list_title': f'Generating report for {client.reporting_name}',
+                    'taskId': async_result.id
                 }
-                return render(request, 'report_results.html', context)
+                return render(request, 'processing_bar.html', context)
+        else:
+            context['form'] = form
     return render(request, 'base_form.html', context)
 
 
 @login_required
 def render_period_report(request):
+    """ Triggers the rendering of a specific report for a given period """
+
     context = {
         'page_title': 'Generate Reports',
         'form_title': 'Generate a specific report',
@@ -119,16 +102,75 @@ def render_period_report(request):
             period = form.cleaned_data.get('period')
             report = form.cleaned_data.get('report', None)
             if report is not None:
-                res = m.gen_report_by_id(period, report.id)
-                if res is None:
-                    context['err_message'] = f'No data for {report.file_name} in {period}'
-                    return render(request, 'base_form.html', context)
+                async_result = m.gen_report_by_id.delay(period, report.id)
                 context = {
-                    'res': res,
-                    'period': period
+                    'list_title': f'Generating report {report.file_name}',
+                    'taskId': async_result.id
                 }
-                return render(request, 'report_results.html', context)
+                return render(request, 'processing_bar.html', context)
+        else:
+            context['form'] = form
     return render(request, 'base_form.html', context)
+
+
+# BILLING REPORTS DOWNLOAD
+@login_required
+def download_billing_report(request, pk: int):
+    """ Triggers download of a billing report file with the given pk """
+
+    try:
+        report_file = ReportFile.objects.get(pk=pk)
+        filepath = report_file.file.path
+        logger.debug(f'Requested file to download: {filepath}')
+        return download_excel_file(filepath)
+
+    except ReportFile.DoesNotExist:
+        logger.warning(f'Does Not Exist: ReportFile with id {pk}')
+        return HttpResponse('No report file with such id')
+
+
+@login_required
+def download_billing_reports_all(request, period: str):
+    """ Triggers the download of a ZIP archive with all billing report files for a given period """
+
+    queryset = ReportFile.objects.filter(period=period)
+    return create_zip_file(queryset, f'{period}_billing_reports')
+
+
+@login_required
+def list_report_files(request):
+    """ Visualize PeriodForm to trigger list of billing report files """
+
+    context = {
+        'page_title': 'Manage Report Files',
+        'form_title': 'List billing report files',
+        'form_address': '/reports/view-files/',
+        'form': PeriodForm()
+    }
+    if request.method == 'POST':
+        form = PeriodForm(request.POST)
+        context['form'] = form
+        if form.is_valid():
+            period = form.cleaned_data.get('period')
+            files = ReportFile.objects.filter(period=period, type_id=1).order_by('report__client_id')
+            context = {
+                'header': f'List of billing report files for {period}',
+                'files': files,
+                'zip_url': reverse('download_billing_reports_all', args=[period]),
+                'list_url': 'download_billing_report'
+            }
+            return render(request, 'file_download_list.html', context)
+    return render(request, 'base_form.html', context)
+
+
+# ZOHO REPORTS
+@login_required
+def download_zoho_report(request, period, filename):
+    filepath = str(settings.MEDIA_ROOT / f'output/zoho/{period}/{filename}')
+    logger.debug(f'Requested file to download: {filepath}')
+    if os.path.exists(filepath):
+        return _download_report(filepath)
+    logger.warning(f'Does Not Exists: {filepath}')
 
 
 @login_required
@@ -163,6 +205,7 @@ def reconciliation(request):
 
 @login_required
 def zoho_service_usage(request):
+
     context = {
         'page_title': 'Generate Reports',
         'form_title': 'Zoho Reports',
@@ -170,7 +213,18 @@ def zoho_service_usage(request):
         'form_address': '/reports/generate/zoho-service-usage/',
         'form': PeriodForm()
     }
-    return _period_report(request, context, m.gen_zoho_usage_summary, zoho=True)
+    if request.method == 'POST':
+        form = PeriodForm(request.POST)
+        if form.is_valid():
+            period = form.cleaned_data.get('period')
+            res = m.gen_zoho_usage_summary(period)
+            context = {
+                'res': res,
+                'period': period,
+                'res_zoho': True
+            }
+            return render(request, 'report_results.html', context)
+    return render(request, 'base_form.html', context)
 
 
 def _download_report(filepath):
@@ -180,16 +234,21 @@ def _download_report(filepath):
         return response
 
 
-def _period_report(request, context, func, zoho=False):
+# DEPRECIATED OR TEMPORARY
+def reports_test(request):
+    context = {
+        'page_title': 'Generate Reports',
+        'form_title': 'Test Reports',
+        'form_subtitle': 'Generate reports from test view',
+        'form_address': '/reports/test/',
+        'form': PeriodForm()
+    }
     if request.method == 'POST':
         form = PeriodForm(request.POST)
         if form.is_valid():
             period = form.cleaned_data.get('period')
-            res = func(period)
-            context = {
-                'res': res,
-                'period': period,
-                'res_zoho': zoho
-            }
-            return render(request, 'report_results.html', context)
+            m.gen_zoho_uqu_clients(period)
+            m.gen_zoho_uqu_period(period)
+            m.gen_zoho_uqu_vendors(period)
+            return redirect('home')
     return render(request, 'base_form.html', context)

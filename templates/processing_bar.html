@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block custom_scripts %}<script src="{% static 'js/progress.js' %}" defer="defer"></script>{% endblock %}
+{% block content %}
+
+    <!-- Main body -->
+    <h2>{{ list_title }}</h2>
+    {% if list_subtitle %}
+    <h4>{{ list_subtitle }}</h4>
+    {% endif %}
+    <input id="taskId" type="hidden" value="{{ taskId }}">
+    <div class="row mt-3">
+        <div class="col">
+            <div class="progress position-relative">
+                <div id="progressBar" class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col">
+            <p id="taskStatus">Starting in 2 seconds ... </p>
+            <ul id="documentList" class="list-group border border-success">
+            </ul>
+        </div>
+    </div>
+
+    <!-- Unreconciled Transactions Modal -->
+    <div id="modalReconciliationDetails" class="modal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Unreconciled transactions</h5>
+                </div>
+            <div class="modal-body">
+                <table class="table table-success caption-top">
+                    <caption>List of unreconciled transaction types</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Type</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Signing type</th>
+                            <th scope="col">Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <h5>Matching services</h5>
+                <ul></ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+{% endblock %}

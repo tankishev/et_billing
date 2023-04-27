@@ -1,3 +1,4 @@
+# CODE OK
 import xlsxwriter
 from xlsxwriter import worksheet, workbook
 
@@ -10,7 +11,7 @@ class FormatMixin:
 
     def _apply_cell_format(self, cells_formats: tuple) -> None:
         """ Apply formats to cell or range of cells based on provided tuple.
-        :param cells_formats: tuple in the format (row, col, format_name) or ((row, row, col, col), format_name).
+            :param cells_formats: tuple in the format (row, col, format_name) or ((row, row, col, col), format_name).
         """
 
         if not cells_formats:
@@ -37,7 +38,7 @@ class FormatMixin:
 
     def _apply_row_sizes(self, sizes: tuple) -> None:
         """ Change row sizes based on provided tuple.
-        :param sizes: tuple in the format ((row_number, row_size),)
+            :param sizes: tuple in the format ((row_number, row_size),)
         """
 
         ws = self.worksheet

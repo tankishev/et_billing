@@ -1,7 +1,10 @@
+# CODE OK
 from django.db import models
 
 
 class Industry(models.Model):
+    """ A model to store client industry """
+
     industry = models.CharField(max_length=30, verbose_name='Industry', unique=True)
 
     def __str__(self):
@@ -14,6 +17,8 @@ class Industry(models.Model):
 
 
 class ClientCountry(models.Model):
+    """ A model to store client country """
+
     code = models.CharField(max_length=3)
     country = models.CharField(max_length=30)
 
@@ -27,6 +32,8 @@ class ClientCountry(models.Model):
 
 
 class Client(models.Model):
+    """ A model to describe a Client object """
+
     client_id = models.IntegerField(primary_key=True, verbose_name='Client ID')
     legal_name = models.CharField(max_length=100, verbose_name='Legal name')
     reporting_name = models.CharField(max_length=100, verbose_name='Reporting name')

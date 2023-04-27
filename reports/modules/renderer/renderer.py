@@ -1,3 +1,4 @@
+# CODE OK
 from django.conf import settings
 from django.core.files import File
 from reports.models import ReportFile
@@ -8,7 +9,7 @@ import tempfile
 import os
 import logging
 
-logger = logging.getLogger('report.renderer')
+logger = logging.getLogger('et_billing.report.renderer')
 
 
 class BaseReportRenderer(FormatMixin):
@@ -61,10 +62,12 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
         if self._wb:
             self._wb.close()
 
-    def render(self, report, **kwargs) -> ReportFile | None:
+    def render(self, report, **kwargs) -> ReportFile | None | str:
         """ Creates XLSX file and renders data in it given a Report object.
         :param report: Report object
         """
+
+        logger.info(f'Rendering report {report.output_file_name}')
 
         if report.layout.wb_formats:
             logger.debug(f'Creating tempfile for {report.output_file_name}')
@@ -102,11 +105,13 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
                     os.remove(report_file.file.path)
                 logger.debug(f'Replacing existing ReportFile object for report_id {report_id}, period {period}')
                 report_file.file.save(filename, django_file, save=True)
+
             except ReportFile.DoesNotExist:
                 logger.debug(f'Saving ReportFile object for report_id {report_id}, period {period}')
                 report_file = ReportFile.objects.create(
                     period=period, file=django_file, report_id=report.report_id, type_id=1)
                 report_file.save()
+
             finally:
                 file_obj.close()
                 os.remove(temp_file.name)

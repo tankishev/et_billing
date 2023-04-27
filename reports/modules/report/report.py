@@ -1,15 +1,18 @@
-from datetime import timedelta as td, datetime as dt
+# CODE OK
+from celery import current_task
+from celery_tasks.models import FileProcessingTask
 from clients.models import Client
 from .bililng_summary import BillingSummary
 from .utils import ReportClient, Report
+
+from datetime import timedelta as td, datetime as dt
 import logging
 
-
-logger = logging.getLogger('report.DBReportFactory')
+logger = logging.getLogger('et_billing.report.DBReportFactory')
 
 
 class DBReportFactory:
-
+    """ A class that generates usage reports """
     def __init__(self, period: str, db_report, layout_factory, renderer) -> None:
         """ Class that generates billing reports
 
@@ -22,41 +25,67 @@ class DBReportFactory:
         self._layout_factory = layout_factory
         self._renderer = renderer
         self._reporting_period = self._calc_period()
-        self.services = self.dbr.get_report_services()
+        self.services = self.dbr.get_service_types_for_reports()
 
     def close(self) -> None:
         self.dbr.close()
 
-    def generate_report_by_client(self, client_id: int) -> list | None:
+    def generate_report_by_client(self, client_id: int):
         """ Generates all reports for a given client """
+
+        logger.info('Called from generate_report_by_client')
 
         report_data = self.dbr.get_report_data(self.period, client_id=client_id)
         if len(report_data) > 0:
-            return self.generate_reports(report_data)
+            self.generate_reports(report_data)
 
-    def generate_report_by_report_id(self, report_id: int) -> list | None:
+    def generate_report_by_report_id(self, report_id: int):
         """ Generates a specific report given its report_id """
 
         report_data = self.dbr.get_report_data(self.period, report_id=report_id)
         if len(report_data) > 0:
-            return self.generate_reports(report_data)
+            self.generate_reports(report_data)
 
-    def generate_reports(self, report_data=None) -> list | None:
+    def generate_reports(self, report_data=None):
         """ Generates a specific report given its DB data or all reports if report_data is None """
 
         if report_data is None:
             report_data = self.dbr.get_report_data(self.period)
         if report_data is not None:
             retval = []
-            logger.info(f'Reports to generate: {len(report_data)}')
-            for data in report_data:
+
+            # Get the number of reports
+            number_of_reports = len(report_data)
+            logger.info(f'Reports to generate: {number_of_reports}')
+
+            # Get task to be updated
+            task_id = current_task.request.id
+            task_status = FileProcessingTask.objects.get(task_id=task_id)
+            task_status.number_of_files = number_of_reports
+            task_status.save()
+
+            # Cycle through records and generate reports
+            for i, data in enumerate(report_data):
                 if data.report_type is not None:
+
+                    # Generate report object
                     report = self._generate_report_obj(data)
                     with_details = data.render_details
+
+                    # Render report and save to ReportFile
                     report_file = self._renderer.render(report, with_details=with_details, period=self.period)
                     retval.append(report_file)
+
+                    # Update celery task
+                    progress = min(100 * i // number_of_reports, 100)
+                    self._update_task_status(task_status, progress, report_file)
+
                     logger.info(f'{report_file.filename} - Complete')
-            return sorted(retval, key=lambda x: x.report.client.client_id)
+
+            # Mark task as complete
+            task_status.progress = 100
+            task_status.status = 'COMPLETE'
+            task_status.save()
 
     # Private methods used to generate Report
     def _generate_report_obj(self, data) -> Report:
@@ -116,3 +145,16 @@ class DBReportFactory:
         if dir_format:
             return f'{self.period[0:4]}-{self.period[5:]}'
         return f'{self.period[0:4]}{self.period[5:]}'
+
+    @staticmethod
+    def _update_task_status(task_status, progress, report_file):
+        """ Update the details for the task """
+
+        task_status.progress = progress
+        task_status.processed_documents.append({
+            'fileName': report_file.filename,
+            'resultCode': 0,
+            'resultText': 'Complete',
+            'fileId': report_file.id
+        })
+        task_status.save()

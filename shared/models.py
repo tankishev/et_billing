@@ -1,8 +1,10 @@
+# CODE OK
 from django.db import models
 from shared.utils import period_validator
 
 
 class PeriodField(models.CharField):
+    """ Period field that accepts YYYY-MM format """
 
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = 7

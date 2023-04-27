@@ -1,1 +1,1 @@
-from .mixins import FiltersMixin
+from .mixins import FiltersMixin, ServicesMixin

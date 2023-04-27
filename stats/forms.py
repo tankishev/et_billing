@@ -1,11 +1,15 @@
+# CODE OK
 from django import forms
-from clients.models import Client
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.utils.translation import gettext_lazy as _
 
+from clients.models import Client
+
 
 class UniqueUsersForm(forms.Form):
+    """ Form to select inputs for extracting Unique Users information """
+
     SCOPE_CHOICES = (
         ('1', 'Client'),
         ('2', 'All'),
@@ -75,6 +79,7 @@ class UniqueUsersForm(forms.Form):
 
 
 def period_is_valid(period):
+    """ Period validator to be used in the UniqueUsersForm class """
     period_err_message = _(
         "“%(value)s” is not a valid period. "
         "Accepted periods are in format yyyy-mm and between 2018-09 and latest usage upload"

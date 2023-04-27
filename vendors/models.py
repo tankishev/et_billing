@@ -1,7 +1,9 @@
+# CODE OK
 from django.db import models
+
 from clients.models import Client
 from services.models import Service, Filter
-from shared.models import PeriodField
+from month.models import MonthField
 import os
 
 
@@ -59,7 +61,7 @@ def content_vendor_input_filename(instance, filename):
 
 class VendorInputFile(models.Model):
     """ An object to record the Iteco vendor files """
-    period = PeriodField()
+    period = MonthField()
     file = models.FileField(max_length=255, upload_to=content_vendor_input_filename)
     vendor = models.ForeignKey(
         Vendor, on_delete=models.RESTRICT, db_column='vendor_id', related_name='input_files'
@@ -70,6 +72,10 @@ class VendorInputFile(models.Model):
     def filename(self):
         return os.path.basename(self.file.name)
 
+    @property
+    def list_name(self):
+        return str(self.vendor)
+
     def __str__(self):
         return f'{self.period} - {self.vendor}'
 
@@ -77,8 +83,9 @@ class VendorInputFile(models.Model):
         db_table = 'vendor_input_files'
 
 
+# NOT IMPLEMENTED
 class VendorUsage(models.Model):
-    period = PeriodField()
+    period = MonthField()
     vendor = models.ForeignKey(
         Vendor, on_delete=models.RESTRICT, db_column='vendor_id', related_name='vendor_usage')
     service = models.ForeignKey(

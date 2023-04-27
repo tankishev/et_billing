@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}File Downloads{% endblock %}
+{% block content %}
+    <h2>{{ header }}</h2>
+    {% if files %}
+        <h5>Click on a file to download it or click <a href="{{ zip_url }}">here</a> to download all</h5>
+        <div class="list-group">
+            {% for file in files %}
+                <a class="list-group-item list-group-item-action" href="{% url list_url pk=file.pk %}">{{ file.list_name }}</a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="list-group">
+            <div class="list-group-item">No files found</div>
+        </div>
+    {% endif %}
+{% endblock %}

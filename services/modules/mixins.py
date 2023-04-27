@@ -1,23 +1,33 @@
-from services.models import FilterConfig
+# CODE OK ... ADD LOGGING
+from services.models import FilterConfig, Service
+from .db_proxy import DBProxyFilters
 from .filters import FilterGroup
 
 
 class FiltersMixin:
     """ A mixin class to add methods for loading service filters """
 
-    def load_vendor_service_filters(self, vendor_id, service_filters) -> dict or None:
+    def load_all_service_filters(self) -> dict:
+        """ Returns a dictionary with FilterGroups for all services """
+
+        services = Service.objects.all().filter(usage_based=True)
+        service_filters = self.get_service_filters()
+        return {el.service_id: FilterGroup(service_filters[el.filter_id]) for el in services}
+
+    @staticmethod
+    def load_vendor_service_filters(vendor_id, service_filters) -> dict | None:
         """ Returns a dictionary with FilterGroups for each service of the given vendor.
         :param vendor_id: vendor_id to load services for
         :param service_filters: a dictionary with services filter functions
         """
 
-        db_services = self.dba.get_vendor_services(vendor_id)
-        if db_services is None:
-            return
-        return {el[0]: FilterGroup(service_filters[el[1]]) for el in db_services}
+        dbp = DBProxyFilters()
+        db_services = dbp.get_vendor_services_filters(vendor_id)
+        if db_services:
+            return {el[0]: FilterGroup(service_filters[el[1]]) for el in db_services}
 
     @staticmethod
-    def get_service_filters() -> dict or None:
+    def get_service_filters() -> dict | None:
         """ Returns the service filters configuration in the DB in the form of {filter_id: [(func, value),]}"""
 
         try:
@@ -40,3 +50,17 @@ class FiltersMixin:
             return retval
         except FilterConfig.DoesNotExist:
             return None
+
+
+class ServicesMixin:
+    """ A class to add methods to access Services objects """
+
+    @staticmethod
+    def get_service_types_for_reports() -> dict[int: dict[str: str]] | None:
+        """ Returns the list of services in the DB
+        :return: None or {service_id: {service, stype}}
+        """
+
+        services_data = Service.objects.order_by('service_order').values_list('service_id', 'service', 'stype')
+        if services_data.exists():
+            return {_id: {'service': service, 'stype': stype} for _id, service, stype in services_data}

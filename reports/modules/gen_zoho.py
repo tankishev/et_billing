@@ -1,6 +1,8 @@
+# CODE OK ... ADD CELERY CREATE NEW TEMPLATE
 from django.conf import settings
-from vendors.models import Vendor
-from stats.models import UniqueUser, UquStatsPeriodVendor, UquStatsPeriodClient, UquStatsPeriod
+
+from stats.models import UquStatsPeriodVendor, UquStatsPeriodClient, UquStatsPeriod
+
 import pandas as pd
 import sqlite3 as sl
 import os
@@ -77,7 +79,8 @@ def gen_zoho_usage_summary(period):
         left join client_industries ci on c.industry_id = ci.id
         """
 
-    df = pd.read_sql(sql, conn, params=(period, period))
+    month = period + '-01'
+    df = pd.read_sql(sql, conn, params=(period, month))
     output_path = REPORT_PATH / period
     os.makedirs(output_path, exist_ok=True)
     filepath = os.path.join(output_path, USAGE_FILENAME)

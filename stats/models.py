@@ -1,13 +1,17 @@
+# CODE OK
 from django.db import models
-from services.models import Service
-from shared.models import PeriodField
+
 from clients.models import Client
+from services.models import Service
 from vendors.models import Vendor
+
 from month.models import MonthField
 
 
 class UsageStats(models.Model):
-    period = PeriodField()
+    """ Model to store vendor service UsageStats """
+
+    period = MonthField()
     vendor = models.ForeignKey(
         Vendor, on_delete=models.RESTRICT, db_column='vendor_id', related_name='usage_stats')
     service = models.ForeignKey(
@@ -19,6 +23,8 @@ class UsageStats(models.Model):
 
 
 class UniqueUser(models.Model):
+    """ Models to store unique user PIDs for each period and vendor """
+
     month = MonthField()
     vendor = models.ForeignKey(
         Vendor, on_delete=models.RESTRICT, db_column='vendor_id', related_name='unique_users')
@@ -30,6 +36,8 @@ class UniqueUser(models.Model):
 
 
 class UquStatsPeriod(models.Model):
+    """ Model to store aggregated stats regarding unique users per month """
+
     period = MonthField(unique=True)
     cumulative = models.IntegerField()
     uqu_month = models.IntegerField()
@@ -40,6 +48,8 @@ class UquStatsPeriod(models.Model):
 
 
 class UquStatsPeriodClient(models.Model):
+    """ Model to store aggregated stats regarding unique users per client per month """
+
     period = MonthField()
     client = models.ForeignKey(
         Client, on_delete=models.RESTRICT, db_column='client_id', related_name='uqu_stats')
@@ -53,6 +63,8 @@ class UquStatsPeriodClient(models.Model):
 
 
 class UquStatsPeriodVendor(models.Model):
+    """ Model to store aggregated stats regarding unique users per vendor per month """
+
     period = MonthField()
     vendor = models.ForeignKey(
         Vendor, on_delete=models.RESTRICT, db_column='vendor_id', related_name='uqu_stats')

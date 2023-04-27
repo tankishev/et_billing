@@ -1,7 +1,10 @@
+# CODE OK
 from django.db import models
 
 
 class Filter(models.Model):
+    """ A model to describe Service Filters """
+
     filter_name = models.CharField(max_length=100, unique=True)
     description = models.TextField(null=True, blank=True)
 
@@ -13,6 +16,8 @@ class Filter(models.Model):
 
 
 class FilterFunction(models.Model):
+    """ A model to describe functions added to Service Filters """
+
     func = models.CharField(max_length=15, unique=True)
     description = models.CharField(max_length=50)
 
@@ -24,6 +29,7 @@ class FilterFunction(models.Model):
 
 
 class FilterConfig(models.Model):
+    """ A model to describe configurations of Service Filters """
 
     filter = models.ForeignKey(Filter, on_delete=models.CASCADE)
     field = models.CharField(max_length=30)
@@ -38,6 +44,7 @@ class FilterConfig(models.Model):
 
 
 class Service(models.Model):
+    """ A model to describe a Service used by a client """
 
     service_id = models.AutoField(primary_key=True, verbose_name='Service ID')
     service = models.CharField(max_length=20, verbose_name='Service group')

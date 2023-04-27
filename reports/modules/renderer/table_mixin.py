@@ -1,4 +1,4 @@
-# Commented sections below
+# CODE OK
 from .formats_mixin import FormatMixin
 
 
@@ -41,7 +41,7 @@ class BaseTableRenderer(FormatMixin):
 
     def render_table(self, summary, *args, **kwargs) -> int:
         """ Renders a summary table in the Summary sheet
-        :returns the
+            :returns the
         """
         report = args[0]
         self._load_formats(self.layout.wb_formats)
@@ -342,7 +342,3 @@ class SubscriptionTable(BaseTableRenderer):
                 ws.write_string(row, start_col + i, value, formats['str'])
             elif type(value) == int:
                 ws.write_number(row, start_col + i, value, formats['int'])
-#
-#
-# class UsersSummaryTable(BaseTableRenderer):
-#     pass

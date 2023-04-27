@@ -1,7 +1,10 @@
+# CODE OK
 from shared.utils import DictToObjectMixin
 
 
 class KwargsTransaction(DictToObjectMixin):
+    """ Simple class mapping dictionary values to transaction object """
+
     def __init__(self, all_data, **kwargs):
         self.all_data = all_data
         self.render_from_headers = False
@@ -10,6 +13,7 @@ class KwargsTransaction(DictToObjectMixin):
 
 
 class TransactionFactory:
+    """ A simple class to generate KwargsTransactions """
 
     _HEADERS_MAP = {
         'Date created': 'date_created',
@@ -46,6 +50,8 @@ class TransactionFactory:
         self._headers = [self._HEADERS_MAP.get(el) for el in headers_list]
 
     def gen_transaction(self, data):
+        """ Generate KwargsTransaction from the given data """
+
         headers = self.headers
         if len(data) == len(headers):
             init_kwargs = {headers[i]: el for i, el in enumerate(data)}

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
 from pathlib import Path
+import logging.config
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -44,7 +45,8 @@ INSTALLED_APPS = [
     'reports.apps.ReportsConfig',
     'contracts.apps.ContractsConfig',
     'stats.apps.StatsConfig',
-    'packages.apps.PackagesConfig'
+    'packages.apps.PackagesConfig',
+    'celery_tasks.apps.CeleryTasksConfig'
 ]
 
 MIDDLEWARE = [
@@ -130,7 +132,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+# STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+# STATIC_ROOT = BASE_DIR / 'static'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static')
+]
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -140,28 +146,58 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Celery settings
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+# CELERY_RESULT_BACKEND = 'django-db'
+CELERY_RESULT_BACKEND = None
+CELERY_HIJACK_ROOT_LOGGER = False
+
 # Settings for logging
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,  # retain the default loggers
-    'loggers': {
-        '': {
-            'level': 'DEBUG',
-            'handlers': ['formatted_file_debug'],
-        },
-    },
-    'handlers': {
-        'formatted_file_debug': {
-            'class': 'logging.FileHandler',
-            'filename': 'formatted_debug.log',
-            'formatter': 'pipe',
-        },
-    },
     'formatters': {
         'pipe': {
             'format': '{asctime}|{module}|{levelname}|{message}',
             'style': '{',
         },
+    },
+    'handlers': {
+        'et_billing_debug': {
+            'class': 'logging.FileHandler',
+            'filename': 'et_billing_debug.log',
+            'formatter': 'pipe',
+            'level': 'DEBUG'
+        },
+        'celery_tasks_debug': {
+            'class': 'logging.FileHandler',
+            'filename': 'celery_debug.log',
+            'formatter': 'pipe',
+            'level': 'DEBUG'
+        },
+        'et_billing_info': {
+            'class': 'logging.FileHandler',
+            'filename': 'et_billing_info.log',
+            'formatter': 'pipe',
+            'level': 'INFO'
+        },
+        'celery_tasks_info': {
+            'class': 'logging.FileHandler',
+            'filename': 'celery_info.log',
+            'formatter': 'pipe',
+            'level': 'INFO'
+        },
+    },
+    'loggers': {
+        'et_billing': {
+            'level': 'DEBUG',
+            'handlers': ['et_billing_debug', 'et_billing_info'],
+            'propagate': False
+        },
+        'celery.task': {
+            'level': 'DEBUG',
+            'handlers': ['celery_tasks_debug', 'celery_tasks_info'],
+            'propagate': False
+        },
     }
 }
-

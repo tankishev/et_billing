@@ -1,10 +1,14 @@
+# CODE OK
 from django.db import models
+
 from clients.models import Client
 from services.models import Service
 from vendors.models import VendorService
 
 
 class Currency(models.Model):
+    """ A model to describe the abstract currency used for billing (may differ from payment) """
+
     ccy_type = models.CharField(max_length=10, db_column='type')
     ccy_short = models.CharField(max_length=5, null=True, blank=True)
     ccy_long = models.CharField(max_length=10, null=True, blank=True)
@@ -17,6 +21,8 @@ class Currency(models.Model):
 
 
 class PaymentType(models.Model):
+    """ A model to describe the type of charging for billing purposes associated with the contract """
+
     pmt_type = models.CharField(max_length=30, db_column='type')
     description = models.CharField(max_length=100, db_column='descr')
 
@@ -28,6 +34,8 @@ class PaymentType(models.Model):
 
 
 class Contract(models.Model):
+    """ A model to describe the Contract object """
+
     contract_id = models.AutoField(primary_key=True)
     client = models.ForeignKey(
         Client, on_delete=models.CASCADE, db_column='client_id', related_name='contracts')
@@ -42,6 +50,9 @@ class Contract(models.Model):
 
 
 class Order(models.Model):
+    """ A model to describe split of contracted services in abstract groups
+    that may be charged and reported differently """
+
     order_id = models.AutoField(primary_key=True)
     contract = models.ForeignKey(
         Contract, on_delete=models.CASCADE, db_column='contract_id', related_name='orders')
@@ -70,6 +81,8 @@ class Order(models.Model):
 
 
 class OrderPrice(models.Model):
+    """ A model to describe the prices associated with each service in an Order """
+
     order = models.ForeignKey(Order, on_delete=models.CASCADE, db_column='order_id')
     service = models.ForeignKey(Service, on_delete=models.CASCADE, db_column='service_id')
     unit_price = models.DecimalField(max_digits=6, decimal_places=3, default=0.000)
@@ -79,6 +92,7 @@ class OrderPrice(models.Model):
 
 
 class OrderService(models.Model):
+    """ A model to link services to Orders """
     order = models.ForeignKey(Order, on_delete=models.CASCADE, db_column='order_id')
     service = models.ForeignKey(VendorService, on_delete=models.CASCADE, db_column='vendor_service_id')
 

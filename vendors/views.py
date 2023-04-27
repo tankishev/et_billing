@@ -1,10 +1,19 @@
-from django.http import HttpResponse
+# CODE OK
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse
+
+from shared.views import download_excel_file
+from shared.modules import create_zip_file
 from .forms import VendorPeriodForm, PeriodForm, FileUploadForm
-from .models import Vendor, VendorInputFile
-from .modules import recalc_vendor, recalc_all_vendors, \
+from .models import VendorInputFile
+from .modules import recalc_vendor, recalc_all_vendors, get_vendor_unreconciled, \
     handle_uploaded_file, list_archive, handle_extract_zip, delete_inactive_input_files
+
+import logging
+
+logger = logging.getLogger('et_billing.vendors.views')
 
 
 @login_required
@@ -12,117 +21,108 @@ def index(request):
     return render(request, 'vendors_index.html')
 
 
-def res_result(res_id):
-    """ Return verbose names for the results of the calc_vendor functions """
-    update_vendor_legend = {
-        0: 'Complete',
-        1: 'No services configured',
-        2: 'No input file',
-        3: 'No transactions',
-        4: 'Not reconciled'
-    }
-    return update_vendor_legend.get(res_id, 'Not defined')
-
-
+# VENDOR USAGE CALCULATIONS
 @login_required
 def calc_vendor_usage(request):
+    """ Trigger usage calculation for one vendor """
+
     context = {
         'page_title': 'Calculate Usage',
         'form_title': 'Calculate usage for a vendor_id',
+        'form_subtitle': None,
         'form_address': '/vendors/calc-vendor/',
         'form': VendorPeriodForm()
     }
+
     if request.method == 'POST':
         form = VendorPeriodForm(request.POST)
-        context['form'] = form
         if form.is_valid():
             period = form.cleaned_data.get('period')
             vendor_id = form.cleaned_data.get('pk', None)
             if vendor_id is not None:
-                res = recalc_vendor(period, int(vendor_id))
-                if res:
-                    cv_dict = {k: v for k, v in Vendor.objects.values_list('vendor_id', 'description')}
-                    k, v = res
-                    context['res_details'] = {(k, res_result(k)): [f'{v} - {cv_dict[v]}']}
-                return render(request, 'results_collapse.html', context)
+                async_result = recalc_vendor.delay(period, int(vendor_id))
+                context = {
+                    'list_title': f'Calculate usage for vendor {vendor_id}',
+                    'taskId': async_result.id
+                }
+                return render(request, 'processing_bar.html', context)
+        else:
+            context['form'] = form
+
     return render(request, 'base_form.html', context)
 
 
 @login_required
 def calc_usage_all_vendors(request):
+    """ Trigger usage calculation for all vendor """
+
     context = {
         'page_title': 'Calculate Usage',
-        'form_title': 'Calculate usage for all vendor_id',
+        'form_title': 'Calculate usage for ALL vendors',
+        'form_subtitle': None,
         'form_address': '/vendors/calc-all/',
         'form': PeriodForm()
     }
+
     if request.method == 'POST':
         form = PeriodForm(request.POST)
-        context['form'] = form
         if form.is_valid():
             period = form.cleaned_data.get('period')
-            res = recalc_all_vendors(period)
-            if res:
-                cv_dict = {k: v for k, v in Vendor.objects.values_list('vendor_id', 'description')}
-                res_details = {(k, res_result(k)): [f'{el} - {cv_dict[el]}' for el in v] for k, v in res.items()}
-                context['res_details'] = res_details
-            return render(request, 'results_collapse.html', context)
+            async_result = recalc_all_vendors.delay(period)
+            context = {
+                'list_title': 'Calculate usage for ALL vendors',
+                'list_subtitle': 'This could take up to 2 minutes',
+                'taskId': async_result.id
+            }
+            return render(request, 'processing_bar.html', context)
+        else:
+            context['form'] = form
+
     return render(request, 'base_form.html', context)
 
 
-@login_required
-def list_vendor_files(request):
-    context = {
-        'page_title': 'Manage Vendor Files',
-        'form_title': 'List vendor input files',
-        'form_address': '/vendors/view-files/',
-        'form': PeriodForm()
-    }
-    if request.method == 'POST':
-        form = PeriodForm(request.POST)
-        context['form'] = form
-        if form.is_valid():
-            period = form.cleaned_data.get('period')
-            return redirect('list_vendor_files_period', period)
-    return render(request, 'base_form.html', context)
+def view_unreconciled_transactions(request, file_id: int):
+    """ Return transactions and possible services for the Unreconciled modal """
+
+    res = get_vendor_unreconciled(file_id)
+    return JsonResponse(res, safe=False)
 
 
+# PROCESSING OF VENDOR INPUT FILES
 @login_required
-def list_vendor_files_period(request, period):
-    files = VendorInputFile.objects.filter(period=period, is_active=True).order_by('vendor')
-    if files.exists():
-        context = {'files': files}
-        return render(request, 'vendor_file_download.html', context)
-    return HttpResponse('No vendor files for this period')
+def delete_unused_vendor_input_files(request):
+    """ Triggers deletion of VendorInputFiles marked as inactive """
+
+    deleted_files = delete_inactive_input_files()
+    return HttpResponse(deleted_files)
 
 
 @login_required
-def upload_zip(request):
-    context = {
-        'page_title': 'Vendor Input ZIP',
-        'form_title': 'File Upload',
-        'form_subtitle': 'Upload zip-file with vendor input files for a given period',
-        'form_address': '/vendors/upload/',
-        'form_enctype': "multipart/form-data",
-        'form': FileUploadForm()
-    }
-    if request.method == 'POST':
-        form = FileUploadForm(request.POST, request.FILES)
-        context['form'] = form
-        if form.is_valid():
-            file = request.FILES['file']
-            z_file = handle_uploaded_file(file)
-            if z_file is not None:
-                period = form.cleaned_data.get('period')
-                request.session['upload_period'] = period
-                return redirect('vendor_zip_extract')
-            context['err_message'] = f'Attached file must be a valid ZIP file.'
-    return render(request, 'base_form.html', context)
+def download_vendor_file(request, pk: int):
+    """ Triggers download of a vendor file with the given pk """
+
+    try:
+        file = VendorInputFile.objects.get(pk=pk)
+        filepath = file.file.path
+        logger.debug(f'Requested file to download: {filepath}')
+        return download_excel_file(filepath)
+
+    except VendorInputFile.DoesNotExist:
+        logger.warning(f'Does Not Exist: VendorInputFile with id {pk}')
+        return HttpResponse('No vendor file with such id')
 
 
 @login_required
-def extract_zip(request):
-    """ Extract the contents of the last uploaded Iteco achive """
+def download_vendor_files_all(request, period: str):
+    """ Triggers the download of a ZIP archive with all vendor input files for a given period """
+
+    queryset = VendorInputFile.objects.filter(period=period)
+    return create_zip_file(queryset, f'{period}_vendor_files')
+
+
+@login_required
+def extract_zip_view(request):
+    """ Extract the contents of the last uploaded vendor input ZIP archive """
 
     # Get the content of the last uploaded archive
     zip_content = list_archive()
@@ -156,6 +156,52 @@ def extract_zip(request):
 
 
 @login_required
-def delete_unused_vendor_input_files(request):
-    deleted_files = delete_inactive_input_files()
-    return HttpResponse(deleted_files)
+def list_vendor_files(request):
+    """ Visualize PeriodForm to trigger list of vendor files """
+
+    context = {
+        'page_title': 'Manage Vendor Files',
+        'form_title': 'List vendor input files',
+        'form_address': '/vendors/view-files/',
+        'form': PeriodForm()
+    }
+    if request.method == 'POST':
+        form = PeriodForm(request.POST)
+        context['form'] = form
+        if form.is_valid():
+            period = form.cleaned_data.get('period')
+            files = VendorInputFile.objects.filter(period=period, is_active=True).order_by('vendor')
+            context = {
+                'header': f'List of vendor input files for {period}',
+                'files': files,
+                'zip_url': reverse('download_vendor_files_all', args=[period]),
+                'list_url': 'download_vendor_file'
+            }
+            return render(request, 'file_download_list.html', context)
+    return render(request, 'base_form.html', context)
+
+
+@login_required
+def upload_zip_view(request):
+    """ Load form for uploading a Vendor Input ZIP archive and trigger extraction if file is valid """
+
+    context = {
+        'page_title': 'Vendor Input ZIP',
+        'form_title': 'File Upload',
+        'form_subtitle': 'Upload zip-file with vendor input files for a given period',
+        'form_address': '/vendors/upload/',
+        'form_enctype': "multipart/form-data",
+        'form': FileUploadForm()
+    }
+    if request.method == 'POST':
+        form = FileUploadForm(request.POST, request.FILES)
+        context['form'] = form
+        if form.is_valid():
+            file = request.FILES['file']
+            z_file = handle_uploaded_file(file)
+            if z_file is not None:
+                period = form.cleaned_data.get('period')
+                request.session['upload_period'] = period
+                return redirect('vendor_zip_extract')
+            context['err_message'] = f'Attached file must be a valid ZIP file.'
+    return render(request, 'base_form.html', context)

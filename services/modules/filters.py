@@ -1,20 +1,29 @@
+# CODE OK
+import logging
+
+logger = logging.getLogger('et_billing.services.filters')
+
+
 class FieldFilter:
-    """ A factory class to generage FieldFilters from given config """
+    """ A factory class to generate FieldFilters from given config """
 
     _ACCEPTED_FIELDS = ['transaction_type', 'transaction_status', 'description', 'cost', 'signing_type', 'receiver_pid']
 
-    def __init__(self, field_name=None, func=None, lookup_value=None):
+    def __init__(self, field_name=None, func=None, lookup_value=None) -> None:
         self.field_name = field_name
         self.match_func = func
         self.lookup_value = lookup_value
 
-    def apply(self, transaction):
-        field_value = getattr(transaction, self.field_name)
-        func = getattr(self, self.match_func)
-        return func(field_value)
+    def apply(self, transaction) -> bool:
+        try:
+            field_value = getattr(transaction, self.field_name)
+            func = getattr(self, self.match_func)
+            return func(field_value)
+        except AttributeError as err:
+            logger.warning(err)
 
     @classmethod
-    def set_accepted_fields(cls, fields):
+    def set_accepted_fields(cls, fields) -> None:
         cls._ACCEPTED_FIELDS.clear()
         for field_name in fields:
             cls._ACCEPTED_FIELDS.append(field_name)
@@ -28,32 +37,39 @@ class FieldFilter:
             return filter_obj
 
     # Filter functions
-    def _match_gt(self, field_value):
+    def _match_gt(self, field_value) -> bool:
+        """ Check if provided value is greater than lookup value """
         return field_value > self.lookup_value
 
-    def _match_gte(self, field_value):
+    def _match_gte(self, field_value) -> bool:
+        """ Check if provided value is greater than or equal to the lookup value """
         return field_value >= self.lookup_value
 
-    def _match_lte(self, field_value):
+    def _match_lte(self, field_value) -> bool:
+        """ Check if provided value is less than or equal to the lookup value """
         return field_value <= self.lookup_value
 
-    def _match_eq(self, field_value):
+    def _match_eq(self, field_value) -> bool:
+        """ Check if provided value is equal to the lookup value """
         return self.lookup_value == field_value
 
-    def _match_not_eq(self, field_value):
+    def _match_not_eq(self, field_value) -> bool:
+        """ Check if provided value is different from the lookup value """
         return self.lookup_value != field_value
 
-    def _match_incl(self, field_value):
+    def _match_incl(self, field_value) -> bool:
+        """ Check if provided value is included in the lookup value """
         return field_value in self.lookup_value
 
-    def _match_not_incl(self, field_value):
+    def _match_not_incl(self, field_value) -> bool:
+        """ Check if provided value is NOT included in the lookup value """
         return field_value not in self.lookup_value
 
 
 class FilterGroup:
     """ A class to hold a list of FieldFilters and method to apply them to a transaction """
 
-    def __init__(self, filters_config=None):
+    def __init__(self, filters_config=None) -> None:
         self.filters = []
         if filters_config:
             for filter_config in filters_config:
@@ -68,7 +84,7 @@ class FilterGroup:
                 return False
         return True
 
-    def _add_filters_from_config(self, filter_config):
+    def _add_filters_from_config(self, filter_config) -> None:
         """ Adds filters to the FieldGroup given the config
         :param filter_config: a tuple of (field_name__func_name, filter_value)
         """
