@@ -17,7 +17,6 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 app.conf.broker_url = 'redis://localhost:6379/0'
 
 # Using the django-celery-results backend to store task results
-# app.conf.result_backend = 'django-db'
 app.conf.result_backend = None
 
 
@@ -31,8 +30,3 @@ def config_loggers(*args, **kwargs):
 
 # Automatically discover tasks from your installed apps
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
-
-
-@app.task(bind=True)
-def debug_task(self):
-    print(f'Request: {self.request!r}')
