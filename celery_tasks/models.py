@@ -4,7 +4,10 @@ import json
 
 class ProcessedDocumentsList(models.JSONField):
     def __init__(self, *args, **kwargs):
-        super().__init__(default=list, blank=True, null=True, *args, **kwargs)
+        kwargs['blank'] = True
+        kwargs['null'] = True
+        kwargs['default'] = list
+        super().__init__(*args, **kwargs)
 
     # Read from DB
     def to_python(self, value):
