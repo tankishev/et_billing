@@ -47,7 +47,7 @@ class VendorAdmin(admin.ModelAdmin):
     search_fields = ['vendor_id', 'client__reporting_name', 'client__legal_name']
     list_select_related = ['client']
 
-    fields = ['client', 'vendor_id', 'description', 'is_reconciled', 'is_active']
+    fields = ['client', 'vendor_id', 'description', 'iteco_name', 'is_reconciled', 'is_active']
     readonly_fields = ['iteco_name']
     exclude = ['services']
     inlines = [VendorServicesInline, VendorFilterOverrideInline]
