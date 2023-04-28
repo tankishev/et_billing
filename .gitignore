@@ -2,3 +2,4 @@
 /static/
 .idea
 db.et_billing
+__pycache__/
