@@ -35,7 +35,7 @@ class ReportLanguage(models.Model):
 class ReportSkipColumnConfig(models.Model):
     """ An object to record configurations of which columns have to be skipped when rendering a report """
 
-    skip_columns = models.CharField(max_length=20, unique=True)
+    skip_columns = models.CharField(max_length=30, unique=True)
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
