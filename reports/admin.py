@@ -55,6 +55,7 @@ class ReportAdmin(admin.ModelAdmin):
 
 class SkipColumnsAdmin(admin.ModelAdmin):
     list_display = ['skip_columns', 'description', 'report_count']
+    ordering = ['skip_columns']
 
     @staticmethod
     def report_count(obj):
