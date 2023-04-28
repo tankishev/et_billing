@@ -107,7 +107,7 @@ class DBProxyReports(DBProxy):
         """
 
         sql = "select distinct report_id, file_name, report_type, language, skip_columns, include_details, show_pids,"
-        sql += " client_id, legal_name, contract_id, contract_date from tmp_report_data"
+        sql += " client_id, legal_name, contract_id, contract_date from tmp_report_data order by client_id"
         res = self.exec(sql)
         data = res.fetchall()
         res.close()
