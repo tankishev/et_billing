@@ -9,6 +9,7 @@ from .forms import UserLoginForm
 
 urlpatterns = [
     path('', views.index, name='home'),
+    path("et_auth/", views.index, name='et_auth'),
     path("accounts/login/", LoginView.as_view(authentication_form=UserLoginForm), name='login'),
     path("accounts/", include("django.contrib.auth.urls")),
     path('admin/', admin.site.urls),
