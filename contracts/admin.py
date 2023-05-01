@@ -5,7 +5,7 @@ from django.forms import Textarea
 from services.models import Service
 from shared.utils import get_parent_object_from_request
 from vendors.models import VendorService
-from .models import Contract, Order, OrderPrice, OrderService
+from .models import Contract, Order, OrderPrice, OrderService, Currency
 
 
 class ContractOrderInline(admin.TabularInline):
@@ -83,3 +83,4 @@ class OrderAdmin(admin.ModelAdmin):
 
 admin.site.register(Contract, ContractsAdmin)
 admin.site.register(Order, OrderAdmin)
+admin.site.register(Currency)
