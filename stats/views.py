@@ -6,8 +6,7 @@ from django.contrib.auth.decorators import login_required
 from reports.modules import gen_zoho_uqu_vendors
 from shared.forms import PeriodForm
 from .forms import UniqueUsersForm
-from .modules import store_unique_users, get_uqu
-from .modules import store_uqu_clients, store_uqu_vendors, store_uqu_periods
+from .modules import get_uqu, store_uqu_celery
 
 # from .models import UniqueUser
 
@@ -40,36 +39,16 @@ def view_unique_users(request):
 
 
 @login_required
-def save_unique_users(request):
-    """ Triggers saving of UniqueUser stats """
+def save_unique_users_celery(request):
+    """ Trigger calculation of unique users """
 
-    res = store_unique_users()
-    context = {'res_details': {(0, 'Processed files'): res}}
-    return render(request, 'results_collapse.html', context)
-
-
-@login_required
-def save_unique_users_periods(request):
-    """ Triggers saving of UquStatsPeriod aggregate stats """
-
-    store_uqu_periods()
-    return redirect('home')
-
-
-@login_required
-def save_unique_users_clients(request):
-    """ Triggers saving of UquStatsPeriod aggregate stats """
-
-    store_uqu_clients()
-    return redirect('home')
-
-
-@login_required
-def save_unique_users_vendors(request):
-    """ Triggers saving of UquStatsPeriod aggregate stats """
-
-    store_uqu_vendors()
-    return redirect('home')
+    async_result = store_uqu_celery.delay()
+    context = {
+        'list_title': 'Calculate statistics for unique users',
+        'list_subtitle': 'This could take up to 5 minutes',
+        'taskId': async_result.id
+    }
+    return render(request, 'processing_bar.html', context)
 
 
 # REMOVE TEST AND DEPRECIATE

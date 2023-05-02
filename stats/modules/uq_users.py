@@ -1,5 +1,7 @@
 # CODE OK
 from datetime import datetime as dt
+from celery import shared_task
+from celery_tasks.models import FileProcessingTask
 from clients.models import Client
 from vendors.modules.input_files import InputFilesMixin
 from vendors.models import VendorInputFile, Vendor
@@ -39,6 +41,82 @@ def get_uqu(client_id=None, start_period=None, end_period=None) -> int:
                 .values_list('user_id', flat=True).distinct()
 
     return len(uqu_data)
+
+
+@shared_task(bind=True)
+def store_uqu_celery(self):
+    """ Run all Unique Users calculations """
+
+    start = dt.now()
+    logger.info(f"Starting unique usage calculations")
+
+    # Create file processing task
+    task_status = FileProcessingTask.objects.create(task_id=self.request.id, status='PROGRESS', progress=0)
+    task_status.processed_documents.append({
+        'fileName': 'Saving data for unique users',
+        'resultCode': 3,
+        'resultText': 'starting',
+    })
+    task_status.save()
+
+    try:
+        store_unique_users()
+        task_status.processed_documents.extend([{
+            'fileName': 'Saving data for unique users ',
+            'resultCode': 0,
+            'resultText': 'done',
+        }, {
+            'fileName': 'Calculating unique users by period',
+            'resultCode': 3,
+            'resultText': 'starting',
+        }])
+        task_status.progress = 25
+        task_status.save()
+
+        store_uqu_periods()
+        task_status.processed_documents.extend([{
+            'fileName': 'Calculating unique users by period ',
+            'resultCode': 0,
+            'resultText': 'done',
+        }, {
+            'fileName': 'Calculating unique users by vendor and period',
+            'resultCode': 3,
+            'resultText': 'starting',
+        }])
+        task_status.progress = 50
+        task_status.save()
+
+        store_uqu_vendors()
+        task_status.processed_documents.extend([{
+            'fileName': 'Calculating unique users by vendor and period ',
+            'resultCode': 0,
+            'resultText': 'done',
+        }, {
+            'fileName': 'Calculating unique users by client and period',
+            'resultCode': 3,
+            'resultText': 'starting',
+        }])
+        task_status.progress = 75
+        task_status.save()
+
+        store_uqu_clients()
+        task_status.processed_documents.append({
+            'fileName': 'Calculating unique users by client and period ',
+            'resultCode': 0,
+            'resultText': 'done',
+        })
+        task_status.progress = 100
+        task_status.status = 'COMPLETE'
+        task_status.save()
+
+    except Exception as err:
+        logger.warning(err)
+        task_status.status = 'FAILED'
+        task_status.save()
+
+    finally:
+        execution_time = dt.now() - start
+        logger.info(f'Execution time: {execution_time}')
 
 
 def store_unique_users() -> list:

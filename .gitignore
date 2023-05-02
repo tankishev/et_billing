@@ -3,3 +3,4 @@
 .idea
 db.et_billing
 __pycache__/
+.log

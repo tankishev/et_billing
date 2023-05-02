@@ -18,6 +18,8 @@ class Currency(models.Model):
 
     class Meta:
         db_table = 'pricing_types'
+        verbose_name_plural = 'Currencies'
+        ordering = ('ccy_type', )
 
 
 class PaymentType(models.Model):
