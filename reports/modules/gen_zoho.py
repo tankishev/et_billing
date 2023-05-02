@@ -69,7 +69,7 @@ def gen_zoho_usage_summary(period):
                 left join order_services os on vs.id = os.vendor_service_id
                 left join orders o on os.order_id = o.order_id
                 left join order_prices op on o.order_id = op.order_id and op.service_id = su.service_id
-                where su.period = ?
+                where su.period = ? and o.is_active = 1
                  ) tmp
             group by vendor_id, service_id
              ) tmp2
