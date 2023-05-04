@@ -10,8 +10,8 @@ class Currency(models.Model):
     """ A model to describe the abstract currency used for billing (may differ from payment) """
 
     ccy_type = models.CharField(max_length=10, db_column='type')
-    ccy_short = models.CharField(max_length=5, null=True, blank=True)
-    ccy_long = models.CharField(max_length=10, null=True, blank=True)
+    ccy_virtual = models.CharField(max_length=3, null=True, blank=True)
+    ccy_real = models.CharField(max_length=3, null=True, blank=True)
 
     def __str__(self):
         return self.ccy_type

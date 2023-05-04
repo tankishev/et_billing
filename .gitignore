@@ -4,3 +4,4 @@
 db.et_billing
 __pycache__/
 .log
+/shared/modules/et/

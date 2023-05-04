@@ -1,16 +1,18 @@
 class CurrencyMixin:
 
-    _ALLOWED_CURRENCY = ['BGN', 'EUR']
+    _ALLOWED_CURRENCY = ['BGN', 'EUR', 'USD']
     _DEFAULT_CURRENCY = 'BGN'
     _DEFAULT_CCY_LANGUAGE = 'BG'
     _CURRENCY_DICT = {
         'EN': {
             'BGN': {'short': 'lv.', 'long': 'BGN'},
-            'EUR': {'short': 'EUR', 'long': 'EUR'}
+            'EUR': {'short': 'EUR', 'long': 'EUR'},
+            'USD': {'short': 'USD', 'long': 'USD'}
         },
         'BG': {
             'BGN': {'short': 'лв.', 'long': 'лева'},
-            'EUR': {'short': 'евро', 'long': 'евро'}
+            'EUR': {'short': 'евро', 'long': 'евро'},
+            'USD': {'short': 'щ.д.', 'long': 'щатски долари'}
         }
     }
 

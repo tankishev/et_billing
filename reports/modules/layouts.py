@@ -23,6 +23,9 @@ class BaseLayout:
 
     def __init__(self, *args, **kwargs):
         self._layout = kwargs.get(self._LAYOUT_CONFIG_KEY)
+        self._ccy_long = kwargs.get('ccy_long')
+        self._ccy_short = kwargs.get('ccy_short')
+        self.language = kwargs.get('language')
 
     @property
     def cell_formats(self):
@@ -94,9 +97,7 @@ class DBReportingLayout(BaseLayout):
 
     def __init__(self, *args, **kwargs):
         super(DBReportingLayout, self).__init__(*args, **kwargs)
-        self.language = kwargs.get('language')
-        self._ccy_long = kwargs.get('ccy_long')
-        self._ccy_short = kwargs.get('ccy_short')
+
         load_tables = kwargs.get('load_tables', False)
         if self._layout is not None:
             if load_tables:
