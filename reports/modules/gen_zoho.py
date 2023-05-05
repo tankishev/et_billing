@@ -78,6 +78,39 @@ def gen_zoho_usage_summary(period):
         left join client_data c on cv2.client_id = c.client_id
         left join client_industries ci on c.industry_id = ci.id
         """
+    sql = """
+        select ? as period, *, round(total_cost * 1.95583, 2) as bgn_cost 
+        from (
+            select u.vendor_id, c.client_id, c.reporting_name as client_name, c.client_group, ci.industry,
+                s.service, s.stype, s.desc_en as description,
+                u.unit_count, u.tu_price * ccy_rate as tu_cost,
+                round(coalesce(op.unit_price, 0) * ccy_rate * case when is_tu then tu_price else 1 end,2) as unit_cost,
+                round(coalesce(op.unit_price, 0) * ccy_rate * case when is_tu then tu_price else 1 end * u.unit_count, 2) as total_cost
+            from (
+                select 
+                    su.vendor_id, su.service_id, su.unit_count, o.order_id, 
+                    coalesce(o.tu_price, 0) as tu_price, ccy_type,
+                    case
+                        when o.ccy_type in (1, 3) then 0.51129
+                        when o.ccy_type in (2, 4) then 1
+                        when o.ccy_type = 6 then 0.91
+                        else 0
+                    end ccy_rate,
+                    case when o.ccy_type in (3, 4, 6) then 1 else 0 end is_tu
+                from vendor_services vs
+                join stats_usage su on vs.service_id = su.service_id and vs.vendor_id = su.vendor_id and su.period = ?
+                left join order_services os on vs.id = os.vendor_service_id and os.order_id in (
+                        select order_id from orders o where is_active = 1
+                    )
+                left join orders o on os.order_id = o.order_id
+            ) u
+            left join order_prices op on u.order_id = op.order_id and u.service_id = op.service_id
+            left join vendors v on u.vendor_id = v.vendor_id
+            left join client_data c on v.client_id = c.client_id
+            left join services s on u.service_id = s.service_id
+            left join client_industries ci on c.industry_id = ci.id
+        );
+    """
 
     month = period + '-01'
     df = pd.read_sql(sql, conn, params=(period, month))
