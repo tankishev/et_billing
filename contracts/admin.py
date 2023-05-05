@@ -71,11 +71,12 @@ class OrderServiceInline(admin.TabularInline):
 class OrderAdmin(admin.ModelAdmin):
     list_per_page = 20
     ordering = ['contract__client', 'order_id']
-    search_fields = ['contract__client__reporting_name']
+    list_display = ['contract', 'start_date', 'is_active']
+    list_filter = ['is_active']
+    search_fields = ['contract__client__reporting_name', 'contract__client__client_id']
     list_select_related = True
 
-    fields = ['contract', 'start_date', 'description',
-              'ccy_type', 'tu_price', 'payment_type', 'is_active']
+    fields = ['contract', 'start_date', 'description', 'ccy_type', 'tu_price', 'payment_type', 'is_active']
     readonly_fields = ['contract']
     inlines = [OrderPriceInline, OrderServiceInline]
     formfield_overrides = {models.TextField: {'widget': Textarea(attrs={'rows': 4, 'cols': 60})}}
