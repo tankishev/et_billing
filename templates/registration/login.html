@@ -1,6 +1,9 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block custom_scripts %}
     <script src="https://kit.fontawesome.com/94d96f4b45.js" crossorigin="anonymous"></script>
+    <script src="{% static 'js/login.js' %}" defer="defer"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 {% endblock %}
 {% block content %}
     <div class="container">
@@ -22,24 +25,17 @@
                                 <button type="submit" class="btn btn-outline-success w-100">Log in</button>
                             </div>
                         </form>
+                        <div class="row spinner-wrapper rounded bg-light visually-hidden">
+                            <div class="spinner-border text-dark" role="status">
+                              <span class="visually-hidden"> ... </span>
+                            </div>
+                            <div class="row text-dark fw-bold justify-content-center">Approve login in the Evrotrust app</div>
+                        </div>
                     </div>
                 </div>
-                {% if form.errors %}
-                    <div class="row mt-3 p-3 bg-danger-subtle text-danger-emphasis rounded">
-                        <p>Your username and password didn't match. Please try again.</p>
-                    </div>
-                {% endif %}
-
-                {% if next %}
-                    <div class="row mt-3 p-3 bg-danger-subtle text-danger-emphasis rounded">
-                        {% if user.is_authenticated %}
-                            <p>Your account doesn't have access to this page. To proceed,
-                            please log in with an account that has access.</p>
-                        {% else %}
-                            <p>Please login to see this page.</p>
-                        {% endif %}
-                    </div>
-                {% endif %}
+                <div id="errMessage" class="row mt-3 p-3 bg-danger-subtle text-danger-emphasis rounded d-none">
+                    <p>Login was unsuccessful. Please try again.</p>
+                </div>
             </div>
         </div>
     </div>
