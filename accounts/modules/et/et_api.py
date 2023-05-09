@@ -14,7 +14,7 @@ logger = logging.getLogger('ETAPi')
 
 class ETApi:
 
-    PUBLIC_KEY_FILE = os.path.join(os.path.dirname(__file__), 'public.pem')
+    PUBLIC_KEY_FILE = os.environ.get('ENC_PUBLIC_KEY')
     VENDOR_API_KEY = os.environ.get('ETAPI_VENDOR_API_KEY')
     VENDOR_NUMBER = os.environ.get('ETAPI_VENDOR_NUMBER')
     URL = 'https://et.test.iteco.bg/vendor'
