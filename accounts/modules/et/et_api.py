@@ -54,7 +54,7 @@ class ETApi:
             response = self.request(endpoint, data)
             return self._handle_response_auth(response)
         except requests.RequestException as err:
-            logger.warning(err)
+            logger.error(err)
 
     def callback(self, transaction_id: str):
 
@@ -413,11 +413,12 @@ class ETApi:
 
     def _get_public_key(self):
         try:
+            logger.debug('Reading public key')
             with open(self.PUBLIC_KEY_FILE, 'rb') as f:
                 pem_data = f.read()
             return base64.b64encode(pem_data).decode('utf-8')
         except Exception as err:
-            print(err.with_traceback())
+            logger.error(err.with_traceback())
 
     def _transaction_id_call(self, endpoint: str, transaction_id: str):
         """ Used for calls to different endpoints given transaction_id """

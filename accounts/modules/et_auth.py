@@ -13,6 +13,7 @@ def authorise_user(user, timeout=30) -> tuple[bool, str]:
 
     # Check if user profile includes phone or PID
     if user.profile.pid or user.profile.phone_number:
+        logger.debug('Setting up user and API objects')
         et_user = SigningUser(
             pid=user.profile.pid,
             phone=user.profile.phone_number
@@ -20,6 +21,7 @@ def authorise_user(user, timeout=30) -> tuple[bool, str]:
         et_api = ETApi()
 
         # Call 2FA API
+        logger.debug('Sending 2FA call to ET')
         is_successful, response = et_api.auth(et_user)
 
         # If response was successful

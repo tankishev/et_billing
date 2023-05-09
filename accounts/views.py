@@ -37,6 +37,7 @@ def login_view(request):
             if authenticated_user:
                 # Clear failed attempts
                 if user.profile.failed_attempts != 0:
+                    logger.debug(f'Resetting failed attempts count for {username}')
                     user.profile.failed_attempts = 0
                     user.profile.save()
 
