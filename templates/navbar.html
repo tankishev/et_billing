@@ -7,7 +7,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-              {% if user.is_authenticated %}
+              {% if user.is_authenticated and user.is_staff %}
               <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     Billing reports
@@ -20,41 +20,45 @@
                       <li><a class="dropdown-item" href="{% url 'list_report_files' %}">View report files</a></li>
                   </ul>
               </li>
-              <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Other reports
-                  </a>
-                  <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" href="{% url 'zoho_service_usage_report' %}">(Zoho) Services Usage</a></li>
-                      <li><hr class="dropdown-divider"></li>
-                      <li><a class="dropdown-item" href="{% url 'db_reconciliation' %}">(DB) Reconciliation report</a></li>
-                      <li><a class="dropdown-item" href="{% url 'uqu_view' %}">(DB) View unique users</a></li>
-                  </ul>
-              </li>
-              <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Vendors update
-                  </a>
-                  <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" href="{% url 'calc_vendor_usage' %}">Calc one vendor usage</a></li>
-                      <li><a class="dropdown-item" href="{% url 'calc_usage_all' %}">Calc ALL vendor usage</a></li>
-                      <li><a class="dropdown-item" href="{% url 'uqu_save' %}">Save unique users</a></li>
-                      <li><hr class="dropdown-divider"></li>
-                      <li><a class="dropdown-item" href="{% url 'vendor_zip_upload' %}">Upload Iteco ZIP</a></li>
-                      <li><a class="dropdown-item" href="{% url 'vendor_zip_extract' %}">Extract Iteco ZIP</a></li>
-                      <li><hr class="dropdown-divider"></li>
-                      <li><a class="dropdown-item" href="{% url 'list_vendor_files' %}">View vendor files</a></li>
-                  </ul>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/admin/" target="_blank">DB Admin</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'logout' %}?next={{ request.path }}">Logout, {{ user.get_username }}</a>
+                  <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Other reports
+                      </a>
+                      <ul class="dropdown-menu">
+                          <li><a class="dropdown-item" href="{% url 'zoho_service_usage_report' %}">(Zoho) Services Usage</a></li>
+                          <li><hr class="dropdown-divider"></li>
+                          <li><a class="dropdown-item" href="{% url 'db_reconciliation' %}">(DB) Reconciliation report</a></li>
+                          <li><a class="dropdown-item" href="{% url 'uqu_view' %}">(DB) View unique users</a></li>
+                      </ul>
+                  </li>
+                  <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Vendors update
+                      </a>
+                      <ul class="dropdown-menu">
+                          <li><a class="dropdown-item" href="{% url 'calc_vendor_usage' %}">Calc one vendor usage</a></li>
+                          <li><a class="dropdown-item" href="{% url 'calc_usage_all' %}">Calc ALL vendor usage</a></li>
+                          <li><a class="dropdown-item" href="{% url 'uqu_save' %}">Save unique users</a></li>
+                          <li><hr class="dropdown-divider"></li>
+                          <li><a class="dropdown-item" href="{% url 'vendor_zip_upload' %}">Upload Iteco ZIP</a></li>
+                          <li><a class="dropdown-item" href="{% url 'vendor_zip_extract' %}">Extract Iteco ZIP</a></li>
+                          <li><hr class="dropdown-divider"></li>
+                          <li><a class="dropdown-item" href="{% url 'list_vendor_files' %}">View vendor files</a></li>
+                      </ul>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="/admin/" target="_blank">DB Admin</a>
+                  </li>
+              {% endif %}
+          </ul>
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+              {% if user.is_authenticated %}
+               <li class="nav-item">
+                   <a class="nav-link" href="{% url 'logout' %}?next={{ request.path }}">Logout, {{ user.get_username }}</a>
               </li>
               {% else %}
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'login' %}?next={{ request.path }}">Login</a>
+              <li class="nav-item ms-auto">
+                  <a class="nav-link" href="{% url 'login' %}?next={{ request.path }}">Login</a>
               </li>
               {% endif %}
           </ul>

@@ -1,5 +1,4 @@
-import logging
-
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -8,6 +7,7 @@ import logging
 logger = logging.getLogger('et_billing.index')
 
 
+@login_required
 def index(request):
     return render(request, 'index.html')
 
