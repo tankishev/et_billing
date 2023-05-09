@@ -1,0 +1,17 @@
+.spinner-wrapper {
+    opacity: 0.7;
+    position: relative;
+    top: -70%;
+    left: -5%;
+    width: 115%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.spinner-border {
+    height: 6rem;
+    width: 6rem;
+}
