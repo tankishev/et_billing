@@ -17,7 +17,7 @@ class ETApi:
     PUBLIC_KEY_FILE = os.environ.get('ENC_PUBLIC_KEY')
     VENDOR_API_KEY = os.environ.get('ETAPI_VENDOR_API_KEY')
     VENDOR_NUMBER = os.environ.get('ETAPI_VENDOR_NUMBER')
-    URL = 'https://et.test.iteco.bg/vendor'
+    URL = os.environ.get('ETAPI_URL')
 
     def __init__(self, certificate_type=1, callback_url=None, **kwargs):
         self._vendor_api_key_sha256 = hashlib.sha256(self.VENDOR_API_KEY.encode('utf-8')).digest()
@@ -418,7 +418,7 @@ class ETApi:
                 pem_data = f.read()
             return base64.b64encode(pem_data).decode('utf-8')
         except Exception as err:
-            logger.error(err.with_traceback())
+            logger.error(err)
 
     def _transaction_id_call(self, endpoint: str, transaction_id: str):
         """ Used for calls to different endpoints given transaction_id """
