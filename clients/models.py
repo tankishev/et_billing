@@ -34,7 +34,7 @@ class ClientCountry(models.Model):
 class Client(models.Model):
     """ A model to describe a Client object """
 
-    client_id = models.IntegerField(primary_key=True, verbose_name='Client ID')
+    client_id = models.AutoField(primary_key=True, verbose_name='Client ID')
     legal_name = models.CharField(max_length=100, verbose_name='Legal name')
     reporting_name = models.CharField(max_length=100, verbose_name='Reporting name')
     client_group = models.CharField(max_length=100, verbose_name='Client group', blank=True, null=True)
