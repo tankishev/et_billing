@@ -10,24 +10,19 @@ async function updateTaskProgress(taskId) {
         const data = await response.json();
         const { taskStatus, taskProgress = 0, fileList = [], progressStatus } = data;
 
-        // Update the progress bar
         taskProgressStatus.textContent = progressStatus;
         progressBar.style.width = `${taskProgress}%`;
 
-        // Update the list of processed documents
         for (const file of fileList) {
             const { fileId, fileName, resultCode, resultText } = file;
             if (!lastProcessedDocuments.includes(fileName)) {
 
-                // Add file to processed list
                 lastProcessedDocuments.push(fileName);
 
-                // Create a listItem
                 const listItem = document.createElement('li');
                 listItem.textContent = `${fileName} (${resultText})`;
                 listItem.classList.add('list-group-item', 'py-1');
 
-                // Customize listItem
                 if (resultCode === 0) {
                     listItem.classList.add('text-success');
                 } else if (resultCode === 3) {
@@ -50,7 +45,6 @@ async function updateTaskProgress(taskId) {
           }
         }
 
-        // Keep polling if the task is still in progress
         if (taskStatus === 'PROGRESS') {
             setTimeout(function () {
             updateTaskProgress(taskId);
@@ -69,14 +63,11 @@ async function showUnreconciledModal(ev){
     const docID = ev.target.id;
     const modal = document.querySelector('.modal');
     try {
-      // Fetch data
+
       const response = await fetch(`/vendors/calc-vendor/unreconciled/${docID}/`);
       const data = await response.json();
       const { table_values = [], services = [] } = data;
 
-      console.log(data);
-
-      // Fill in the table
       const tableBody = document.querySelector('tbody');
       tableBody.innerHTML = '';
       table_values.forEach(el => {
@@ -89,7 +80,6 @@ async function showUnreconciledModal(ev){
           tableBody.appendChild(trow);
       })
 
-      // Fill in the services
       const servicesUl = modal.querySelector('ul');
       servicesUl.innerHTML = '';
       services.forEach(el => {
@@ -97,7 +87,7 @@ async function showUnreconciledModal(ev){
           listItem.textContent = el;
           servicesUl.appendChild(listItem);
       })
-      // Show the modal
+
       const myModal = new bootstrap.Modal(modal, {keyboard: false});
       myModal.show();
 
@@ -106,7 +96,6 @@ async function showUnreconciledModal(ev){
     }
 }
 
-// Start polling
 setTimeout(async function () {
   await updateTaskProgress(taskId);
   }, 2000);

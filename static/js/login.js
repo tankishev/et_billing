@@ -1,9 +1,7 @@
-// Add listener
 const login_form = document.querySelector('.form-signin');
 const errMessage = document.getElementById('errMessage');
 login_form.addEventListener("submit", (ev) => handleLogin(ev));
 
-// Handle login form submission
 async function handleLogin(ev) {
     ev.preventDefault();
     const spinner_wrapper = document.querySelector('.spinner-wrapper');
@@ -14,10 +12,8 @@ async function handleLogin(ev) {
 
     try {
 
-        // Send form data as asynchronous request to Django
         let formData = new FormData(login_form);
         let csrfToken = getCookie('csrftoken');
-        console.log(csrfToken)
         let response = await fetch(login_form.action, {
             method: "POST",
             headers: {
@@ -28,7 +24,7 @@ async function handleLogin(ev) {
         });
 
         if (response.ok) {
-            // Redirect to success page
+
             const data = await response.json();
             document.location.href="/";
         } else if (response.status == 401) {
@@ -39,9 +35,7 @@ async function handleLogin(ev) {
             errMessage.classList.remove('d-none')
         }
     } catch (error) {
-        // Display error message
         alert("An error occurred while logging in. Please try again later.");
-        // location.reload()
         console.log(error)
     } finally {
         spinner_wrapper.classList.add('visually-hidden');

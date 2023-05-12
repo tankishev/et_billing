@@ -122,7 +122,9 @@ def download_billing_report(request, pk: int):
         report_file = ReportFile.objects.get(pk=pk)
         filepath = report_file.file.path
         logger.debug(f'Requested file to download: {filepath}')
-        return download_excel_file(filepath)
+        response = download_excel_file(filepath)
+        response["Cache-Control"] = "no-store"
+        return response
 
     except ReportFile.DoesNotExist:
         logger.warning(f'Does Not Exist: ReportFile with id {pk}')
@@ -134,7 +136,9 @@ def download_billing_reports_all(request, period: str):
     """ Triggers the download of a ZIP archive with all billing report files for a given period """
 
     queryset = ReportFile.objects.filter(period=period)
-    return create_zip_file(queryset, f'{period}_billing_reports')
+    response = create_zip_file(queryset, f'{period}_billing_reports')
+    response["Cache-Control"] = "no-store"
+    return response
 
 
 @login_required
