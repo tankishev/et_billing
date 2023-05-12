@@ -108,7 +108,7 @@ class ReportFile(models.Model):
         return self.filename
 
     def __str__(self):
-        return f'{self.month} - {self.report.file_name}'
+        return f'{self.period} - {self.report.file_name}'
 
     class Meta:
         db_table = 'report_files'
