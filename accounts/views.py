@@ -25,16 +25,19 @@ def login_view(request):
         # Check if user exists and can be logged in:
         try:
             user = User.objects.get(username=username)
+            logger.debug(f'User {username} exists')
 
             # User exists, check if user is blocked
             if not user.is_active:
                 logger.debug(f'User {username} is suspended')
                 error_message = 'Authentication failed or account suspended.'
                 return JsonResponse({'success': False, 'error_message': error_message}, status=401)
+            logger.debug(f'User {username} is not susspended')
 
             # Authenticate users that are not blocked
             authenticated_user = authenticate(request, username=username, password=password)
             if authenticated_user:
+                logger.debug(f'User {username} successfully authenticated. Prior failed attempts: {user.profile.failed_attempts}')
                 # Clear failed attempts
                 if user.profile.failed_attempts != 0:
                     logger.debug(f'Resetting failed attempts count for {username}')
@@ -42,6 +45,7 @@ def login_view(request):
                     user.profile.save()
 
                 # Proceed to 2FA authentication
+                logger.debug('Calling 2FA authentication')
                 is_authorised, message = authorise_user(user, timeout=30)
                 if is_authorised:
                     login(request, user)

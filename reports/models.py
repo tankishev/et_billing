@@ -116,7 +116,7 @@ class ReportFile(models.Model):
 
 class TransactionStatus(models.Model):
     status_type = models.IntegerField(primary_key=True)
-    description = models.CharField(max_length=20)
+    description = models.CharField(max_length=50)
 
     class Meta:
         db_table = 'transaction_statuses'

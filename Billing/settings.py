@@ -86,9 +86,17 @@ WSGI_APPLICATION = 'Billing.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
+    'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.et_billing',
+    },
+    'default':{
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+	'NAME': os.environ.get('PG_DB_NAME'),
+	'USER': os.environ.get('PG_USERNAME'),
+	'PASSWORD': os.environ.get('PG_PASSWORD'),
+	'HOST': os.environ.get('PG_HOST'),
+	'PORT': '5432'
     }
 }
 

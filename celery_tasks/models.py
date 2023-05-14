@@ -18,8 +18,8 @@ class ProcessedDocumentsList(models.JSONField):
         return [
             {
                 'fileName': item.get('fileName', ''),
-                'fileId': int(item['fileId']) if 'fileId' != '' else None,
-                'resultCode': int(item['resultCode']) if 'resultCode' != '' else None,
+                'fileId': int(item['fileId']) if item.get('fileId','') != '' else None,
+                'resultCode': int(item['resultCode']) if item.get('resultCode','') != '' else None,
                 'resultText': item.get('resultText', '')
             }
             for item in value
