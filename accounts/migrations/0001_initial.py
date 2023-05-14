@@ -19,11 +19,36 @@ class Migration(migrations.Migration):
             name='UserProfile',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('country', models.CharField(blank=True, max_length=2, null=True, validators=[django.core.validators.MinLengthValidator(2)])),
-                ('pid', models.CharField(blank=True, max_length=13, null=True, validators=[django.core.validators.RegexValidator(message='PID must be 9 to 13 digits', regex='^\\d{9,13}$')])),
-                ('phone_number', models.CharField(blank=True, max_length=16, null=True, validators=[django.core.validators.RegexValidator(message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.", regex='^\\+?\\d{9,15}$')])),
+                ('country', models.CharField(
+                    blank=True,
+                    max_length=2,
+                    null=True,
+                    validators=[django.core.validators.MinLengthValidator(2)]
+                )),
+                ('pid', models.CharField(
+                    blank=True,
+                    max_length=13,
+                    null=True,
+                    validators=[django.core.validators.RegexValidator(
+                        message='PID must be 9 to 13 digits',
+                        regex='^\\d{9,13}$'
+                    )]
+                )),
+                ('phone_number', models.CharField(
+                    blank=True,
+                    max_length=16,
+                    null=True,
+                    validators=[django.core.validators.RegexValidator(
+                        message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.",
+                        regex='^\\+?\\d{9,15}$'
+                    )]
+                )),
                 ('failed_attempts', models.IntegerField(default=0)),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='profile', to=settings.AUTH_USER_MODEL)),
+                ('user', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='profile',
+                    to=settings.AUTH_USER_MODEL
+                )),
             ],
         ),
     ]

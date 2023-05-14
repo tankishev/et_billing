@@ -22,7 +22,12 @@ class Migration(migrations.Migration):
                 ('start_date', models.DateField(blank=True, null=True)),
                 ('end_date', models.DateField(blank=True, null=True)),
                 ('is_active', models.BooleanField(default=True)),
-                ('client', models.ForeignKey(db_column='client_id', on_delete=django.db.models.deletion.CASCADE, related_name='contracts', to='clients.client')),
+                ('client', models.ForeignKey(
+                    db_column='client_id',
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='contracts',
+                    to='clients.client'
+                )),
             ],
             options={
                 'db_table': 'contracts',
@@ -49,8 +54,18 @@ class Migration(migrations.Migration):
                 ('description', models.TextField()),
                 ('tu_price', models.DecimalField(decimal_places=2, default=0.0, max_digits=5)),
                 ('is_active', models.BooleanField(default=True)),
-                ('ccy_type', models.ForeignKey(db_column='ccy_type', on_delete=django.db.models.deletion.RESTRICT, related_name='orders', to='contracts.currency')),
-                ('contract', models.ForeignKey(db_column='contract_id', on_delete=django.db.models.deletion.CASCADE, related_name='orders', to='contracts.contract')),
+                ('ccy_type', models.ForeignKey(
+                    db_column='ccy_type',
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='orders',
+                    to='contracts.currency'
+                )),
+                ('contract', models.ForeignKey(
+                    db_column='contract_id',
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='orders',
+                    to='contracts.contract'
+                )),
             ],
             options={
                 'db_table': 'orders',
@@ -71,8 +86,16 @@ class Migration(migrations.Migration):
             name='OrderService',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('order', models.ForeignKey(db_column='order_id', on_delete=django.db.models.deletion.CASCADE, to='contracts.order')),
-                ('service', models.ForeignKey(db_column='vendor_service_id', on_delete=django.db.models.deletion.CASCADE, to='vendors.vendorservice')),
+                ('order', models.ForeignKey(
+                    db_column='order_id',
+                    on_delete=django.db.models.deletion.CASCADE,
+                    to='contracts.order'
+                )),
+                ('service', models.ForeignKey(
+                    db_column='vendor_service_id',
+                    on_delete=django.db.models.deletion.CASCADE,
+                    to='vendors.vendorservice'
+                )),
             ],
             options={
                 'db_table': 'order_services',
@@ -83,8 +106,16 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('unit_price', models.DecimalField(decimal_places=3, default=0.0, max_digits=6)),
-                ('order', models.ForeignKey(db_column='order_id', on_delete=django.db.models.deletion.CASCADE, to='contracts.order')),
-                ('service', models.ForeignKey(db_column='service_id', on_delete=django.db.models.deletion.CASCADE, to='services.service')),
+                ('order', models.ForeignKey(
+                    db_column='order_id',
+                    on_delete=django.db.models.deletion.CASCADE,
+                    to='contracts.order'
+                )),
+                ('service', models.ForeignKey(
+                    db_column='service_id',
+                    on_delete=django.db.models.deletion.CASCADE,
+                    to='services.service'
+                )),
             ],
             options={
                 'db_table': 'order_prices',
@@ -93,6 +124,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='order',
             name='payment_type',
-            field=models.ForeignKey(db_column='payment_type', on_delete=django.db.models.deletion.RESTRICT, related_name='orders', to='contracts.paymenttype'),
+            field=models.ForeignKey(
+                db_column='payment_type',
+                on_delete=django.db.models.deletion.RESTRICT,
+                related_name='orders',
+                to='contracts.paymenttype'
+            ),
         ),
     ]

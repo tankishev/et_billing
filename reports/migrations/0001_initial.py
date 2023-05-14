@@ -25,7 +25,11 @@ class Migration(migrations.Migration):
                 ('is_active', models.BooleanField(default=True)),
                 ('include_details', models.BooleanField(default=True)),
                 ('show_pids', models.BooleanField(default=False)),
-                ('client', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reports', to='clients.client')),
+                ('client', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='reports',
+                    to='clients.client'
+                )),
             ],
             options={
                 'db_table': 'reports',
@@ -67,7 +71,12 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('period', shared.models.PeriodField(max_length=7, validators=[shared.utils.period_validator])),
                 ('file', models.FileField(max_length=255, upload_to=reports.models.content_report_file_filename)),
-                ('report', models.ForeignKey(db_column='report_id', on_delete=django.db.models.deletion.RESTRICT, related_name='report_files', to='reports.report')),
+                ('report', models.ForeignKey(
+                    db_column='report_id',
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='report_files',
+                    to='reports.report'
+                )),
             ],
             options={
                 'db_table': 'report_files',
@@ -76,17 +85,31 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='report',
             name='language',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='reports', to='reports.reportlanguage'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.RESTRICT,
+                related_name='reports',
+                to='reports.reportlanguage'
+            ),
         ),
         migrations.AddField(
             model_name='report',
             name='report_type',
-            field=models.ForeignKey(db_column='report_type', on_delete=django.db.models.deletion.RESTRICT, related_name='reports', to='reports.reporttype'),
+            field=models.ForeignKey(
+                db_column='report_type',
+                on_delete=django.db.models.deletion.RESTRICT,
+                related_name='reports',
+                to='reports.reporttype'
+            ),
         ),
         migrations.AddField(
             model_name='report',
             name='skip_columns',
-            field=models.ForeignKey(db_column='skip_columns', on_delete=django.db.models.deletion.RESTRICT, related_name='reports', to='reports.reportskipcolumnconfig'),
+            field=models.ForeignKey(
+                db_column='skip_columns',
+                on_delete=django.db.models.deletion.RESTRICT,
+                related_name='reports',
+                to='reports.reportskipcolumnconfig'
+            ),
         ),
         migrations.AddField(
             model_name='report',

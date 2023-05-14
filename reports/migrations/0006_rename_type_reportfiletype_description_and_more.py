@@ -19,7 +19,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='reportfile',
             name='type',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.RESTRICT, related_name='report_files', to='reports.reportfiletype'),
+            field=models.ForeignKey(
+                default=1,
+                on_delete=django.db.models.deletion.RESTRICT,
+                related_name='report_files',
+                to='reports.reportfiletype'
+            ),
             preserve_default=False,
         ),
     ]

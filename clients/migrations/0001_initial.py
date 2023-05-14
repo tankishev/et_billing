@@ -43,8 +43,17 @@ class Migration(migrations.Migration):
                 ('client_group', models.CharField(blank=True, max_length=100, null=True, verbose_name='Client group')),
                 ('is_billable', models.BooleanField(default=False, verbose_name='Is billable')),
                 ('is_validated', models.BooleanField(default=False, verbose_name='Is validated')),
-                ('country', models.ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='clients', to='clients.clientcountry')),
-                ('industry', models.ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='clients', to='clients.industry', verbose_name='Client industry')),
+                ('country', models.ForeignKey(
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='clients',
+                    to='clients.clientcountry'
+                )),
+                ('industry', models.ForeignKey(
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='clients',
+                    to='clients.industry',
+                    verbose_name='Client industry'
+                )),
             ],
             options={
                 'db_table': 'client_data',

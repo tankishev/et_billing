@@ -20,8 +20,18 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('period', shared.models.PeriodField(max_length=7, validators=[shared.utils.period_validator])),
                 ('unit_count', models.IntegerField()),
-                ('service', models.ForeignKey(db_column='service_id', on_delete=django.db.models.deletion.RESTRICT, related_name='vendor_usage', to='services.service')),
-                ('vendor', models.ForeignKey(db_column='vendor_id', on_delete=django.db.models.deletion.RESTRICT, related_name='vendor_usage', to='vendors.vendor')),
+                ('service', models.ForeignKey(
+                    db_column='service_id',
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='vendor_usage',
+                    to='services.service'
+                )),
+                ('vendor', models.ForeignKey(
+                    db_column='vendor_id',
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='vendor_usage',
+                    to='vendors.vendor'
+                )),
             ],
             options={
                 'db_table': 'vendor_usage',

@@ -23,7 +23,12 @@ class Migration(migrations.Migration):
                 ('vendor_id', models.IntegerField(primary_key=True, serialize=False, verbose_name='Vendor ID')),
                 ('description', models.CharField(max_length=100, verbose_name='Description EN')),
                 ('is_reconciled', models.BooleanField(default=False)),
-                ('client', models.ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='vendors', to='clients.client', verbose_name='Client')),
+                ('client', models.ForeignKey(
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='vendors',
+                    to='clients.client',
+                    verbose_name='Client'
+                )),
             ],
             options={
                 'db_table': 'vendors',
@@ -33,8 +38,18 @@ class Migration(migrations.Migration):
             name='VendorService',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('service', models.ForeignKey(db_column='service_id', on_delete=django.db.models.deletion.RESTRICT, related_name='vendor_services', to='services.service')),
-                ('vendor', models.ForeignKey(db_column='vendor_id', on_delete=django.db.models.deletion.CASCADE, related_name='vendor_services', to='vendors.vendor')),
+                ('service', models.ForeignKey(
+                    db_column='service_id',
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='vendor_services',
+                    to='services.service'
+                )),
+                ('vendor', models.ForeignKey(
+                    db_column='vendor_id',
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='vendor_services',
+                    to='vendors.vendor'
+                )),
             ],
             options={
                 'db_table': 'vendor_services',
@@ -46,7 +61,12 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('period', shared.models.PeriodField(max_length=7, validators=[shared.utils.period_validator])),
                 ('file', models.FileField(max_length=255, upload_to=vendors.models.content_vendor_input_filename)),
-                ('vendor', models.ForeignKey(db_column='vendor_id', on_delete=django.db.models.deletion.RESTRICT, related_name='input_files', to='vendors.vendor')),
+                ('vendor', models.ForeignKey(
+                    db_column='vendor_id',
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='input_files',
+                    to='vendors.vendor'
+                )),
             ],
             options={
                 'db_table': 'vendor_input_files',
@@ -56,9 +76,24 @@ class Migration(migrations.Migration):
             name='VendorFilterOverride',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('filter', models.ForeignKey(db_column='filter_id', on_delete=django.db.models.deletion.RESTRICT, related_name='filter_overrides', to='services.filter')),
-                ('service', models.ForeignKey(db_column='service_id', on_delete=django.db.models.deletion.CASCADE, related_name='filter_overrides', to='services.service')),
-                ('vendor', models.ForeignKey(db_column='vendor_id', on_delete=django.db.models.deletion.CASCADE, related_name='filter_overrides', to='vendors.vendor')),
+                ('filter', models.ForeignKey(
+                    db_column='filter_id',
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='filter_overrides',
+                    to='services.filter'
+                )),
+                ('service', models.ForeignKey(
+                    db_column='service_id',
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='filter_overrides',
+                    to='services.service'
+                )),
+                ('vendor', models.ForeignKey(
+                    db_column='vendor_id',
+                    on_delete=django.db.models.deletion.CASCADE,
+                    related_name='filter_overrides',
+                    to='vendors.vendor'
+                )),
             ],
             options={
                 'db_table': 'vendor_filters_overrides',

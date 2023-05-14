@@ -37,7 +37,9 @@ def login_view(request):
             # Authenticate users that are not blocked
             authenticated_user = authenticate(request, username=username, password=password)
             if authenticated_user:
-                logger.debug(f'User {username} successfully authenticated. Prior failed attempts: {user.profile.failed_attempts}')
+                logger.debug(
+                    f'User {username} successfully authenticated. Prior failed attempts: {user.profile.failed_attempts}'
+                )
                 # Clear failed attempts
                 if user.profile.failed_attempts != 0:
                     logger.debug(f'Resetting failed attempts count for {username}')

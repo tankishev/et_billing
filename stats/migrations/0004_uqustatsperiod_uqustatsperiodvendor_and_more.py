@@ -33,7 +33,12 @@ class Migration(migrations.Migration):
                 ('period', month.models.MonthField(unique=True)),
                 ('cumulative', models.IntegerField()),
                 ('month', models.IntegerField()),
-                ('vendor', models.ForeignKey(db_column='vendor_id', on_delete=django.db.models.deletion.RESTRICT, related_name='uqu_stats', to='vendors.vendor')),
+                ('vendor', models.ForeignKey(
+                    db_column='vendor_id',
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='uqu_stats',
+                    to='vendors.vendor'
+                )),
             ],
             options={
                 'db_table': 'stats_uqu_period_vendor',
@@ -46,7 +51,12 @@ class Migration(migrations.Migration):
                 ('period', month.models.MonthField(unique=True)),
                 ('cumulative', models.IntegerField()),
                 ('month', models.IntegerField()),
-                ('client', models.ForeignKey(db_column='client_id', on_delete=django.db.models.deletion.RESTRICT, related_name='uqu_stats', to='clients.client')),
+                ('client', models.ForeignKey(
+                    db_column='client_id',
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='uqu_stats',
+                    to='clients.client'
+                )),
             ],
             options={
                 'db_table': 'stats_uqu_period_client',

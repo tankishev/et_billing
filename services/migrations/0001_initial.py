@@ -46,7 +46,13 @@ class Migration(migrations.Migration):
                 ('usage_based', models.BooleanField(default=False, verbose_name='Transaction based')),
                 ('skip_service_render', models.BooleanField(default=False, verbose_name='Hide in reports')),
                 ('service_order', models.IntegerField(unique=True)),
-                ('filter', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.RESTRICT, related_name='filter_services', to='services.filter')),
+                ('filter', models.ForeignKey(
+                    blank=True,
+                    null=True,
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='filter_services',
+                    to='services.filter'
+                )),
             ],
             options={
                 'db_table': 'services',
@@ -59,7 +65,11 @@ class Migration(migrations.Migration):
                 ('field', models.CharField(max_length=30)),
                 ('value', models.CharField(blank=True, default='', max_length=15)),
                 ('filter', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='services.filter')),
-                ('func', models.ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='filter_configs', to='services.filterfunction')),
+                ('func', models.ForeignKey(
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='filter_configs',
+                    to='services.filterfunction'
+                )),
             ],
             options={
                 'db_table': 'service_filter_configs',

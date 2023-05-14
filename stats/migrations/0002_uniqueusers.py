@@ -19,7 +19,12 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('month', month.models.MonthField()),
                 ('user_id', models.CharField(max_length=20)),
-                ('vendor', models.ForeignKey(db_column='vendor_id', on_delete=django.db.models.deletion.RESTRICT, related_name='unique_users', to='vendors.vendor')),
+                ('vendor', models.ForeignKey(
+                    db_column='vendor_id',
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='unique_users',
+                    to='vendors.vendor'
+                )),
             ],
             options={
                 'db_table': 'stats_uq_users',

@@ -8,7 +8,7 @@ import os
 
 
 class Vendor(models.Model):
-    """ A Vendor is a object in Iteco to link a client to an API key """
+    """ A Vendor is an object in Iteco to link a client to an API key """
 
     vendor_id = models.IntegerField(primary_key=True, verbose_name='Vendor ID')
     description = models.CharField(max_length=100, verbose_name='Description EN')

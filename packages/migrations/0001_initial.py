@@ -22,7 +22,12 @@ class Migration(migrations.Migration):
                 ('purchased_amount', models.DecimalField(decimal_places=5, default=0.0, max_digits=12)),
                 ('transferred_units', models.IntegerField(default=0)),
                 ('transferred_amount', models.DecimalField(decimal_places=5, default=0.0, max_digits=12)),
-                ('order', models.ForeignKey(db_column='order_id', on_delete=django.db.models.deletion.RESTRICT, related_name='packages', to='contracts.order')),
+                ('order', models.ForeignKey(
+                    db_column='order_id',
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='packages',
+                    to='contracts.order'
+                )),
             ],
             options={
                 'db_table': 'order_packages',
@@ -34,7 +39,12 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('period', month.models.MonthField()),
                 ('used_units', models.IntegerField()),
-                ('package', models.ForeignKey(db_column='package_id', on_delete=django.db.models.deletion.RESTRICT, related_name='usage', to='packages.prepaidpackage')),
+                ('package', models.ForeignKey(
+                    db_column='package_id',
+                    on_delete=django.db.models.deletion.RESTRICT,
+                    related_name='usage',
+                    to='packages.prepaidpackage'
+                )),
             ],
             options={
                 'db_table': 'order_package_usage',

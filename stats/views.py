@@ -1,6 +1,6 @@
 # REMOVE DEPRECIATED IMPORTS ... ADD LOGGERS
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
 from reports.modules import gen_zoho_uqu_vendors
