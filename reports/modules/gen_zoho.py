@@ -20,64 +20,7 @@ def gen_zoho_usage_summary(period):
     """ Generate service usage report for Zoho Analytics"""
 
     conn = sl.connect(DB_PATH)
-    sql = """
-        select ? as period
-             , tmp2.vendor_id as vendor_id
-             , c.client_id
-             , c.reporting_name as client_name
-             , s2.service, s2.stype, s2.desc_bg as description
-             , tmp2.unit_count, tmp2.tu_cost, tmp2.unit_cost, tmp2.total_cost, tmp2.bgn_cost
-             , c.client_group, ci.industry
-        from (
-            select vendor_id, service_id, sum(unit_count) as unit_count
-                 ,round(avg(tu_price),2) as tu_cost, round(avg(unit_cost),2) as unit_cost
-                 ,round(sum(total_cost),2) as total_cost, round(sum(bgn_cost),2) as bgn_cost
-            from (
-                select
-                    su.vendor_id
-                    ,su.service_id
-                    ,su.unit_count
-                    ,case
-                        when o.ccy_type = 3 then o.tu_price
-                        when o.ccy_type = 4 then o.tu_price / 1.95583
-                        else 0
-                    end tu_price
-                    ,case
-                        when o.ccy_type = 1 then op.unit_price / 1.95583
-                        when o.ccy_type = 2 then op.unit_price
-                        when o.ccy_type = 3 then op.unit_price * o.tu_price / 1.95583
-                        when o.ccy_type = 4 then op.unit_price * o.tu_price
-                        else 0
-                    end unit_cost
-                    ,case
-                        when o.ccy_type = 1 then su.unit_count * op.unit_price / 1.95583
-                        when o.ccy_type = 2 then su.unit_count * op.unit_price
-                        when o.ccy_type = 3 then su.unit_count * op.unit_price * o.tu_price / 1.95583
-                        when o.ccy_type = 4 then su.unit_count * op.unit_price * o.tu_price
-                        else 0
-                    end total_cost
-                    ,case
-                        when o.ccy_type = 1 then su.unit_count * op.unit_price
-                        when o.ccy_type = 2 then su.unit_count * op.unit_price * 1.95583
-                        when o.ccy_type = 3 then su.unit_count * op.unit_price * o.tu_price
-                        when o.ccy_type = 4 then su.unit_count * op.unit_price * o.tu_price * 1.95583
-                        else 0
-                    end bgn_cost
-                from stats_usage su
-                left join services s on su.service_id = s.service_id
-                left join vendor_services vs on su.vendor_id = vs.vendor_id and su.service_id = vs.service_id
-                left join order_services os on vs.id = os.vendor_service_id
-                left join orders o on os.order_id = o.order_id
-                left join order_prices op on o.order_id = op.order_id and op.service_id = su.service_id
-                where su.period = ? and o.is_active = 1
-                 ) tmp
-            group by vendor_id, service_id
-             ) tmp2
-        left join services s2 on s2.service_id = tmp2.service_id
-        left join vendors cv2 on cv2.vendor_id = tmp2.vendor_id
-        left join client_data c on cv2.client_id = c.client_id
-        left join client_industries ci on c.industry_id = ci.id
-        """
+
     sql = """
         select ? as period, *, round(total_cost * 1.95583, 2) as bgn_cost 
         from (

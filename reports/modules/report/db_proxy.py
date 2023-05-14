@@ -120,8 +120,9 @@ class DBProxyReports(DBProxy):
         """
 
         sql = "select distinct"
-        sql += " order_id, order_descr, ccy_type, payment_type, tu_price"
-        sql += " from tmp_report_data where report_id = ?"
+        sql += " order_id, order_descr, t.ccy_type, payment_type, tu_price from tmp_report_data t"
+        sql += " left join pricing_types pt on pt.id = t.ccy_type"
+        sql += " where t.report_id = ?"
         res = self.exec(sql, (report_id,))
         data = res.fetchall()
         res.close()

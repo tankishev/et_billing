@@ -3,5 +3,6 @@
 .idea
 db.et_billing
 __pycache__/
-.log
+/*.log
 /shared/modules/et/
+/accounts/modules/et/public_key.pem
