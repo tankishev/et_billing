@@ -10,10 +10,10 @@ import logging
 
 logger = logging.getLogger('et_billing.accounts.views')
 
-
 @csrf_protect
 @ensure_csrf_cookie
 def login_view(request):
+
     """ Authorise and login user using combination of Django credentials and 2FA authorisation """
 
     if request.method == 'POST':

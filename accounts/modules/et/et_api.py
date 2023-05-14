@@ -150,7 +150,7 @@ class ETApi:
             with open('downloaded_file.zip', 'wb') as f:
                 f.write(response.content)
         else:
-            print(response.status_code, response.text)
+            logger.debug((response.status_code, response.text))
 
     @staticmethod
     def _handle_response_auth(response):
@@ -183,18 +183,16 @@ class ETApi:
                         3: 'document already withdrawn'
                     }[status]
                     json_response.update({'verbose_status': verbose_status})
-                print(json_response)
                 return json_response
             elif response.request.path_url == '/vendor/user/check' and response.status_code in (204, 438):
                 if response.status_code == 204:
-                    print('User found')
+                    logger.debug('User found')
                 else:
-                    print('User not found')
+                    logger.debug('User not found')
             else:
                 logger.warning(f'{response.status_code} {response.text}')
-                print(response.status_code, response.text)
         except Exception as err:
-            print(err)
+            logger.error(err)
 
     def identification(self, user: SigningUser, eid_data: list, **kwargs):
 
