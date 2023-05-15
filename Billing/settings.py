@@ -166,6 +166,7 @@ CELERY_RESULT_BACKEND = None
 CELERY_HIJACK_ROOT_LOGGER = False
 
 # Settings for logging
+LOG_DIR = os.environ.get('DJANGO_LOGS_DIR', os.path.join(BASE_DIR, 'logs'))
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,  # retain the default loggers
@@ -178,25 +179,25 @@ LOGGING = {
     'handlers': {
         'et_billing_debug': {
             'class': 'logging.FileHandler',
-            'filename': 'et_billing_debug.log',
+            'filename': os.path.join(LOG_DIR, 'et_billing_debug.log'),
             'formatter': 'pipe',
             'level': 'DEBUG'
         },
         'celery_tasks_debug': {
             'class': 'logging.FileHandler',
-            'filename': 'celery_debug.log',
+            'filename': os.path.join(LOG_DIR, 'celery_debug.log'),
             'formatter': 'pipe',
             'level': 'DEBUG'
         },
         'et_billing_info': {
             'class': 'logging.FileHandler',
-            'filename': 'et_billing_info.log',
+            'filename': os.path.join(LOG_DIR, 'et_billing_info.log'),
             'formatter': 'pipe',
             'level': 'INFO'
         },
         'celery_tasks_info': {
             'class': 'logging.FileHandler',
-            'filename': 'celery_info.log',
+            'filename': os.path.join(LOG_DIR, 'celery_info.log'),
             'formatter': 'pipe',
             'level': 'INFO'
         },
