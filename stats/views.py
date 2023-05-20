@@ -1,14 +1,8 @@
-# REMOVE DEPRECIATED IMPORTS ... ADD LOGGERS
-from django.http import HttpResponse
+# ADD LOGGERS
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-
-from reports.modules import gen_zoho_uqu_vendors
-from shared.forms import PeriodForm
 from .forms import UniqueUsersForm
 from .modules import get_uqu, store_uqu_celery
-
-# from .models import UniqueUser
 
 
 @login_required
@@ -49,20 +43,3 @@ def save_unique_users_celery(request):
         'taskId': async_result.id
     }
     return render(request, 'processing_bar.html', context)
-
-
-# REMOVE TEST AND DEPRECIATE
-@login_required
-def stats_test(request):
-    if request.method == 'POST':
-        form = PeriodForm(request.POST)
-        if form.is_valid():
-            period = form.cleaned_data.get('period')
-            res = gen_zoho_uqu_vendors(period)
-            return HttpResponse(res.to_html())
-    form = PeriodForm()
-    return render(request, 'base_form.html', {'form': form})
-
-# def remove_unique_users(period):
-#     UniqueUser.objects.filter(month=period).delete()
-#     return HttpResponse('OK')

@@ -10,6 +10,7 @@ import logging
 
 logger = logging.getLogger('et_billing.accounts.views')
 
+
 @csrf_protect
 @ensure_csrf_cookie
 def login_view(request):

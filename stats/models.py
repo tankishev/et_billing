@@ -1,11 +1,10 @@
 # CODE OK
 from django.db import models
+from month.models import MonthField
 
 from clients.models import Client
 from services.models import Service
 from vendors.models import Vendor
-
-from month.models import MonthField
 
 
 class UsageStats(models.Model):
@@ -76,3 +75,17 @@ class UquStatsPeriodVendor(models.Model):
     class Meta:
         db_table = 'stats_uqu_period_vendor'
         unique_together = ('period', 'vendor')
+
+
+class UquStatsPeriodCountries(models.Model):
+    """ Model to store aggregated stats regarding unique users per country and period """
+
+    period = MonthField()
+    country = models.CharField(max_length=5)
+    cumulative = models.IntegerField()
+    uqu_month = models.IntegerField()
+    uqu_new = models.IntegerField()
+
+    class Meta:
+        db_table = 'stats_uqu_period_country'
+        unique_together = ('period', 'country')

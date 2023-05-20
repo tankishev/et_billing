@@ -1,4 +1,4 @@
-# ADD UNIQUE COUNTRIES .. ADD LOGGER
+# ADD LOGGER
 from django.conf import settings
 
 import pandas as pd
