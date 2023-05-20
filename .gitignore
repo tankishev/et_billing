@@ -4,6 +4,7 @@
 db.et_billing
 __pycache__/
 /*.log
+/logs/
 /shared/modules/et/
 /accounts/modules/et/public_key.pem
 .env

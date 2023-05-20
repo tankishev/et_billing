@@ -49,13 +49,13 @@ class InputFilesMixin:
             df = pd.concat([df, self.load_data(input_filepath)], axis=0, ignore_index=True)
         return df
 
-    # def load_data_for_uq_countries(self, filename, skip_status_five=True) -> pd.DataFrame:
-    #     df = self.load_data(filename)
-    #     if 'Status' in df.columns and skip_status_five:
-    #         df = df[df.Status != '5'][["Country receiver", "PID receiver"]].drop_duplicates()
-    #     else:
-    #         df = df[["Country receiver", "PID receiver"]].drop_duplicates()
-    #     return df
+    def load_data_for_uq_countries(self, filename, skip_status_five=True) -> iter:
+        df = self.load_data(filename)
+        if 'Status' in df.columns and skip_status_five:
+            df = df[df.Status != '5'][["Country receiver", "PID receiver"]].drop_duplicates()
+        else:
+            df = df[["Country receiver", "PID receiver"]].drop_duplicates()
+        return df.itertuples(index=False)
 
     def load_data_for_uq_users(self, filename) -> list:
         """ Returns the list of unique PID Receiver in an vendor file"""

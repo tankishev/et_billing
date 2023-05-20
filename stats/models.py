@@ -28,7 +28,8 @@ class UniqueUser(models.Model):
     month = MonthField()
     vendor = models.ForeignKey(
         Vendor, on_delete=models.RESTRICT, db_column='vendor_id', related_name='unique_users')
-    user_id = models.CharField(max_length=20)
+    user_id = models.CharField(max_length=30)
+    country = models.CharField(max_length=5, null=True, blank=True)
 
     class Meta:
         db_table = 'stats_uq_users'

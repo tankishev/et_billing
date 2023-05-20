@@ -1,4 +1,4 @@
-# CODE OK
+# CODE TO BE TESTED
 from datetime import datetime as dt
 from celery import shared_task
 from celery_tasks.models import FileProcessingTask
@@ -119,13 +119,17 @@ def store_uqu_celery(self):
         logger.info(f'Execution time: {execution_time}')
 
 
-def store_unique_users() -> list:
+def store_unique_users(purge_existing=False):
     """ Store unique users at company level for all periods """
 
     logger.info('Starting storing of unique users')
     mx = InputFilesMixin()
     retval = []
     dt_start = dt.now()
+
+    # Clear all existing information
+    if purge_existing:
+        UniqueUser.objects.all().delete()
 
     # Get a query set with VendorInputFiles and list of already processed (period, vendor_id)
     vendor_input_files = VendorInputFile.objects.all().order_by('period', 'vendor_id')
@@ -140,8 +144,8 @@ def store_unique_users() -> list:
 
         # Load unique users data
         logger.debug(f'Getting unique users for vendor {vendor_id} for {period}')
-        unique_pids = mx.load_data_for_uq_users(input_file.file.path)
-        unique_pids = [el for el in unique_pids if el != '']
+        unique_pids = mx.load_data_for_uq_countries(input_file.file.path)
+        unique_pids = [(el[0], el[1]) for el in unique_pids if el[1] != '']
 
         # Save unique users data
         if len(unique_pids) == 0:
@@ -149,7 +153,13 @@ def store_unique_users() -> list:
             continue
 
         logger.debug(f'Found {len(unique_pids)} unique users')
-        unique_users = [UniqueUser(month=period, vendor_id=vendor_id, user_id=pid) for pid in unique_pids]
+        unique_users = [
+            UniqueUser(
+                month=period,
+                vendor_id=vendor_id,
+                user_id=f'{country}{pid}',
+                country=country)
+            for country, pid in unique_pids]
         UniqueUser.objects.bulk_create(unique_users)
         logger.debug('Data saved')
 
@@ -157,7 +167,6 @@ def store_unique_users() -> list:
 
     processing_time = dt.now() - dt_start
     logger.info(f'Execution time: {processing_time}')
-    return retval
 
 
 def store_uqu_clients(purge_existing=False):
@@ -171,11 +180,7 @@ def store_uqu_clients(purge_existing=False):
         UquStatsPeriodClient.objects.all().delete()
 
     # Get clients for which computation should be made
-    sql = "select distinct c.client_id " \
-          "from client_data c " \
-          "join vendors v on c.client_id = v.client_id " \
-          "join stats_uq_users suu on v.vendor_id = suu.vendor_id;"
-    clients = Client.objects.raw(sql)
+    clients = Client.objects.filter(vendors__unique_users__isnull=False).distinct()
 
     # Cycle through clients and compute
     for client in clients:
