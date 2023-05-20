@@ -5,7 +5,7 @@ from celery_tasks.models import FileProcessingTask
 from clients.models import Client
 from vendors.modules.input_files import InputFilesMixin
 from vendors.models import VendorInputFile, Vendor
-from ..models import UniqueUser, UquStatsPeriodClient, UquStatsPeriodVendor, UquStatsPeriod
+from ..models import UniqueUser, UquStatsPeriodClient, UquStatsPeriodVendor, UquStatsPeriod, UquStatsPeriodCountries
 
 import logging
 
@@ -70,7 +70,7 @@ def store_uqu_celery(self):
             'resultCode': 3,
             'resultText': 'starting',
         }])
-        task_status.progress = 25
+        task_status.progress = 20
         task_status.save()
 
         store_uqu_periods()
@@ -83,7 +83,7 @@ def store_uqu_celery(self):
             'resultCode': 3,
             'resultText': 'starting',
         }])
-        task_status.progress = 50
+        task_status.progress = 40
         task_status.save()
 
         store_uqu_vendors()
@@ -96,12 +96,25 @@ def store_uqu_celery(self):
             'resultCode': 3,
             'resultText': 'starting',
         }])
-        task_status.progress = 75
+        task_status.progress = 60
         task_status.save()
 
         store_uqu_clients()
-        task_status.processed_documents.append({
+        task_status.processed_documents.extend([{
             'fileName': 'Calculating unique users by client and period ',
+            'resultCode': 0,
+            'resultText': 'done',
+        }, {
+            'fileName': 'Calculating unique users by country and period',
+            'resultCode': 3,
+            'resultText': 'starting',
+        }])
+        task_status.progress = 80
+        task_status.save()
+
+        store_uqu_countries()
+        task_status.processed_documents.append({
+            'fileName': 'Calculating unique users by country and period ',
             'resultCode': 0,
             'resultText': 'done',
         })
@@ -366,6 +379,75 @@ def store_uqu_vendors(purge_existing=False):
             logger.debug(f'... {month} complete')
 
         logger.info(f'Vendor {vendor_id} complete')
+
+    execution_time = dt.now() - dt_start
+    logger.info(f'Execution time: {execution_time}')
+
+
+def store_uqu_countries(purge_existing=False):
+    """ Store unique users data per country per period """
+
+    dt_start = dt.now()
+    logger.info('Starting calculation of unique users per country per period')
+
+    # Clear all existing information
+    if purge_existing:
+        UquStatsPeriodCountries.objects.all().delete()
+
+    # Get countries for which computation should be made
+    countries = UniqueUser.objects.values_list('country', flat=True).distinct()
+
+    # Cycle through vendors and compute
+    for country in countries:
+        logger.debug(f'Processing country: {country}')
+
+        # Get the months for which there is already unique users data
+        uqu_data = list(UquStatsPeriodCountries.objects
+                        .filter(country=country)
+                        .order_by('-period')
+                        .values_list('period', flat=True).distinct())
+
+        # Get the months for which data needs to be added
+        months = list(UniqueUser.objects
+                      .filter(country=country)
+                      .order_by('month')
+                      .values_list('month', flat=True).distinct())
+        months_to_process = [el for el in months if el not in uqu_data]
+
+        # Cycle through months and compute unique users
+        first_month = months[0]
+        prior_month = uqu_data[0] if uqu_data else first_month
+        for month in months_to_process:
+
+            # Get cumulative unique users for the period from the start till current month
+            cumulative = len(UniqueUser.objects
+                             .filter(country=country, month__range=[first_month, month])
+                             .values_list('user_id', flat=True).distinct())
+
+            # Get the total unique users for the current month
+            period_count = len(UniqueUser.objects
+                               .filter(country=country, month=month)
+                               .values_list('user_id', flat=True).distinct())
+
+            # Calculate the number of unique users appeared for the first time in the current period
+            prior_count = 0
+            if month != first_month:
+                prior_record = UquStatsPeriodCountries.objects.get(period=prior_month, country=country)
+                prior_count = prior_record.cumulative
+            new_count = cumulative - prior_count
+
+            # Save statistics
+            UquStatsPeriodCountries.objects.create(
+                period=month,
+                country=country,
+                cumulative=cumulative,
+                uqu_month=period_count,
+                uqu_new=new_count
+            ).save()
+            prior_month = month
+            logger.debug(f'... {month} complete')
+
+        logger.info(f'Country {country} complete')
 
     execution_time = dt.now() - dt_start
     logger.info(f'Execution time: {execution_time}')
