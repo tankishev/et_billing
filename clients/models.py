@@ -36,7 +36,7 @@ class Client(models.Model):
 
     client_id = models.AutoField(primary_key=True, verbose_name='Client ID')
     legal_name = models.CharField(max_length=100, verbose_name='Legal name')
-    reporting_name = models.CharField(max_length=100, verbose_name='Reporting name')
+    reporting_name = models.CharField(max_length=100, verbose_name='Reporting name', unique=True)
     client_group = models.CharField(max_length=100, verbose_name='Client group', blank=True, null=True)
     is_billable = models.BooleanField(default=False, verbose_name='Is billable')
     is_validated = models.BooleanField(default=False, verbose_name='Is validated')
