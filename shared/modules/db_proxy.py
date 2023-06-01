@@ -8,16 +8,18 @@ class DBProxy:
     """ A class used to extract data from the DB """
 
     def __init__(self):
+        self._debug = settings.DEBUG
         db_config = settings.DATABASES.get('default')
-        if settings.DEBUG:
-            self._conn = sl.connect(self._DB_NAME)
+        db_name = db_config.get('NAME')
+        if self._debug:
+            self._conn = sl.connect(db_name)
         else:
             self._conn = pg.connect(
                 host=db_config.get('HOST'),
                 port=db_config.get('PORT'),
                 user=db_config.get('USER'),
                 password=db_config.get('PASSWORD'),
-                database=db_config.get('NAME'),
+                database=db_name,
             )
 
     @property
@@ -36,27 +38,22 @@ class DBProxy:
         :return: result
         """
 
-        # curr = self.conn.cursor()
-        # if data is None:
-        #     res = curr.execute(sql)
-        # else:
-        #     res = curr.execute(sql, data)
-        # if commit:
-        #     self.conn.commit()
-        # return res
-
-        curr = self.conn.cursor()
         try:
+            curr = self.conn.cursor()
             if data is None:
-                curr.execute(sql)
+                res = curr.execute(sql)
             else:
-                curr.execute(sql, data)
+                res = curr.execute(sql, data)
             if commit:
                 self.conn.commit()
-            res = curr.fetchall()  # Retrieve the result, if needed
+            if settings.DEBUG:
+                data = res.fetchall()
+            else:
+                data = curr.fetchall()  # Retrieve the result, if needed
         except Exception as e:
-            self.conn.rollback()  # Rollback the transaction
+            if not self._debug:
+                self.conn.rollback()  # Rollback the transaction
             raise e
         finally:
             curr.close()  # Close the cursor
-        return res
+        return data

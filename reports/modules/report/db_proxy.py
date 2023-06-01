@@ -45,7 +45,7 @@ class DBProxyReports(DBProxy):
             where r.is_active = 1 and o.is_active = 1 and su.period = ? and vif.is_active = True;
         """
         period += '-01'
-        self.exec(sql, (period,)).close()
+        self.exec(sql, (period,))
 
     def drop_temp_data_table(self) -> None:
         """ Drops the temp table """
@@ -68,10 +68,7 @@ class DBProxyReports(DBProxy):
 
         sql = "select distinct report_id, file_name, report_type, language, skip_columns, include_details, show_pids, "
         sql += "client_id, legal_name, contract_id, contract_date from tmp_report_data where client_id = ?"
-
-        res = self.exec(sql, (client_id,))
-        data = res.fetchall()
-        res.close()
+        data = self.exec(sql, (client_id,))
         return data
 
     def get_report_data_by_report_id(self, report_id: int) -> list:
@@ -89,9 +86,7 @@ class DBProxyReports(DBProxy):
 
         sql = "select distinct report_id, file_name, report_type, language, skip_columns, include_details, show_pids, "
         sql += "client_id, legal_name, contract_id, contract_date from tmp_report_data where report_id = ?"
-        res = self.exec(sql, (report_id,))
-        data = res.fetchall()
-        res.close()
+        data = self.exec(sql, (report_id,))
         return data
 
     def get_report_data(self) -> list:
@@ -108,9 +103,7 @@ class DBProxyReports(DBProxy):
 
         sql = "select distinct report_id, file_name, report_type, language, skip_columns, include_details, show_pids,"
         sql += " client_id, legal_name, contract_id, contract_date from tmp_report_data order by client_id"
-        res = self.exec(sql)
-        data = res.fetchall()
-        res.close()
+        data = self.exec(sql)
         return data
 
     def get_report_details(self, report_id: int) -> list:
@@ -123,9 +116,7 @@ class DBProxyReports(DBProxy):
         sql += " order_id, order_descr, t.ccy_type, payment_type, tu_price from tmp_report_data t"
         sql += " left join pricing_types pt on pt.id = t.ccy_type"
         sql += " where t.report_id = ?"
-        res = self.exec(sql, (report_id,))
-        data = res.fetchall()
-        res.close()
+        data = self.exec(sql, (report_id,))
         return data
 
     def get_report_order_services(self, report_id: int, order_id: int) -> list:
@@ -141,9 +132,7 @@ class DBProxyReports(DBProxy):
         sql += " sum(unit_count) unit_count"
         sql += " from tmp_report_data where report_id = ? and order_id = ?"
         sql += " group by service_order, service_group, service_type, service_descr, unit_price, skip_service_render"
-        res = self.exec(sql, (report_id, order_id))
-        data = res.fetchall()
-        res.close()
+        data = self.exec(sql, (report_id, order_id))
         return data
 
     def get_vendor_files_by_report_id(self, report_id):
@@ -154,9 +143,7 @@ class DBProxyReports(DBProxy):
 
         sql = "select distinct vif_id"
         sql += " from tmp_report_data where report_id = ?"
-        res = self.exec(sql, (report_id,))
-        data = res.fetchall()
-        res.close()
+        data = self.exec(sql, (report_id,))
 
         # If successful return the VendorInputFiles
         if data:
