@@ -189,6 +189,7 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
                 row, col = layout.logo_location
                 path = os.path.join(self._resources_dir, layout.logo_filename)
                 path.strip()
+                logger.debug(f'{self._resources_dir}, {path}')
                 ws.insert_image(row, col, path)
                 if len(report.transactions) != 0 and report.is_reconciled is False:
                     self._apply_cell_format((((row, row, col, col + 6), 'bold-warning'),))
