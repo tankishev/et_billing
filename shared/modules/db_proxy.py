@@ -29,12 +29,13 @@ class DBProxy:
     def close(self):
         self.conn.close()
 
-    def exec(self, sql, data=None, commit=False):
+    def exec(self, sql, data=None, commit=False, fetch=True):
         """
         Save data to db given sql expression
         :param sql: valid sql expression with data placeholders
         :param data: data tuple
         :param commit: commit the transaction
+        :param fetch: whether to return results after the execution
         :return: result
         """
 
@@ -48,14 +49,16 @@ class DBProxy:
                 res = curr.execute(sql, data)
             if commit:
                 self.conn.commit()
-            if settings.DEBUG:
-                data = res.fetchall()
-            else:
-                data = curr.fetchall()  # Retrieve the result, if needed
+            if fetch:
+                if settings.DEBUG:
+                    data = res.fetchall()
+                else:
+                    data = curr.fetchall()  # Retrieve the result, if needed
         except Exception as e:
             if not self._debug:
                 self.conn.rollback()  # Rollback the transaction
             raise e
         finally:
             curr.close()  # Close the cursor
-        return data
+        if fetch:
+            return data
