@@ -18,7 +18,7 @@ class DBProxyFilters(DBProxy):
             from vendor_services vs
             left join services s on vs.service_id = s.service_id
             left join vendor_filters_overrides vso on vs.service_id = vso.service_id and vs.vendor_id = vso.vendor_id
-            where vs.vendor_id = %s and usage_based = 1
+            where vs.vendor_id = %s and usage_based = True
             """
         res = self.exec(sql, data=(vendor_id,))
         # return res.fetchall()
