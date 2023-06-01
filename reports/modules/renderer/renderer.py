@@ -192,7 +192,6 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
                 row, col = layout.logo_location
                 path = os.path.join(self._resources_dir, layout.logo_filename)
                 path.strip()
-                logger.debug(f'{self._resources_dir}, {path}')
                 ws.insert_image(row, col, path)
                 if len(report.transactions) != 0 and report.is_reconciled is False:
                     self._apply_cell_format((((row, row, col, col + 6), 'bold-warning'),))
@@ -205,8 +204,9 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
                     ws.write_string(row, col, label, xl_format)
 
             if layout.value_cells:
-                contract_date = [el for el in report.client_data.contract_date.split('-')]
-                contract_date.reverse()
+                # contract_date = [el for el in report.client_data.contract_date.split('-')]
+                # contract_date.reverse()
+                contract_date = report.client_data.contract_date
                 data_to_render = {
                     'client_name': report.client.legal_name,
                     'reporting_period': report.reporting_period.get('period'),
