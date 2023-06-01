@@ -72,26 +72,29 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
         if report.layout.wb_formats:
             logger.debug(f'Creating temp file for {report.output_file_name}')
             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as temp_file:
-                wb = xlsxwriter.Workbook(temp_file.name)
-                self._ws = wb.add_worksheet(self._TOTAL_SHEET_NAME)
-                self._wb = wb
+                try:
+                    wb = xlsxwriter.Workbook(temp_file.name)
+                    self._ws = wb.add_worksheet(self._TOTAL_SHEET_NAME)
+                    self._wb = wb
 
-                with_details = kwargs.get('with_details', False)
+                    with_details = kwargs.get('with_details', False)
 
-                # Load formats
-                if not report.layout.wb_formats:
-                    logger.critical('Workbook formats missing')
-                    return 'workbook formats missing'
-                self._load_formats(report.layout.wb_formats)
-                self.t_row, self.t_col = report.layout.top_rc
+                    # Load formats
+                    if not report.layout.wb_formats:
+                        logger.critical('Workbook formats missing')
+                        return 'workbook formats missing'
+                    self._load_formats(report.layout.wb_formats)
+                    self.t_row, self.t_col = report.layout.top_rc
 
-                # Render data
-                logger.debug('Rendering data in temp file')
-                self._render_header(report)
-                self._render_tables(report)
-                if with_details:
-                    self._render_details(report)
-                self.close_workbook()
+                    # Render data
+                    logger.debug('Rendering data in temp file')
+                    self._render_header(report)
+                    self._render_tables(report)
+                    if with_details:
+                        self._render_details(report)
+                    self.close_workbook()
+                except Exception as e:
+                    logger.error(e)
 
             logger.debug(f'Temp file created')
             period = kwargs.get('period')
