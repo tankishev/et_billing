@@ -1,6 +1,7 @@
-# CODE OK
+# CODE needs cleaning to support both postgres and sqlite
 from django.conf import settings
 import sqlite3 as sl
+import psycopg2 as pg
 
 
 class DBProxy:
@@ -9,7 +10,8 @@ class DBProxy:
     _DB_NAME = settings.DATABASES.get('default').get('NAME')
 
     def __init__(self):
-        self._conn = sl.connect(self._DB_NAME)
+        # self._conn = sl.connect(self._DB_NAME)
+        self._conn = pg.connect(database=self._DB_NAME)
 
     @property
     def conn(self):
@@ -29,9 +31,14 @@ class DBProxy:
 
         curr = self.conn.cursor()
         if data is None:
-            res = curr.execute(sql)
+            # res = curr.execute(sql)
+            curr.execute(sql)
         else:
-            res = curr.execute(sql, data)
+            # res = curr.execute(sql, data)
+            curr.execute(sql, data)
         if commit:
             self.conn.commit()
+        # return res
+        res = curr.fetchall()
+        curr.close()
         return res
