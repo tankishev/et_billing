@@ -210,7 +210,8 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
                 data_to_render = {
                     'client_name': report.client.legal_name,
                     'reporting_period': report.reporting_period.get('period'),
-                    'contract_date': '.'.join(contract_date)
+                    'contract_date': contract_date
+                    # 'contract_date': '.'.join(contract_date)
                 }
                 for field, value in data_to_render.items():
                     if field in layout.value_cells:
