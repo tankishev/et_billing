@@ -70,7 +70,7 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
         logger.info(f'Rendering report {report.output_file_name}')
 
         if report.layout.wb_formats:
-            logger.debug(f'Creating tempfile for {report.output_file_name}')
+            logger.debug(f'Creating temp file for {report.output_file_name}')
             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as temp_file:
                 wb = xlsxwriter.Workbook(temp_file.name)
                 self._ws = wb.add_worksheet(self._TOTAL_SHEET_NAME)
@@ -80,18 +80,20 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
 
                 # Load formats
                 if not report.layout.wb_formats:
+                    logger.critical('Workbook formats missing')
                     return 'workbook formats missing'
                 self._load_formats(report.layout.wb_formats)
                 self.t_row, self.t_col = report.layout.top_rc
 
                 # Render data
+                logger.debug('Rendering data in temp file')
                 self._render_header(report)
                 self._render_tables(report)
                 if with_details:
                     self._render_details(report)
                 self.close_workbook()
 
-            logger.debug(f'Tempfile created')
+            logger.debug(f'Temp file created')
             period = kwargs.get('period')
             report_id = report.report_id
             filename = report.output_file_name
@@ -171,6 +173,8 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
         """ Render the header in the Summary sheet of the XLSX report.
         :param report: Report object
         """
+
+        logger.debug('Rendering headers')
 
         layout = report.layout
         ws = self._ws
