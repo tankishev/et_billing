@@ -23,7 +23,7 @@ class DBProxyReports(DBProxy):
                 ,cd.client_id, cd.legal_name, cd.reporting_name, c.contract_id contract_id, c.start_date contract_date
                 ,os.order_id, o.description order_descr, o.ccy_type, p.type payment_type, o.tu_price
                 ,vs.service_id, s.service service_group
-                ,case when s.stype isnull then '' else stype end service_type
+                ,case when s.stype is null then '' else stype end service_type
                 ,case when r.language_id = 1 then s.desc_bg else s.desc_en end service_descr
                 ,s.desc_en s_desc_rept
                 ,su.unit_count, op.unit_price, s.skip_service_render
@@ -42,7 +42,7 @@ class DBProxyReports(DBProxy):
             join contracts c on o.contract_id = c.contract_id
             left join services s on su.service_id = s.service_id
             left join vendor_input_files vif on vif.vendor_id = vs.vendor_id and vif.period = su.period
-            where r.is_active = 1 and o.is_active = 1 and su.period = ? and vif.is_active = True;
+            where r.is_active = True and o.is_active = True and su.period = %s and vif.is_active = True;
         """
         period += '-01'
         self.exec(sql, (period,))
@@ -67,7 +67,7 @@ class DBProxyReports(DBProxy):
         """
 
         sql = "select distinct report_id, file_name, report_type, language, skip_columns, include_details, show_pids, "
-        sql += "client_id, legal_name, contract_id, contract_date from tmp_report_data where client_id = ?"
+        sql += "client_id, legal_name, contract_id, contract_date from tmp_report_data where client_id = %s"
         data = self.exec(sql, (client_id,))
         return data
 
@@ -85,7 +85,7 @@ class DBProxyReports(DBProxy):
         """
 
         sql = "select distinct report_id, file_name, report_type, language, skip_columns, include_details, show_pids, "
-        sql += "client_id, legal_name, contract_id, contract_date from tmp_report_data where report_id = ?"
+        sql += "client_id, legal_name, contract_id, contract_date from tmp_report_data where report_id = %s"
         data = self.exec(sql, (report_id,))
         return data
 
@@ -115,7 +115,7 @@ class DBProxyReports(DBProxy):
         sql = "select distinct"
         sql += " order_id, order_descr, t.ccy_type, payment_type, tu_price from tmp_report_data t"
         sql += " left join pricing_types pt on pt.id = t.ccy_type"
-        sql += " where t.report_id = ?"
+        sql += " where t.report_id = %s"
         data = self.exec(sql, (report_id,))
         return data
 
@@ -130,7 +130,7 @@ class DBProxyReports(DBProxy):
 
         sql = "select service_order, service_group, service_type, service_descr, unit_price, skip_service_render,"
         sql += " sum(unit_count) unit_count"
-        sql += " from tmp_report_data where report_id = ? and order_id = ?"
+        sql += " from tmp_report_data where report_id = %s and order_id = %s"
         sql += " group by service_order, service_group, service_type, service_descr, unit_price, skip_service_render"
         data = self.exec(sql, (report_id, order_id))
         return data
@@ -142,7 +142,7 @@ class DBProxyReports(DBProxy):
         """
 
         sql = "select distinct vif_id"
-        sql += " from tmp_report_data where report_id = ?"
+        sql += " from tmp_report_data where report_id = %s"
         data = self.exec(sql, (report_id,))
 
         # If successful return the VendorInputFiles

@@ -38,6 +38,8 @@ class DBProxy:
         :return: result
         """
 
+        if self._debug:
+            sql = sql.replace('%s', '?')
         try:
             curr = self.conn.cursor()
             if data is None:
