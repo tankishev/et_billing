@@ -2,10 +2,13 @@
 from services.models import FilterConfig, Service
 from .db_proxy import DBProxyFilters
 from .filters import FilterGroup
+
+from celery.utils.log import get_task_logger
 import logging
 
 
 logger = logging.getLogger('et_billing.services.mixins')
+celery_logger = get_task_logger('services.mixins')
 
 
 class FiltersMixin:
@@ -14,7 +17,7 @@ class FiltersMixin:
     def load_all_service_filters(self) -> dict:
         """ Returns a dictionary with FilterGroups for all services """
 
-        logger.debug("Loading service filters")
+        celery_logger.debug("Loading service filters")
         services = Service.objects.all().filter(usage_based=True)
         service_filters = self.get_service_filters()
         return {el.service_id: FilterGroup(service_filters[el.filter_id]) for el in services}
@@ -26,13 +29,13 @@ class FiltersMixin:
         :param service_filters: a dictionary with services filter functions
         """
 
-        logger.debug(f"Loading service filters for vendor {vendor_id}")
+        celery_logger.debug(f"Loading service filters for vendor {vendor_id}")
         dbp = DBProxyFilters()
         db_services = dbp.get_vendor_services_filters(vendor_id)
         if db_services:
-            logger.debug("Services loaded. Returning filters")
+            celery_logger.debug("Services loaded. Returning filters")
             return {el[0]: FilterGroup(service_filters[el[1]]) for el in db_services}
-        logger.critical("No services found")
+        celery_logger.critical("No services found")
 
     @staticmethod
     def get_service_filters() -> dict | None:
