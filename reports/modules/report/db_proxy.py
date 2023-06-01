@@ -45,7 +45,7 @@ class DBProxyReports(DBProxy):
             where r.is_active = True and o.is_active = True and su.period = %s and vif.is_active = True;
         """
         period += '-01'
-        self.exec(sql, (period,))
+        self.exec(sql, (period,), fetch=False)
 
     def drop_temp_data_table(self) -> None:
         """ Drops the temp table """
