@@ -91,6 +91,7 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
                     self._render_details(report)
                 self.close_workbook()
 
+            logger.debug(f'Tempfile created')
             period = kwargs.get('period')
             report_id = report.report_id
             filename = report.output_file_name
