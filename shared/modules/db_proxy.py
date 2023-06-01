@@ -7,11 +7,18 @@ import psycopg2 as pg
 class DBProxy:
     """ A class used to extract data from the DB """
 
-    _DB_NAME = settings.DATABASES.get('default').get('NAME')
-
     def __init__(self):
-        # self._conn = sl.connect(self._DB_NAME)
-        self._conn = pg.connect(database=self._DB_NAME)
+        db_config = settings.DATABASES.get('default')
+        if settings.DEBUG:
+            self._conn = sl.connect(self._DB_NAME)
+        else:
+            self._conn = pg.connect(
+                host=db_config.get('HOST'),
+                port=db_config.get('PORT'),
+                user=db_config.get('USER'),
+                password=db_config.get('PASSWORD'),
+                database=db_config.get('NAME'),
+            )
 
     @property
     def conn(self):
@@ -29,16 +36,27 @@ class DBProxy:
         :return: result
         """
 
-        curr = self.conn.cursor()
-        if data is None:
-            # res = curr.execute(sql)
-            curr.execute(sql)
-        else:
-            # res = curr.execute(sql, data)
-            curr.execute(sql, data)
-        if commit:
-            self.conn.commit()
+        # curr = self.conn.cursor()
+        # if data is None:
+        #     res = curr.execute(sql)
+        # else:
+        #     res = curr.execute(sql, data)
+        # if commit:
+        #     self.conn.commit()
         # return res
-        res = curr.fetchall()
-        curr.close()
+
+        curr = self.conn.cursor()
+        try:
+            if data is None:
+                curr.execute(sql)
+            else:
+                curr.execute(sql, data)
+            if commit:
+                self.conn.commit()
+            res = curr.fetchall()  # Retrieve the result, if needed
+        except Exception as e:
+            self.conn.rollback()  # Rollback the transaction
+            raise e
+        finally:
+            curr.close()  # Close the cursor
         return res
