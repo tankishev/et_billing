@@ -79,19 +79,16 @@ class Migration(migrations.Migration):
                 ('filter', models.ForeignKey(
                     db_column='filter_id',
                     on_delete=django.db.models.deletion.RESTRICT,
-                    related_name='filter_overrides',
                     to='services.filter'
                 )),
                 ('service', models.ForeignKey(
                     db_column='service_id',
                     on_delete=django.db.models.deletion.CASCADE,
-                    related_name='filter_overrides',
                     to='services.service'
                 )),
                 ('vendor', models.ForeignKey(
                     db_column='vendor_id',
                     on_delete=django.db.models.deletion.CASCADE,
-                    related_name='filter_overrides',
                     to='vendors.vendor'
                 )),
             ],

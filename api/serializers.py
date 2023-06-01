@@ -3,8 +3,9 @@ from rest_framework import serializers
 from celery_tasks.models import FileProcessingTask
 from clients.models import Client, Industry, ClientCountry
 from contracts.models import Order, Contract, OrderPrice, Service, OrderService, Currency, PaymentType
-from vendors.models import Vendor, VendorService, VendorFilterOverride
+from vendors.models import Vendor, VendorService
 from reports.models import ReportFile, Report, ReportType, ReportSkipColumnConfig, ReportLanguage
+from services.models import ServiceFilterOverride
 
 
 class ReportSerializerBase(serializers.ModelSerializer):
@@ -109,9 +110,9 @@ class VendorServiceSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_filter_override(self, obj):
-        vfo = VendorFilterOverride.objects.filter(vendor=obj.vendor, service=obj.service).first()
-        if vfo:
-            return vfo.filter.filter_name
+        sfo = ServiceFilterOverride.objects.filter(vendor=obj.vendor, service=obj.service).first()
+        if sfo:
+            return sfo.filter.filter_name
         return None
 
 

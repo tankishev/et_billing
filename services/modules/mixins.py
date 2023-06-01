@@ -2,8 +2,8 @@ from __future__ import annotations
 from typing import Dict, List, Tuple
 from django.db.models import OuterRef, Case, When, Subquery, Exists, IntegerField, F
 
-from vendors.models import VendorService, VendorFilterOverride
-from services.models import FilterConfig, Service
+from vendors.models import VendorService
+from services.models import FilterConfig, Service, ServiceFilterOverride
 from .filters import FilterGroup
 
 from celery.utils.log import get_task_logger
@@ -76,7 +76,7 @@ class FiltersMixin:
             :param usage_based_only: return records only for usage based services
             :return: [(service_id, filter_id), ]
         """
-        vfo_subquery = VendorFilterOverride.objects.filter(
+        sfo_subquery = ServiceFilterOverride.objects.filter(
             vendor_id=OuterRef('vendor_id'),
             service_id=OuterRef('service_id')
         ).values('filter_id')[:1]
@@ -84,7 +84,7 @@ class FiltersMixin:
         vs = VendorService.objects.filter(vendor_id=vendor_id, service__usage_based=usage_based_only) \
             .annotate(
             filter_name=Case(
-                When(Exists(Subquery(vfo_subquery)), then=Subquery(vfo_subquery)),
+                When(Exists(Subquery(sfo_subquery)), then=Subquery(sfo_subquery)),
                 default=F('service__filter_id'),
                 output_field=IntegerField()
             )) \

@@ -1,12 +1,12 @@
 from django.contrib import admin
 from django.db.models import Count
 
-from services.models import Service, Filter
+from services.models import Service, Filter, ServiceFilterOverride
 from shared.utils import get_parent_object_from_request
-from .models import Vendor, VendorFilterOverride, VendorService, VendorInputFile
+from .models import Vendor, VendorService, VendorInputFile
 
 
-class VendorFilterOverrideAdmin(admin.ModelAdmin):
+class ServiceFilterOverrideAdmin(admin.ModelAdmin):
     list_display = ['id', 'vendor', 'service', 'filter']
     search_fields = ['vendor__id', 'vendor__description']
     ordering = ['vendor_id', 'service_id']
@@ -20,8 +20,8 @@ class VendorServicesInline(admin.TabularInline):
     verbose_name_plural = 'services used'
 
 
-class VendorFilterOverrideInline(admin.TabularInline):
-    model = VendorFilterOverride
+class ServiceFilterOverrideInline(admin.TabularInline):
+    model = ServiceFilterOverride
     extra = 0
     ordering = ['service']
     verbose_name = 'Filter Override'
@@ -36,7 +36,7 @@ class VendorFilterOverrideInline(admin.TabularInline):
                 kwargs["queryset"] = Service.objects.filter(service_id__in=services_list)
         elif db_field.name == 'filter':
             kwargs["queryset"] = Filter.objects.order_by('filter_name')
-        return super(VendorFilterOverrideInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        return super(ServiceFilterOverrideInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class VendorAdmin(admin.ModelAdmin):
@@ -50,7 +50,7 @@ class VendorAdmin(admin.ModelAdmin):
     fields = ['client', 'vendor_id', 'description', 'iteco_name', 'is_reconciled', 'is_active']
     readonly_fields = ['iteco_name']
     exclude = ['services']
-    inlines = [VendorServicesInline, VendorFilterOverrideInline]
+    inlines = [VendorServicesInline, ServiceFilterOverrideInline]
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(VendorAdmin, self).get_form(request, obj, **kwargs)
@@ -79,6 +79,6 @@ class VendorInputFileAdmin(admin.ModelAdmin):
     search_fields = ['period', 'vendor__vendor_id', 'vendor__description']
 
 
-admin.site.register(VendorFilterOverride, VendorFilterOverrideAdmin)
+admin.site.register(ServiceFilterOverride, ServiceFilterOverrideAdmin)
 admin.site.register(Vendor, VendorAdmin)
 admin.site.register(VendorInputFile, VendorInputFileAdmin)

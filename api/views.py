@@ -14,9 +14,10 @@ from celery_tasks.models import FileProcessingTask
 from clients.models import Client, ClientCountry, Industry
 from contracts.models import Contract, Order, OrderPrice, OrderService, PaymentType, Currency
 from services.models import Service
-from vendors.models import Vendor, VendorService, VendorFilterOverride
+from vendors.models import Vendor, VendorService
 from reports.models import ReportFile, Report, ReportSkipColumnConfig, ReportLanguage
 from reports.modules import gen_report_for_client, gen_report_by_id
+from services.models import ServiceFilterOverride
 from stats.models import UsageStats
 from stats.modules.usage_calculations import recalc_vendor
 
@@ -181,7 +182,7 @@ def vendor_services_remove(request: Request, pk):
                 .annotate(orderservices_count=Count('orderservice')).filter(orderservices_count=0)
             services_to_delete_filters = list(vs_to_delete.values_list('service_id', flat=True))
             vs_to_delete.delete()
-            VendorFilterOverride.objects.filter(vendor=vendor, service_id__in=services_to_delete_filters).delete()
+            ServiceFilterOverride.objects.filter(vendor=vendor, service_id__in=services_to_delete_filters).delete()
             return redirect('get_vendor_services', pk=pk)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -190,7 +191,7 @@ def vendor_services_remove(request: Request, pk):
 @api_view(['GET'])
 def vendor_services_duplicate(request: Request, pk):
     """
-    Replicate the VendorServices & VendorServiceOverride from another vendor
+    Replicate the VendorServices & ServiceFilterOverride from another vendor
     :return: Details for the new services
     """
 
@@ -211,17 +212,17 @@ def vendor_services_duplicate(request: Request, pk):
                     err_message = f'Source account does not exist.'
                     return Response(data={'message': err_message}, status=status.HTTP_404_NOT_FOUND)
 
-                VendorFilterOverride.objects.filter(vendor=target_vendor).delete()
+                ServiceFilterOverride.objects.filter(vendor=target_vendor).delete()
                 VendorService.objects.filter(vendor=target_vendor).delete()
 
                 source_vs = VendorService.objects.filter(vendor=source_vendor)
                 for vs in source_vs:
                     VendorService.objects.create(vendor=target_vendor, service=vs.service)
-                    source_vfo = VendorFilterOverride.objects.filter(vendor=source_vendor, service=vs.service)
-                    if source_vfo.exists():
-                        vfo = source_vfo.first()
-                        VendorFilterOverride.objects.create(
-                            vendor=target_vendor, service=vs.service, filter=vfo.filter)
+                    source_sfo = ServiceFilterOverride.objects.filter(vendor=source_vendor, service=vs.service)
+                    if source_sfo.exists():
+                        sfo = source_sfo.first()
+                        ServiceFilterOverride.objects.create(
+                            vendor=target_vendor, service=vs.service, filter=sfo.filter)
                 target_vs = VendorService.objects.filter(vendor=target_vendor)
                 serializer = serializers.VendorServiceSerializer(target_vs, many=True)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)

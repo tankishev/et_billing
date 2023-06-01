@@ -1,4 +1,5 @@
 from django.db import models
+from vendors.models import Vendor
 
 
 class Filter(models.Model):
@@ -63,3 +64,17 @@ class Service(models.Model):
     class Meta:
         db_table = "services"
         ordering = ('service_order',)
+
+
+class ServiceFilterOverride(models.Model):
+    """ ServiceFilterOverride object tracks the ServiceFilters overrides for respective Vendors """
+
+    vendor = models.ForeignKey(
+        Vendor, on_delete=models.CASCADE, db_column='vendor_id', related_name='filter_overrides')
+    service = models.ForeignKey(
+        Service, on_delete=models.CASCADE, db_column='service_id', related_name='filter_overrides')
+    filter = models.ForeignKey(
+        Filter, on_delete=models.RESTRICT, db_column='filter_id', related_name='filter_overrides')
+
+    class Meta:
+        db_table = 'service_filters_overrides'

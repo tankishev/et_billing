@@ -3,7 +3,6 @@ from month.models import MonthField
 import os
 
 from clients.models import Client
-from services.models import Service, Filter
 
 
 class Vendor(models.Model):
@@ -30,7 +29,7 @@ class VendorService(models.Model):
     vendor = models.ForeignKey(
         Vendor, on_delete=models.CASCADE, db_column='vendor_id', related_name='vendor_services')
     service = models.ForeignKey(
-        Service, on_delete=models.RESTRICT, db_column='service_id', related_name='vendor_services')
+        'services.Service', on_delete=models.RESTRICT, db_column='service_id', related_name='vendor_services')
 
     def __str__(self):
         return f'{self.vendor.vendor_id} - {self.service}'
@@ -40,15 +39,16 @@ class VendorService(models.Model):
         ordering = ('service__service_order',)
 
 
+# DEPRECIATED - REMOVE
 class VendorFilterOverride(models.Model):
     """ VendorFilterOverride object tracks the ServiceFilters overrides for respective Vendors """
 
     vendor = models.ForeignKey(
-        Vendor, on_delete=models.CASCADE, db_column='vendor_id', related_name='filter_overrides')
+        Vendor, on_delete=models.CASCADE, db_column='vendor_id')
     service = models.ForeignKey(
-        Service, on_delete=models.CASCADE, db_column='service_id', related_name='filter_overrides')
+        'services.Service', on_delete=models.CASCADE, db_column='service_id')
     filter = models.ForeignKey(
-        Filter, on_delete=models.RESTRICT, db_column='filter_id', related_name='filter_overrides')
+        'services.Filter', on_delete=models.RESTRICT, db_column='filter_id')
 
     class Meta:
         db_table = 'vendor_filters_overrides'
@@ -88,7 +88,7 @@ class VendorUsage(models.Model):
     vendor = models.ForeignKey(
         Vendor, on_delete=models.RESTRICT, db_column='vendor_id', related_name='vendor_usage')
     service = models.ForeignKey(
-        Service, on_delete=models.RESTRICT, db_column='service_id', related_name='vendor_usage')
+        'services.Service', on_delete=models.RESTRICT, db_column='service_id', related_name='vendor_usage')
     unit_count = models.IntegerField()
 
     class Meta:
