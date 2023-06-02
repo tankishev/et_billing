@@ -1,4 +1,6 @@
 # CODE OK
+import decimal
+
 from .formats_mixin import FormatMixin
 
 
@@ -140,11 +142,11 @@ class BaseTableRenderer(FormatMixin):
     def _write_data_row(self, data, formats, row, start_col):
         ws = self.worksheet
         for i, value in enumerate(data):
-            if type(value) == str:
+            if isinstance(value, str):
                 ws.write_string(row, start_col + i, value, formats['str'])
-            elif type(value) == float:
+            elif isinstance(value, float) or isinstance(value, decimal.Decimal):
                 ws.write_number(row, start_col + i, value, formats['float_ext'])
-            elif type(value) == int:
+            elif isinstance(value, int):
                 ws.write_number(row, start_col + i, value, formats['int'])
 
         n = len(data)
