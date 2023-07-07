@@ -3,7 +3,7 @@ from datetime import datetime as dt
 from celery import shared_task
 from celery_tasks.models import FileProcessingTask
 from clients.models import Client
-from vendors.modules.input_files import InputFilesMixin
+from shared.modules import InputFilesMixin
 from vendors.models import VendorInputFile, Vendor
 from ..models import UniqueUser, UquStatsPeriodClient, UquStatsPeriodVendor, UquStatsPeriod, UquStatsPeriodCountries
 

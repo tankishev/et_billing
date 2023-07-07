@@ -1,7 +1,7 @@
 # CODE OK
 from services.modules import FiltersMixin, ServicesMixin
 from shared.utils import DictToObjectMixin
-from vendors.modules import ServiceUsageMixin, InputFilesMixin
+from shared.modules import ServiceUsageMixin, InputFilesMixin
 from .db_proxy import DBProxyReports
 
 import logging

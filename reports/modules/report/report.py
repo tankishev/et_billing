@@ -89,7 +89,7 @@ class DBReportFactory:
 
     # Private methods used to generate Report
     def _generate_report_obj(self, data) -> Report:
-        """ Generates Report object from DB data """
+        """ Generates Report object from DBReport data """
 
         logger.debug(f'Generating Report object for client_id {data.client_id}')
         client_data = ReportClient(data.legal_name, data.client_id, data.contract_date)

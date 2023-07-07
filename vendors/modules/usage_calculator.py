@@ -1,8 +1,6 @@
 # CODE OK
-from services.modules import FiltersMixin
+from shared.modules import BaseServiceUsageCalculator
 from stats.modules import save_service_usage
-from .input_files import InputFilesMixin
-from .service_usage import ServiceUsageMixin
 from ..models import Vendor, VendorService
 
 import logging
@@ -10,7 +8,7 @@ import logging
 logger = logging.getLogger('et_billing.vendors.usage_calculator')
 
 
-class ServiceUsageCalculator(FiltersMixin, ServiceUsageMixin, InputFilesMixin):
+class ServiceUsageCalculator(BaseServiceUsageCalculator):
     """ A helper class that calculates and save vendor service usage """
 
     def find_unreconciled_transactions(self, input_file, skip_status_five=True):
@@ -48,7 +46,7 @@ class ServiceUsageCalculator(FiltersMixin, ServiceUsageMixin, InputFilesMixin):
             if n > 0:
                 data.append((50, n))
 
-        # Add unique users where enabled requiring enablement
+        # Add unique users where required
         if VendorService.objects.filter(vendor_id=vendor_id, service_id=32).exists():
             logger.debug("Calculating unique users stats")
             n = df["PID receiver"].dropna().nunique()
@@ -76,28 +74,3 @@ class ServiceUsageCalculator(FiltersMixin, ServiceUsageMixin, InputFilesMixin):
 
         except Vendor.DoesNotExist:
             logger.warning(f"No vendor object with vendor_id {vendor_id}")
-
-    def _calculate_service_usage(self, input_file, skip_status_five=True):
-        """ Reads the input file and calculates service usage """
-
-        period, vendor_id = input_file.period, input_file.vendor_id
-        logger.debug(f"Starting usage calcs for vendor {vendor_id} for {period}.")
-
-        # Load dataframe and convert all numbers
-        logger.debug(f"Loading transactions for vendor {vendor_id} for {period}.")
-        df = self.load_data_for_service_usage(input_file.file.path, skip_status_five)
-        if df is None:
-            logger.info(f'vendor_id: {vendor_id}, period_id: {period}, return: No transactions')
-            return 3, None, None
-
-        # Load service filters
-        service_filters = self.get_service_filters()
-        services = self.load_vendor_service_filters(vendor_id, service_filters)
-        if services is None:
-            logger.info(f'vendor_id: {vendor_id}, period_id {period}, return: No services configured')
-            return 1, None, None
-
-        # Calculate transaction based services
-        logger.debug("Calculating transaction based stats")
-        df, is_reconciled = self.calc_usage(df, services)
-        return 0, df, is_reconciled

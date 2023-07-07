@@ -1,7 +1,7 @@
 # CODE OK
 from services.modules import FiltersMixin
 from services.models import Service
-from .service_usage import ServiceUsageMixin
+from shared.modules import ServiceUsageMixin
 from .usage_calculator import ServiceUsageCalculator
 from ..models import VendorInputFile
 
