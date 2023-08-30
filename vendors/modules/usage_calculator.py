@@ -37,6 +37,15 @@ class ServiceUsageCalculator(BaseServiceUsageCalculator):
         res = df.service_id.value_counts()
         data = [(k, v) for k, v in res.items() if v is not None]
 
+        # Update calculations for Legal Person eID (type 19)
+        if data:
+            for record in data:
+                service_id, count = record
+                if service_id == 19:
+                    data.remove(record)
+                    data.append((service_id, count // 2))
+                    break
+
         # Get aggregation based stats
         if data and "Bio required" in df.columns:
             logger.debug("Calculating BioID stats")
