@@ -10,6 +10,9 @@ logger = logging.getLogger('et_billing.vendors.usage_calculator')
 
 class ServiceUsageCalculator(BaseServiceUsageCalculator):
     """ A helper class that calculates and save vendor service usage """
+    _BIO_AUTH_SERVICE_ID = 50
+    _LEGAL_PERSONS_SERVICE_ID = 36
+    _UNIQUE_USERS_SERVICE_ID = 32
 
     def find_unreconciled_transactions(self, input_file, skip_status_five=True):
         """ Provides a summary of unreconciled transactions """
@@ -41,7 +44,7 @@ class ServiceUsageCalculator(BaseServiceUsageCalculator):
         if data:
             for record in data:
                 service_id, count = record
-                if service_id == 19:
+                if service_id == self._LEGAL_PERSONS_SERVICE_ID:
                     data.remove(record)
                     data.append((service_id, count // 2))
                     break
@@ -53,14 +56,14 @@ class ServiceUsageCalculator(BaseServiceUsageCalculator):
             df_bio = df_bio.drop_duplicates()
             n = len(df_bio)
             if n > 0:
-                data.append((50, n))
+                data.append((self._BIO_AUTH_SERVICE_ID, n))
 
         # Add unique users where required
         if VendorService.objects.filter(vendor_id=vendor_id, service_id=32).exists():
             logger.debug("Calculating unique users stats")
             n = df["PID receiver"].dropna().nunique()
             if n > 0:
-                data.append((32, n))
+                data.append((self._UNIQUE_USERS_SERVICE_ID, n))
 
         # Save usage stats
         logger.debug("Saving usage stats")
