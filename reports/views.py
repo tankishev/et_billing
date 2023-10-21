@@ -1,4 +1,3 @@
-# FIX ZOHO REPORTS
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -167,16 +166,6 @@ def list_report_files(request):
     return render(request, 'base_form.html', context)
 
 
-# ZOHO REPORTS
-@login_required
-def download_zoho_report(request, period, filename):
-    filepath = str(settings.MEDIA_ROOT / f'output/zoho/{period}/{filename}')
-    logger.debug(f'Requested file to download: {filepath}')
-    if os.path.exists(filepath):
-        return _download_report(filepath)
-    logger.warning(f'Does Not Exists: {filepath}')
-
-
 @login_required
 def reconciliation(request):
     billable_vendors = [el for el in Vendor.objects.filter(
@@ -207,52 +196,8 @@ def reconciliation(request):
     return render(request, 'results_collapse.html', context)
 
 
-@login_required
-def zoho_service_usage(request):
-
-    context = {
-        'page_title': 'Generate Reports',
-        'form_title': 'Zoho Reports',
-        'form_subtitle': 'Generate services usage report',
-        'form_address': '/reports/generate/zoho-service-usage/',
-        'form': PeriodForm()
-    }
-    if request.method == 'POST':
-        form = PeriodForm(request.POST)
-        if form.is_valid():
-            period = form.cleaned_data.get('period')
-            res = m.gen_zoho_usage_summary(period)
-            context = {
-                'res': res,
-                'period': period,
-                'res_zoho': True
-            }
-            return render(request, 'report_results.html', context)
-    return render(request, 'base_form.html', context)
-
-
 def _download_report(filepath):
     with open(filepath, 'rb') as f:
         response = HttpResponse(f.read(), content_type="application/ms-excel")
         response['Content-Disposition'] = 'attachment; filename={}'.format(os.path.basename(filepath))
         return response
-
-
-# DEPRECIATED OR TEMPORARY
-def reports_test(request):
-    context = {
-        'page_title': 'Generate Reports',
-        'form_title': 'Test Reports',
-        'form_subtitle': 'Generate reports from test view',
-        'form_address': '/reports/test/',
-        'form': PeriodForm()
-    }
-    if request.method == 'POST':
-        form = PeriodForm(request.POST)
-        if form.is_valid():
-            period = form.cleaned_data.get('period')
-            m.gen_zoho_uqu_clients(period)
-            m.gen_zoho_uqu_period(period)
-            m.gen_zoho_uqu_vendors(period)
-            return redirect('home')
-    return render(request, 'base_form.html', context)

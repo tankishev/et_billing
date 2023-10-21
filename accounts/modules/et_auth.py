@@ -50,7 +50,7 @@ def authorise_user(user, timeout=30) -> tuple[bool, str]:
             return False, '2FA authorisation timeout'
         else:
             logger.critical('2FA API error')
-            return False, 'Authorisation error'
+            return False, 'Error with 2FA Authorisation'
     else:
         logger.warning('User profile does not contain PID or phone number')
         return False, 'Profile incomplete - contact site admin'
