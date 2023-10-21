@@ -16,5 +16,4 @@ urlpatterns = [
         path('billing/all/<str:period>/', views.download_billing_reports_all, name='download_billing_reports_all'),
     ])),
     path('reconciliation/', views.reconciliation, name='db_reconciliation'),
-    path('test/', views.reports_test, name='reports_test'),
 ]
