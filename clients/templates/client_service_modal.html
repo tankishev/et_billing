@@ -1,0 +1,55 @@
+{% block client_service_modal %}
+    <!-- Add/Remove Service Modal -->
+    <div class="modal fade" id="modalClientServices" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalClientServices" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addServicesLabel">Add service</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-success-subtle">
+                    <div class="col">
+                        <div class="row rounded bg-light mx-0">
+                            <div class="list-group p-0 overflow-y-auto" id="modalClientServiceList" style="max-height: 40vh;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btnUpdateServices" type="button" class="btn btn-primary rounded-end-0 border-end-0 me-0">
+                        <span id="btnUpdateServicesSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        <span id="btnUpdateServicesText">Add selected</span></button>
+                    <button class="btn btn-primary dropdown-toggle dropdown-toggle-split rounded-start-0 ms-0" type="button" data-bs-toggle="dropdown">
+                        <span class="visually-hidden">Select services</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Select all</a></li>
+                        <li><a class="dropdown-item" href="#">Clear selection</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <template id="clientServicesItemTemplate">
+        <a href="#" class="list-group-item">
+            <div class="row">
+                <div class="col-1 align-self-center">
+                    <input id="templateCheckbox" class="form-check-input me-1" type="checkbox" value="">
+                    <label for="templateCheckbox" class="d-none"></label>
+                </div>
+                <div class="col">
+                    <div class="row">
+                        <span></span>
+                    </div>
+                    <label>
+                        <span class="badge rounded-pill bg-info"></span>
+                        <span class="badge rounded-pill bg-success"></span>
+                        <span class="badge rounded-pill bg-secondary"></span>
+                        <span class="badge rounded-pill bg-secondary"></span>
+                        <span class="badge rounded-pill bg-warning"></span>
+                    </label>
+                </div>
+            </div>
+        </a>
+    </template>
+{% endblock %}

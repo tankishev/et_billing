@@ -15,5 +15,7 @@ urlpatterns = [
     path("stats/", include('stats.urls')),
     path("tasks/", include('celery_tasks.urls')),
     path("packages/", include('packages.urls')),
+    path("clients/", include('clients.urls')),
+    path("api/", include('api.urls')),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

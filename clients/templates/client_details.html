@@ -1,0 +1,75 @@
+{% extends 'client_base.html' %}
+{% load static %}
+{% block custom_scripts %}
+    <script type="module" src="{% static 'js/utils.js' %}" defer="defer"></script>
+    <script type="module" src="{% static 'js/api.js' %}" defer="defer"></script>
+    <script type="module" src="{% static 'js/client_details.js' %}" defer="defer"></script>
+{% endblock %}
+{% block client_details_tab %}
+
+    <!-- Client Details -->
+    <div class="row bg-light-subtle mt-3">
+        <div class="col p-2">
+            <div class="row p-3">
+                <div class="col h4">Client details</div>
+                <div class="col" id="clientDetailsButtons">
+                    <div class="float-end d-none">
+                        <button id="btnCancel" class="btn btn-outline-danger ms-1">Cancel</button>
+                        <button id="btnSave" class="btn btn-outline-success">Save</button>
+                    </div>
+                    <div class="">
+                        <button class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split rounded-start-0 float-end" type="button" data-bs-toggle="dropdown">
+                            <span class="visually-hidden">Client actions</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a id="btnDelete" class="dropdown-item" href="#">Delete</a></li>
+                        </ul>
+                        <button id="btnEdit" class="btn btn-outline-primary rounded-end-0 border-end-0 float-end">Edit</button>
+                    </div>
+                </div>
+            </div>
+            <form id="clientDetailsForm" class="row p-3 needs-validation" novalidate>
+                <div class="col-md-3">
+                    <label class="form-label" for="client_id">Client ID</label>
+                    <input type="text" class="form-control" id="client_id" data-id="client_id" value="{{ client.client_id }}" disabled readonly required>
+                </div>
+                <div class="col-md-9">
+                    <label class="form-label" for="legal_name">Legal name</label>
+                    <input type="text" class="form-control" id="legal_name" data-id="legal_name" placeholder="Legal name" value="{{ client.legal_name }}" disabled required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="reporting_name">Reporting name</label>
+                    <input type="text" class="form-control" id="reporting_name" data-id="reporting_name" placeholder="Reporting name" value="{{ client.reporting_name }}" disabled required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="client_group">Client group</label>
+                    <input type="text" class="form-control" id="client_group" data-id="client_group" value="{{ client.client_group|default_if_none:"" }}" disabled>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="country">Country</label>
+                    <select class="form-select" id="country" data-id="country" disabled required>
+                        {% for el in countries %}
+                            {% if el.id == client.country.id %}
+                            <option selected value="{{ el.id }}">{{ el.country }}</option>
+                            {% else %}
+                            <option value="{{ el.id }}">{{ el.country }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="industry">Industry</label>
+                    <select class="form-select" id="industry" data-id="industry" disabled required>
+                        {% for el in industries %}
+                            {% if el.id == client.industry.id %}
+                            <option selected value="{{ el.id }}">{{ el.industry }}</option>
+                            {% else %}
+                            <option value="{{ el.id }}">{{ el.industry }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

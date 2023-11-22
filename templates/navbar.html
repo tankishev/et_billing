@@ -29,20 +29,23 @@
                           <li><a class="dropdown-item" href="{% url 'uqu_view' %}">(DB) View unique users</a></li>
                       </ul>
                   </li>
-                  <li class="nav-item dropdown">
+                  <li class="nav-item dropdown border-end">
                       <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Vendors update
+                        Accounts update
                       </a>
                       <ul class="dropdown-menu">
-                          <li><a class="dropdown-item" href="{% url 'calc_vendor_usage' %}">Calc one vendor usage</a></li>
-                          <li><a class="dropdown-item" href="{% url 'calc_usage_all' %}">Calc ALL vendor usage</a></li>
+                          <li><a class="dropdown-item" href="{% url 'calc_vendor_usage' %}">Calc one account usage</a></li>
+                          <li><a class="dropdown-item" href="{% url 'calc_usage_all' %}">Calc usage ALL accounts</a></li>
                           <li><a class="dropdown-item" href="{% url 'uqu_save' %}">Save unique users</a></li>
                           <li><hr class="dropdown-divider"></li>
                           <li><a class="dropdown-item" href="{% url 'vendor_zip_upload' %}">Upload Iteco ZIP</a></li>
                           <li><a class="dropdown-item" href="{% url 'vendor_zip_extract' %}">Extract Iteco ZIP</a></li>
                           <li><hr class="dropdown-divider"></li>
-                          <li><a class="dropdown-item" href="{% url 'list_vendor_files' %}">View vendor files</a></li>
+                          <li><a class="dropdown-item" href="{% url 'list_vendor_files' %}">View raw usage files</a></li>
                       </ul>
+                  </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href={% url 'clients_list' %} }>Clients</a>
                   </li>
                   <li class="nav-item">
                     <a class="nav-link" href="/admin/" target="_blank">DB Admin</a>

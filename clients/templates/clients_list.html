@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block custom_scripts %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+    <script type="module" src="{% static 'js/api.js' %}"></script>
+    <script type="module" src="{% static 'js/utils.js' %}"></script>
+    <script type="module" src="{% static 'js/clients_list.js' %}" defer="defer"></script>
+{% endblock %}
+{% block title %}ET Clients list{% endblock %}
+{% block content %}
+
+    <!-- Clients list -->
+    <div class="col px-3">
+        <div class="row h2">
+            Clients list
+        </div>
+        <div class="row bg-light-subtle p-3">
+            <div class="col mx-auto">
+                <form id="clientSearchForm">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search client" id="clientsListSearch">
+                        <label for="clientsListSearch" class="d-none"></label>
+                        <button type="submit" form="clientSearchForm" class="btn btn-outline-secondary" id="clientSearchButton">Search</button>
+                        <button class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" type="button" data-bs-toggle="dropdown">
+                            <span class="visually-hidden">Predefined filters</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'clients_list' %}">Clear search</a></li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-1">
+                <button id="btnAddClient" class="btn btn-outline-primary float-end" data-bs-toggle="modal" data-bs-target="#addClientModal">Add</button>
+            </div>
+        </div>
+        <div class="row bg-light-subtle p-3 mt-3">
+            <table class="table table-hover table-sm">
+                <thead>
+                    <tr>
+                        <th scope="col">ClientID</th>
+                        <th scope="col">Reporting Name</th>
+                        <th scope="col">Legal Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in page_obj %}
+                        <tr onclick="window.location='#';">
+                            <th scope="row">{{ client.client_id }}</th>
+                            <td><a href="{% url 'client_details' pk=client.client_id %}">{{ client.reporting_name }}</a></td>
+                            <td>{{ client.legal_name }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="row p-3" id="clientsListPagination">
+            <nav aria-label="...">
+                <ul class="pagination pagination-sm justify-content-center">
+                {% for i in page_obj.paginator.page_range %}
+                    {% if i == page_obj.number %}
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">{{ i }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Add client modal -->
+    <div class="modal fade" id="addClientModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="addClientModal" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addClientLabel">Add new client</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-success-subtle">
+                    <form id="clientForm" class="needs-validation" novalidate>
+                        <div class="form-floating mb-2">
+                            <input type="text" class="form-control" id="legalName" data-id="legal_name" placeholder="Legal name" required>
+                            <label for="legalName">Legal name</label>
+                        </div>
+                        <div class="form-floating mb-2">
+                            <input type="text" class="form-control" id="reportingName" data-id="reporting_name" placeholder="Reporting name" required>
+                            <label for="reportingName">Reporting name</label>
+                        </div>
+                        <div class="form-floating mb-2">
+                            <input type="text" class="form-control" id="clientGroup" data-id="client_group" placeholder="None">
+                            <label for="clientGroup">Client group</label>
+                        </div>
+                        <div class="form-floating mb-2">
+                            <select class="form-select" id="countrySelect" data-id="country" required></select>
+                            <label for="countrySelect">Country</label>
+                        </div>
+                        <div class="form-floating">
+                            <select class="form-select" id="industrySelect" data-id="industry" required></select>
+                            <label for="industrySelect">Industry</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button form="clientForm" type="submit" class="btn btn-primary">Add client</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" aria-label="Cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates -->
+    <template id="clientListRowTemplate">
+        <tr>
+            <th scope="row"></th>
+            <td><a href="#"></a></td>
+            <td></td>
+        </tr>
+    </template>
+{% endblock %}

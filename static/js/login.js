@@ -1,3 +1,5 @@
+import {getCookie} from "./utils.js";
+
 const login_form = document.querySelector('.form-signin');
 const errMessage = document.getElementById('errMessage');
 login_form.addEventListener("submit", (ev) => handleLogin(ev));
@@ -24,10 +26,9 @@ async function handleLogin(ev) {
         });
 
         if (response.ok) {
-
-            const data = await response.json();
+            void await response.json();
             document.location.href="/";
-        } else if (response.status == 401) {
+        } else if (response.status === 401) {
             // Display error message
             const data = await response.json();
             const { error_message } = data
@@ -40,19 +41,4 @@ async function handleLogin(ev) {
     } finally {
         spinner_wrapper.classList.add('visually-hidden');
     }
-}
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
 }

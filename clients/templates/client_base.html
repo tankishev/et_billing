@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}ET Client details{% endblock %}
+{% block content %}
+    <div class="col px-3">
+        <div class="row">
+            <div class="col">
+                <h2>{{ client.reporting_name}}</h2>
+            </div>
+            <div class="col text-center">
+                <a class="btn btn-primary float-end" href="{% url 'clients_list' %}">Back</a>
+            </div>
+        </div>
+        <div class="row">
+            <ul id="clientDetailsNav" class="nav nav-pills">
+                <li class="nav-item">
+                    <a class="nav-link" aria-current="page" href="{% url 'client_details' pk=client.client_id %}">Details</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'client_contracts' pk=client.client_id %}">Contracts</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'client_accounts' pk=client.client_id %}">Accounts</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Reports</a>
+                </li>
+            </ul>
+        </div>
+        {% block client_details_tab %}
+        {% endblock %}
+    </div>
+
+    <!-- Confirm Action Modal -->
+    <div class="modal fade" id="confirmAction" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="confirmAction" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm action</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="h6" id="confirmActionModalText"></div>
+                    <div class="h6 alert alert-danger d-none" id="confirmActionModalAlert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btnActionConfirm" type="button" class="btn btn-primary d-none">Confirm</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" aria-label="Cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert pop-up -->
+
+    <!-- Global Templates -->
+    <template id="inactiveTag">
+        <span class="badge rounded-pill bg-danger float-end d-none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dash-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM4.5 7.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7z"></path>>
+            </svg>
+            &emsp;inactive
+        </span>
+    </template>
+{% endblock %}

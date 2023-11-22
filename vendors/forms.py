@@ -13,7 +13,7 @@ def validate_vendor(value):
 
     if value not in [el.get('vendor_id') for el in Vendor.objects.values('vendor_id')]:
         raise ValidationError(
-            _('%(value)s is not a valid vendor_id'),
+            _('%(value)s is not a valid account ID'),
             params={'value': value},
         )
 
@@ -22,7 +22,7 @@ class VendorPeriodForm(PeriodForm):
     """ A PeriodForm with a field for vendor_id """
 
     pk = forms.IntegerField(
-        label='Enter vendor_id',
+        label='Enter account ID',
         widget=forms.NumberInput(
             attrs={'class': "form-control"}
         ),

@@ -2,7 +2,8 @@
 {% load static %}
 {% block custom_scripts %}
     <script src="https://kit.fontawesome.com/94d96f4b45.js" crossorigin="anonymous"></script>
-    <script src="{% static 'js/login.js' %}" defer="defer"></script>
+    <script type="module" src="{% static 'js/utils.js' %}" defer="defer"></script>
+    <script type="module" src="{% static 'js/login.js' %}" defer="defer"></script>
     <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
 {% endblock %}
 {% block content %}

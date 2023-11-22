@@ -57,7 +57,7 @@ class Order(models.Model):
 
     order_id = models.AutoField(primary_key=True)
     contract = models.ForeignKey(
-        Contract, on_delete=models.CASCADE, db_column='contract_id', related_name='orders')
+        Contract, on_delete=models.RESTRICT, db_column='contract_id', related_name='orders')
     start_date = models.DateField()
     description = models.TextField()
     ccy_type = models.ForeignKey(
@@ -66,6 +66,17 @@ class Order(models.Model):
     payment_type = models.ForeignKey(
         PaymentType, on_delete=models.RESTRICT, db_column='payment_type', related_name='orders')
     is_active = models.BooleanField(default=True)
+    # status = models.ForeignKey(
+    #     OrderStatus, on_delete=models.RESTRICT, db_column='status_id', related_name='orders'
+    # )
+
+    @property
+    def currency(self):
+        return self.ccy_type.ccy_type
+
+    @property
+    def payment(self):
+        return self.payment_type.description
 
     @property
     def vendors(self):
@@ -80,6 +91,7 @@ class Order(models.Model):
 
     class Meta:
         db_table = 'orders'
+        ordering = ['-is_active', '-start_date']
 
 
 class OrderPrice(models.Model):
@@ -91,12 +103,13 @@ class OrderPrice(models.Model):
 
     class Meta:
         db_table = 'order_prices'
+        ordering = ['order', 'service__service_order']
 
 
 class OrderService(models.Model):
     """ A model to link services to Orders """
     order = models.ForeignKey(Order, on_delete=models.CASCADE, db_column='order_id')
-    service = models.ForeignKey(VendorService, on_delete=models.CASCADE, db_column='vendor_service_id')
+    service = models.ForeignKey(VendorService, on_delete=models.RESTRICT, db_column='vendor_service_id')
 
     class Meta:
         db_table = 'order_services'

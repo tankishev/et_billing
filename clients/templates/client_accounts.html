@@ -1,0 +1,242 @@
+{% extends 'client_base.html' %}
+{% load static %}
+{% block custom_scripts %}
+    <script src="https://kit.fontawesome.com/94d96f4b45.js" crossorigin="anonymous"></script>
+    <script type="module" src="{% static 'js/client_accounts.js' %}" defer="defer"></script>
+    <script type="module" src="{% static 'js/utils.js' %}" defer="defer"></script>
+    <script type="module" src="{% static 'js/api.js' %}" defer="defer"></script>
+{% endblock %}
+{% block client_details_tab %}
+
+    <!-- Assigned Accounts -->
+    <div class="row bg-light-subtle mt-3">
+        <div class="col p-2">
+            <div class="row p-3">
+                <div class="col h4">Assigned accounts</div>
+                <div class="col">
+                    <button id="btnAddAccount" class="btn btn-outline-primary float-end">Add</button>
+                </div>
+            </div>
+            <div class="row p-3">
+                <div class="list-group overflow-y-auto px-4 mb-2" id="accountsList" data-client-id="{{ client.client_id }}" style="max-height: 22vh;">
+                {% for vendor in client.vendors.all %}
+                    <div class="d-flex w-100 justify-content-between mb-1" data-account-id="{{ vendor.vendor_id }}" id="accountListItem{{ vendor.vendor_id }}">
+                        <a href="#" class="list-group-item list-group-item-action rounded-start align-content-center">
+                            <h6 class="mb-0">
+                                <span class="badge rounded-pill bg-info">{{ vendor.vendor_id }}</span>
+                                <span>{{ vendor.description }}</span>
+                                <span class="badge rounded-pill bg-danger float-end {% if vendor.is_active %} d-none{% endif %}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dash-circle-fill" viewBox="0 0 16 16">
+                                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM4.5 7.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7z"></path>
+                                    </svg>&emsp;inactive
+                                </span>
+                                <span class="badge rounded-pill bg-warning float-end {% if vendor.is_reconciled %}d-none{% endif %}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-card-checklist" viewBox="0 0 16 16">
+                                        <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"></path>
+                                        <path d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0zM7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0z"></path>
+                                    </svg> unreconciled
+                                </span>
+                            </h6>
+                        </a>
+                        <button class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split rounded-start-0" type="button" data-bs-toggle="dropdown">
+                            <span class="visually-hidden">Edit account</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item{% if vendor.is_active %} d-none{% endif %}" href="#">Activate</a></li>
+                            <li><a class="dropdown-item{% if not vendor.is_active %} d-none{% endif %}" href="#">Deactivate</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Remove</a></li>
+                        </ul>
+                    </div>
+                {% endfor %}
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Details -->
+    <div id="accountDetails"></div>
+
+    <!-- Assign Accounts Modal -->
+    <div class="modal fade" id="modalAddAccount" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign accounts to client</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-success-subtle">
+                    <div class="col">
+                        <div id="searchGroup" class="row rounded bg-light mx-0 mb-2 py-2">
+                            <div class="input-group mx-0 py-1">
+                                <input id="searchBox" type="text" class="form-control" placeholder="Account description">
+                                <label class="form-check-label d-none" for="searchBox"></label>
+                                <span class="input-group-text"><i class="fa fa-search"></i></span>
+                            </div>
+                            <div class="form-check mx-0 py-1 ps-5">
+                                <input class="form-check-input" type="checkbox" value="" id="checkUnassigned" checked>
+                                <label class="form-check-label" for="checkUnassigned">
+                                    Filter unassigned only
+                                </label>
+                            </div>
+                        </div>
+                        <div class="row rounded bg-light mx-0">
+                            <div class="list-group p-0 overflow-y-auto" id="modalAddAccountsList" style="max-height: 40vh;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btnAssignAccounts" type="button" class="btn btn-primary rounded-end-0 border-end-0 me-0">Assign selected</button>
+                    <button class="btn btn-primary dropdown-toggle dropdown-toggle-split rounded-start-0 ms-0" type="button" data-bs-toggle="dropdown">
+                        <span class="visually-hidden">Select services</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Select all</a></li>
+                        <li><a class="dropdown-item" href="#">Clear selection</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Remove Service Modal -->
+    {% include 'client_service_modal.html' %}
+
+    <!-- Copy Services from Account Modal -->
+    <div class="modal fade" id="copyServicesModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Select account to copy from</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-success-subtle">
+                    <form id="copyServicesForm" class="needs-validation" novalidate>
+                        <select id="sourceAccount" class="form-select">
+                            <option selected>Select account</option>
+                        </select>
+                        <label for="sourceAccount" class="d-none"></label>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button form="copyServicesForm" type="submit"  class="btn btn-primary">Copy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates -->
+    <template id="accountDetailsTemplate">
+        <div class="row bg-light-subtle mt-3">
+            <div class="col p-2">
+                <div class="row p-3">
+                    <div class="col h4">Account details</div>
+                    <div class="col" id="accountDetailsButtons">
+                        <button id="btnCancel" class="btn btn-outline-danger float-end ms-1 d-none">Cancel</button>
+                        <button id="btnSave" class="btn btn-outline-success float-end d-none">Save</button>
+                        <button id="btnEdit" class="btn btn-outline-primary float-end">Edit</button>
+                    </div>
+                </div>
+                <form class="row p-3 row-cols-auto g-2">
+                    <div class="col-lg-1 col-md-2 col-sm-12">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="accountID" data-id="vendor_id" value="" disabled readonly>
+                            <label for="accountID">ID</label>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-10 col-sm-12">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="itecoName" value="" disabled>
+                            <label for="itecoName">Iteco file name</label>
+                        </div>
+                    </div>
+                    <div class="col-lg-7 col-md-12 col-sm-12">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="accountDescription" data-id="description" value="" disabled>
+                            <label for="accountDescription">Description</label>
+                        </div>
+                    </div>
+                </form>
+                <div class="row p-3">
+                    <div class="col">
+                        <div class="row">
+                            <div class="col h5">Services</div>
+                            <div class="col">
+                                <button id="btnRemoveServices" class="btn btn-outline-danger float-end ms-1">Remove</button>
+                                <button class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split rounded-start-0 float-end" type="button" data-bs-toggle="dropdown">
+                                    <span class="visually-hidden">Add services</span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a id="btnCopyFrom" class="dropdown-item" href="#">Copy from...</a></li>
+                                </ul>
+                                <button id="btnAddServices" class="btn btn-outline-primary float-end border-end-0 rounded-end-0">Add</button>
+                            </div>
+                        </div>
+                        <div class="row mx-2">
+                            <div class="list-group list-group-flush"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <template id="accountServicesListItemTemplate">
+        <div class="list-group-item rounded">
+            <div>Service name</div>
+            <label>
+                <span class="badge rounded-pill bg-success"></span>
+                <span class="badge rounded-pill bg-secondary"></span>
+                <span class="badge rounded-pill bg-secondary"></span>
+                <span class="badge rounded-pill bg-warning"></span>
+            </label>
+        </div>
+    </template>
+    <template id="accountModalListItemTemplate">
+        <a href="" class="list-group-item">
+            <div class="row">
+                <div class="col-1 align-self-center">
+                    <input id="listCheckbox" class="form-check-input me-1" type="checkbox" value="">
+                    <label for="listCheckbox" class="d-none"></label>
+                </div>
+                <div class="col">
+                    <div class="row">
+                        <span></span>
+                    </div>
+                    <label>
+                        <span class="badge rounded-pill bg-info"></span>
+                        <span class="badge rounded-pill bg-warning"></span>
+                        <span class="badge rounded-pill bg-danger"></span>
+                    </label>
+                </div>
+            </div>
+        </a>
+    </template>
+    <template id="accountListTemplate">
+        <div class="d-flex w-100 justify-content-between mb-1">
+            <a href="#" class="list-group-item list-group-item-action rounded-start align-content-center">
+                <h6 class="mb-0">
+                    <span class="badge rounded-pill bg-info">{{ vendor.vendor_id }}</span>
+                    <span></span>
+                </h6>
+            </a>
+            <button class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split rounded-start-0" type="button" data-bs-toggle="dropdown">
+                <span class="visually-hidden">Edit accounts</span>
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item d-none" href="#">Activate</a></li>
+                <li><a class="dropdown-item d-none" href="#">Deactivate</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#">Remove</a></li>
+            </ul>
+        </div>
+    </template>
+    <template id="unreconciledTagTemplate">
+        <span class="badge rounded-pill bg-warning float-end">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-card-checklist" viewBox="0 0 16 16">
+                <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"></path>
+                <path d="M7 5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0zM7 9.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm-1.496-.854a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0z"></path>
+            </svg> unreconciled
+        </span>
+    </template>
+
+{% endblock %}

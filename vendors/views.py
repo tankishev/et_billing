@@ -24,11 +24,11 @@ def index(request):
 # VENDOR USAGE CALCULATIONS
 @login_required
 def calc_vendor_usage(request):
-    """ Trigger usage calculation for one vendor """
+    """ Trigger usage calculation for one account """
 
     context = {
         'page_title': 'Calculate Usage',
-        'form_title': 'Calculate usage for a vendor_id',
+        'form_title': 'Calculate usage for an account',
         'form_subtitle': None,
         'form_address': '/vendors/calc-vendor/',
         'form': VendorPeriodForm()
@@ -42,7 +42,7 @@ def calc_vendor_usage(request):
             if vendor_id is not None:
                 async_result = recalc_vendor.delay(period, int(vendor_id))
                 context = {
-                    'list_title': f'Calculate usage for vendor {vendor_id}',
+                    'list_title': f'Calculate usage for account {vendor_id}',
                     'taskId': async_result.id
                 }
                 return render(request, 'processing_bar.html', context)
@@ -58,7 +58,7 @@ def calc_usage_all_vendors(request):
 
     context = {
         'page_title': 'Calculate Usage',
-        'form_title': 'Calculate usage for ALL vendors',
+        'form_title': 'Calculate usage for ALL accounts',
         'form_subtitle': None,
         'form_address': '/vendors/calc-all/',
         'form': PeriodForm()
@@ -70,7 +70,7 @@ def calc_usage_all_vendors(request):
             period = form.cleaned_data.get('period')
             async_result = recalc_all_vendors.delay(period)
             context = {
-                'list_title': 'Calculate usage for ALL vendors',
+                'list_title': 'Calculate usage for ALL accounts',
                 'list_subtitle': 'This could take up to 2 minutes',
                 'taskId': async_result.id
             }
@@ -109,7 +109,7 @@ def download_vendor_file(request, pk: int):
 
     except VendorInputFile.DoesNotExist:
         logger.warning(f'Does Not Exist: VendorInputFile with id {pk}')
-        return HttpResponse('No vendor file with such id')
+        return HttpResponse('No account file with such id')
 
 
 @login_required
@@ -133,7 +133,7 @@ def extract_zip_view(request):
         return HttpResponse("No valid data in ZIP file.")
     else:
         context = {
-            'page_title': 'Extract Vendor Input ZIP',
+            'page_title': 'Extract Account Usage ZIP Archive',
             'form_address': '/vendors/extract/',
             'form': PeriodForm(initial={'period': request.session.get('upload_period')}),
             'report_title': 'Archive Contents',
@@ -147,8 +147,8 @@ def extract_zip_view(request):
                 period = form.cleaned_data.get('period')
                 res = handle_extract_zip(period)
                 context = {
-                    'page_title': 'Extract Vendor Input ZIP',
-                    'report_title': 'Processed vendors',
+                    'page_title': 'Extract Account Usage ZIP Archive',
+                    'report_title': 'Processed accounts',
                     'res_details': res
                 }
                 return render(request, 'results_collapse.html', context)
@@ -160,8 +160,8 @@ def list_vendor_files(request):
     """ Visualize PeriodForm to trigger list of vendor files """
 
     context = {
-        'page_title': 'Manage Vendor Files',
-        'form_title': 'List vendor input files',
+        'page_title': 'Manage Account Usage Files',
+        'form_title': 'List account usage files',
         'form_address': '/vendors/view-files/',
         'form': PeriodForm()
     }
@@ -172,7 +172,7 @@ def list_vendor_files(request):
             period = form.cleaned_data.get('period')
             files = VendorInputFile.objects.filter(period=period, is_active=True).order_by('vendor')
             context = {
-                'header': f'List of vendor input files for {period}',
+                'header': f'List of account usage files for {period}',
                 'files': files,
                 'zip_url': reverse('download_vendor_files_all', args=[period]),
                 'list_url': 'download_vendor_file'
@@ -186,9 +186,9 @@ def upload_zip_view(request):
     """ Load form for uploading a Vendor Input ZIP archive and trigger extraction if file is valid """
 
     context = {
-        'page_title': 'Vendor Input ZIP',
+        'page_title': 'Account Usage ZIP Archive',
         'form_title': 'File Upload',
-        'form_subtitle': 'Upload zip-file with vendor input files for a given period',
+        'form_subtitle': 'Upload zip-file with account usage files for a given period',
         'form_address': '/vendors/upload/',
         'form_enctype': "multipart/form-data",
         'form': FileUploadForm()
