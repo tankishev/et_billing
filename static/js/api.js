@@ -98,6 +98,13 @@ async function readClientDetails(clientID){
     return await getRecords(url);
 }
 
+async function readClientIssues(clientID){
+    // Returns issues with the Client set-up in ET-Billing
+
+    const url = `/api/clients/${clientID}/issues`;
+    return await getRecords(url);
+}
+
 async function readClientServices(clientID, searchParams){
     // Returns the Services associated with Accounts
 
@@ -219,6 +226,11 @@ async function deleteOrderService(data){
     return await sendRecords(url, 'POST', rest)
 }
 
+async function readClientReports(clientID){
+    const url = `/api/clients/${clientID}/reports`
+    return await getRecords(url)
+}
+
 // Utils
 async function getWithSearch(endpoint, searchParams){
 
@@ -334,7 +346,9 @@ export const api = {
         createClient,
         readClientsList,
         readClientDetails,
+        readClientIssues,
         readClientServices,
+        readClientReports,
         updateClientDetailsRecord,
         deleteClient
     },

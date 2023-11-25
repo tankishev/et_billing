@@ -106,7 +106,6 @@ export function validateForm(form){
 }
 
 // Parsers
-
 function parseAccountDetails(accountsData){
     // Returns an object/ array of objects with the following structure:
     // {clientID, accountID, description, itecoName, isActive, isReconciled}
@@ -130,6 +129,21 @@ function parseAccountDetails(accountsData){
             "client": clientID
         } = data;
     return {clientID, accountID, description, itecoName, isActive, isReconciled};
+    }
+}
+
+/**
+ * Returns an Array object with parsed reportFileData
+ * @param reportFilesData data for Client reports
+ * @return {{period: string, fileName: string, filePath: string, accountsList: Array, reportType: number}[]}
+ */
+function parseClientReportFiles(reportFilesData){
+    return reportFilesData.map(data => mapper(data));
+
+    function mapper(data){
+        const {'id': reportID, period, report, 'file': filePath, 'type_id': reportType} = data;
+        const {'file_name': fileName, 'vendors': accountsList} = report;
+        return {reportID, period, fileName, filePath, accountsList, reportType};
     }
 }
 
@@ -304,6 +318,7 @@ function parseServiceProps(data){
 
 export const parsers = {
     parseAccountDetails,
+    parseClientReportFiles,
     parseClientServices,
     parseClientServicesPages,
     parseContractData,

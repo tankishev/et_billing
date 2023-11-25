@@ -1,0 +1,44 @@
+{% extends 'client_base.html' %}
+{% load static %}
+{% block custom_scripts %}
+    <script type="module" src="{% static 'js/api.js' %}" defer="defer"></script>
+    <script type="module" src="{% static 'js/client_issues.js' %}" defer="defer"></script>
+{% endblock %}
+{% block client_details_tab %}
+    <div class="row bg-light-subtle mt-3">
+        <div class="col p-2">
+            <!-- Heading -->
+            <div class="row p-3">
+                <div class="col h4">Issues with client set-up</div>
+            </div>
+
+            <!-- Issues -->
+            <div id="issuesList" class="row p3 mx-4 mb-2 list-group" data-client-id="{{ client.client_id }}">
+                No issues identified
+            </div>
+        </div>
+    </div>
+
+    <template id="issueTopicTemplate">
+      <div class="accordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse">
+                    <span>Button text</span>
+                </button>
+            </h2>
+            <div id="collapse" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <ul class="list-group">
+                      <li class="list-group-item">An item</li>
+                      <li class="list-group-item">A second item</li>
+                      <li class="list-group-item">A third item</li>
+                      <li class="list-group-item">A fourth item</li>
+                      <li class="list-group-item">And a fifth one</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    </template>
+{% endblock %}

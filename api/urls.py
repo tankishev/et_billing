@@ -20,6 +20,8 @@ urlpatterns = [
             path('<int:pk>/', include([
                 path('', views.client_details),
                 path('accounts/', views.client_vendors),
+                path('issues/', views.health_check),
+                path('reports/', views.client_reports_list),
                 path('services/', views.client_services),
             ])),
         ])),

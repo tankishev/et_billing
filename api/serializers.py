@@ -2,6 +2,21 @@ from rest_framework import serializers
 from clients.models import Client, Industry, ClientCountry
 from contracts.models import Order, Contract, OrderPrice, Service, OrderService, Currency, PaymentType
 from vendors.models import Vendor, VendorService, VendorFilterOverride
+from reports.models import ReportFile, Report
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = ['file_name', 'vendors']
+
+
+class ReportFileSerializer(serializers.ModelSerializer):
+    report = ReportSerializer(many=False)
+
+    class Meta:
+        model = ReportFile
+        fields = ['id', 'period', 'report', 'file', 'type_id']
 
 
 class ServiceIDListSerializer(serializers.Serializer):

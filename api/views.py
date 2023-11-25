@@ -1,7 +1,7 @@
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.postgres.search import SearchVector
-from django.db.models import RestrictedError
+from django.db.models import RestrictedError, Count, Subquery, Q, Exists, OuterRef
 from django.db import transaction
 
 from rest_framework.decorators import api_view
@@ -14,6 +14,9 @@ from clients.models import Client, ClientCountry, Industry
 from contracts.models import Contract, Order, OrderPrice, OrderService, PaymentType, Currency
 from services.models import Service
 from vendors.models import Vendor, VendorService, VendorFilterOverride
+from reports.models import ReportFile
+from stats.models import UsageStats
+
 from . import serializers
 
 
@@ -134,9 +137,8 @@ def vendor_services_remove(request: Request, pk):
         serializer = serializers.VendorServiceIDsSerializer(data=request.data)
         if serializer.is_valid():
             ids = serializer.data.get('ids', [])
-            order_vs_ids = list(OrderService.objects.filter(service_id__in=ids).values_list('service_id', flat=True))
-            ids_to_delete = [el for el in ids if el not in order_vs_ids]
-            vs_to_delete = VendorService.objects.filter(pk__in=ids_to_delete)
+            vs_to_delete = VendorService.objects.filter(pk__in=ids)\
+                .annotate(orderservices_count=Count('orderservice')).filter(orderservices_count=0)
             services_to_delete_filters = list(vs_to_delete.values_list('service_id', flat=True))
             vs_to_delete.delete()
             VendorFilterOverride.objects.filter(vendor=vendor, service_id__in=services_to_delete_filters).delete()
@@ -624,7 +626,7 @@ def order_services_remove(request: Request, pk):
             for vs_id in services:
                 try:
                     vs = VendorService.objects.get(pk=vs_id)
-                    os = OrderService.objects.get(order=order, service=vs)
+                    os = OrderService.objects.filter(order=order, service=vs)
                     os.delete()
                 except VendorService.DoesNotExist:
                     pass
@@ -637,6 +639,26 @@ def order_services_remove(request: Request, pk):
             return redirect('get_order_services', pk=pk)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     return Response({'message': 'Cannot make changes to inactive Orders.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Reports
+@csrf_exempt
+@api_view(['GET'])
+def client_reports_list(request: Request, pk):
+
+    """ Returns a list of report files for the client """
+
+    try:
+        client = Client.objects.get(pk=pk)
+    except Client.DoesNotExist:
+        err_message = f'Client {pk} does not exist.'
+        return Response({'message': err_message}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        report_files = ReportFile.objects\
+            .filter(report__client=client, report__is_active=True).order_by('-period', 'report__file_name')
+        rf_serializer = serializers.ReportFileSerializer(report_files, many=True)
+        return Response(rf_serializer.data, status=status.HTTP_200_OK)
 
 
 # Metadata
@@ -667,3 +689,72 @@ def get_metadata(request: Request):
             'countries': countries_serializer.data
         }
         return Response(data, status=status.HTTP_200_OK)
+
+
+# HealthCheck
+@csrf_exempt
+@api_view(['GET'])
+def health_check(request: Request, pk):
+
+    try:
+        client = Client.objects.get(pk=pk)
+    except Client.DoesNotExist:
+        err_message = f'Client {pk} does not exist.'
+        return Response({'message': err_message}, status=status.HTTP_404_NOT_FOUND)
+
+    retval = []
+
+    if request.method == 'GET':
+
+        # Same vendorService in more than one active order
+        vs = VendorService.objects\
+            .filter(orderservice__order__is_active=True, vendor__client=client)\
+            .annotate(num_count=Count('orderservice')).filter(num_count__gt=1)\
+            .order_by('vendor_id', 'service_id')
+        if vs.exists():
+            retval.append({
+                'description': 'Account services present in more than one active orders',
+                'values': [f'Account {el.vendor_id}: service {el.service_id}' for el in vs]
+            })
+
+        # VendorServices not in orders
+        os_to_exclude = OrderService.objects.filter(order__contract__client=client, order__is_active=True).values('pk')
+        vs = VendorService.objects.filter(vendor__client=client)\
+            .exclude(orderservice__in=Subquery(os_to_exclude))\
+            .order_by('vendor_id', 'service_id')
+        if vs.exists():
+            retval.append({
+                'description': 'Account services not included in active orders',
+                'values': [f'Account {el.vendor_id}: service {el.service_id}' for el in vs]
+            })
+
+        # Active contracts with no active orders
+        c = Contract.objects.filter(client=client, is_active=True)\
+            .annotate(active_order_count=Count(
+                'orders',
+                filter=Q(orders__is_active=True),
+                distinct=True
+            )
+        ).filter(active_order_count=0)
+        if c.exists():
+            retval.append({
+                'description': 'Active contracts with no active orders',
+                'values': [str(el) for el in c]
+            })
+
+        # Usage data with no accounts service
+        vs_set = VendorService.objects.filter(
+            vendor=OuterRef('vendor'),
+            service=OuterRef('service')
+        )
+        unmatched_us = UsageStats.objects.filter(vendor__client=client).exclude(
+            Exists(vs_set)
+        ).order_by('period', 'vendor_id', 'service_id')
+        if unmatched_us.exists():
+            values = [f'{el.period}: account {el.vendor_id} service {el.service_id}' for el in unmatched_us]
+            retval.append({
+                'description': 'Service usage without associated account',
+                'values': values
+            })
+
+        return Response(data=retval, status=status.HTTP_200_OK)

@@ -8,5 +8,7 @@ urlpatterns = [
         path('contracts/',
              views.ClientDetailsView.as_view(template_name='client_contracts.html'), name='client_contracts'),
         path('accounts/', views.ClientDetailsView.as_view(template_name='client_accounts.html'), name='client_accounts'),
+        path('reports/', views.ClientDetailsView.as_view(template_name='client_reports.html'), name='client_reports'),
+        path('issues/', views.ClientDetailsView.as_view(template_name='client_issues.html'), name='client_issues'),
     ])),
 ]
