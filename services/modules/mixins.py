@@ -12,13 +12,15 @@ celery_logger = get_task_logger('services.mixins')
 
 
 class FiltersMixin:
-    """ A mixin class to add methods for loading service filters """
+    """ A mixin class to add methods for loading service filters.
+        Filters are used to identify the service for each transaction in a vendor input file
+    """
 
-    def load_all_service_filters(self) -> dict:
+    def load_all_service_filters(self, usage_based_only=True) -> dict:
         """ Returns a dictionary with FilterGroups for all services """
 
         celery_logger.debug("Loading service filters")
-        services = Service.objects.all().filter(usage_based=True)
+        services = Service.objects.all().filter(usage_based=usage_based_only)
         service_filters = self.get_service_filters()
         return {el.service_id: FilterGroup(service_filters[el.filter_id]) for el in services}
 
@@ -39,7 +41,9 @@ class FiltersMixin:
 
     @staticmethod
     def get_service_filters() -> dict | None:
-        """ Returns the service filters configuration in the DB in the form of {filter_id: [(func, value),]}"""
+        """ Loads the service filters configuration from the DB and returns them in the form of a dict.
+            Example: {2: [(transaction_type__eq, 1), (status__not_eq, 5)]}
+        """
 
         try:
             filter_configs = FilterConfig.objects.all()
