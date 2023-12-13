@@ -1,9 +1,10 @@
-# CODE OK
 from dateutil.parser import parse
 from django.conf import settings
 from django.core.files import File
+
 from reports.models import ReportFile
-from .table_mixin import TableRenderMixin, FormatMixin
+from .table_mixin import TableRenderMixin
+from .formats_mixin import FormatMixin
 
 import xlsxwriter
 import tempfile

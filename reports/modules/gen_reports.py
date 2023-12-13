@@ -1,4 +1,3 @@
-# CODE OK
 from celery import shared_task
 from celery_tasks.models import FileProcessingTask
 from celery.utils.log import get_task_logger

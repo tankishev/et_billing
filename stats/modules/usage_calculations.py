@@ -1,16 +1,16 @@
-# CODE OK
 from celery import shared_task
 from celery_tasks.models import FileProcessingTask
 from celery.utils.log import get_task_logger
-from .usage_calculator import ServiceUsageCalculator
-from ..models import VendorInputFile
+
+from vendors.models import VendorInputFile
+from .calculator import ServiceUsageCalculator
 
 from datetime import datetime as dt
 from pathlib import PurePath
 import logging
 
-logger = logging.getLogger('et_billing.vendors_vendors_calc')
-celery_logger = get_task_logger('vendors.vendors_calc')
+logger = logging.getLogger('et_billing.stats_vendors_calc')
+celery_logger = get_task_logger('stats.vendors_calc')
 
 
 def res_result(res_id):
@@ -34,7 +34,7 @@ def recalc_vendor(self, period, vendor_id):
 
     # Create file processing task
     task_status = FileProcessingTask.objects.create(
-        task_id=self.request.id,    status='PROGRESS', progress=0, number_of_files=1)
+        task_id=self.request.id, status='PROGRESS', progress=0, number_of_files=1)
     task_status.save()
 
     try:

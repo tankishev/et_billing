@@ -6,11 +6,7 @@ urlpatterns = [
     path('', views.index, name='vendors_index'),
 
     # Vendor calculations
-    path('calc-all/', views.calc_usage_all_vendors, name='calc_usage_all'),
-    path('calc-vendor/', include([
-        path('', views.calc_vendor_usage, name='calc_vendor_usage'),
-        path('unreconciled/<int:file_id>/', views.view_unreconciled_transactions, name='get_unreconciled'),
-    ])),
+    path('calc-vendor/unreconciled/<int:file_id>/', views.view_unreconciled_transactions, name='get_unreconciled'),
 
     # Processing fo vendor files
     path('delete-unused/', views.delete_unused_vendor_input_files, name='vendor_files_delete_unused'),

@@ -1,10 +1,10 @@
-# CODE TO BE TESTED
 from datetime import datetime as dt
 from celery import shared_task
 from celery_tasks.models import FileProcessingTask
-from clients.models import Client
+
 from shared.modules import InputFilesMixin
-from vendors.models import VendorInputFile, Vendor
+from vendors.models import VendorInputFile
+from ..models import Client, Vendor
 from ..models import UniqueUser, UquStatsPeriodClient, UquStatsPeriodVendor, UquStatsPeriod, UquStatsPeriodCountries
 
 import logging

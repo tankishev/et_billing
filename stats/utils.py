@@ -1,11 +1,15 @@
-# CODE OK
+from django.db.models import OuterRef, Subquery
+
+from vendors.models import VendorService
 from .models import UsageStats
 
 
 def get_stats_usage_not_in_vendor_services():
     """ Returns a QuerySet with UsageStats that do not have a corresponding VendorService """
-    return UsageStats.objects.raw(
-        'select * from stats_usage su '
-        'left join vendor_services vs on su.service_id = vs.service_id and su.vendor_id = vs.vendor_id '
-        'where vs.service_id is null'
-    )
+
+    vs_subquery = VendorService.objects.filter(
+        vendor_id=OuterRef('vendor_id'),
+        service_id=OuterRef('service_id')
+    ).values('service_id')[:1]
+
+    return UsageStats.objects.annotate(vs_service_id=Subquery(vs_subquery)).filter(vs_service_id__is_null=True)

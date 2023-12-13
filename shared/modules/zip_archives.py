@@ -1,4 +1,3 @@
-# CODE OK
 from django.http import HttpResponse
 
 from pathlib import PurePath

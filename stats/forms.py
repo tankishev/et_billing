@@ -1,10 +1,33 @@
-# CODE OK
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.utils.translation import gettext_lazy as _
 
-from clients.models import Client
+from shared.forms import PeriodForm
+from .models import Client
+from .models import Vendor
+
+
+def validate_vendor(value):
+    """ Check if value is a valid vendor_id """
+
+    if value not in [el.get('vendor_id') for el in Vendor.objects.values('vendor_id')]:
+        raise ValidationError(
+            _('%(value)s is not a valid account ID'),
+            params={'value': value},
+        )
+
+
+class VendorPeriodForm(PeriodForm):
+    """ A PeriodForm with a field for vendor_id """
+
+    pk = forms.IntegerField(
+        label='Enter account ID',
+        widget=forms.NumberInput(
+            attrs={'class': "form-control"}
+        ),
+        validators=[validate_vendor]
+    )
 
 
 class UniqueUsersForm(forms.Form):

@@ -1,11 +1,9 @@
-from clients.models import Client
-from month.models import MonthField
-from services.models import Service
-from vendors.models import Vendor
-
 from django.db import models
-
+from month.models import MonthField
 import os
+
+from clients.models import Client
+from vendors.models import Vendor
 
 
 class ReportType(models.Model):
@@ -115,6 +113,7 @@ class ReportFile(models.Model):
 
 
 class TransactionStatus(models.Model):
+    """ !!! NOT USED """
     status_type = models.IntegerField(primary_key=True)
     description = models.CharField(max_length=50)
 

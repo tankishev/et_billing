@@ -1,4 +1,3 @@
-# CODE OK
 from django.db import models
 from month.models import MonthField
 

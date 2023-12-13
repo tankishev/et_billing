@@ -1,4 +1,3 @@
-# CODE OK
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -6,10 +5,10 @@ from django.urls import reverse
 
 from shared.views import download_excel_file
 from shared.modules import create_zip_file
-from .forms import VendorPeriodForm, PeriodForm, FileUploadForm
+from .forms import FileUploadForm, PeriodForm
 from .models import VendorInputFile
-from .modules import recalc_vendor, recalc_all_vendors, get_vendor_unreconciled, \
-    handle_uploaded_file, list_archive, handle_extract_zip, delete_inactive_input_files
+from .modules.unreconciled_vendors import get_vendor_unreconciled
+from .modules.zip_archives import list_archive, handle_extract_zip, handle_uploaded_file, delete_inactive_input_files
 
 import logging
 
@@ -22,65 +21,6 @@ def index(request):
 
 
 # VENDOR USAGE CALCULATIONS
-@login_required
-def calc_vendor_usage(request):
-    """ Trigger usage calculation for one account """
-
-    context = {
-        'page_title': 'Calculate Usage',
-        'form_title': 'Calculate usage for an account',
-        'form_subtitle': None,
-        'form_address': '/vendors/calc-vendor/',
-        'form': VendorPeriodForm()
-    }
-
-    if request.method == 'POST':
-        form = VendorPeriodForm(request.POST)
-        if form.is_valid():
-            period = form.cleaned_data.get('period')
-            vendor_id = form.cleaned_data.get('pk', None)
-            if vendor_id is not None:
-                async_result = recalc_vendor.delay(period, int(vendor_id))
-                context = {
-                    'list_title': f'Calculate usage for account {vendor_id}',
-                    'taskId': async_result.id
-                }
-                return render(request, 'processing_bar.html', context)
-        else:
-            context['form'] = form
-
-    return render(request, 'base_form.html', context)
-
-
-@login_required
-def calc_usage_all_vendors(request):
-    """ Trigger usage calculation for all vendor """
-
-    context = {
-        'page_title': 'Calculate Usage',
-        'form_title': 'Calculate usage for ALL accounts',
-        'form_subtitle': None,
-        'form_address': '/vendors/calc-all/',
-        'form': PeriodForm()
-    }
-
-    if request.method == 'POST':
-        form = PeriodForm(request.POST)
-        if form.is_valid():
-            period = form.cleaned_data.get('period')
-            async_result = recalc_all_vendors.delay(period)
-            context = {
-                'list_title': 'Calculate usage for ALL accounts',
-                'list_subtitle': 'This could take up to 2 minutes',
-                'taskId': async_result.id
-            }
-            return render(request, 'processing_bar.html', context)
-        else:
-            context['form'] = form
-
-    return render(request, 'base_form.html', context)
-
-
 def view_unreconciled_transactions(request, file_id: int):
     """ Return transactions and possible services for the Unreconciled modal """
 

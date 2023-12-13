@@ -1,6 +1,7 @@
-# ADD LOGGER
+from typing import Union, Iterator, NamedTuple, List
 from django.conf import settings
 
+from pandas import DataFrame
 import pandas as pd
 
 
@@ -19,10 +20,10 @@ class InputFilesMixin:
     """
 
     _INPUT_FILES_ALLOWED_EXTENSIONS = ('xlsx', 'xls', 'csv')
-    _FILE_NUMERIC_COLS = ['Vendor ID', 'Status', 'Type', 'Signing type', 'Cost', 'Cost EUR']
+    _FILE_NUMERIC_COLS = ['Vendor ID', 'Status', 'Type', 'Signing type', 'Cost', 'Cost EUR', 'TransValue']
     _FILE_PID_COLS = ['PID receiver', 'PID sender']
 
-    def load_data(self, filename) -> pd.DataFrame | None:
+    def load_data(self, filename: str) -> Union[DataFrame, None]:
         """ Returns a DataFrame given vendor input filename """
 
         ext = filename.split('.')[-1]
@@ -33,7 +34,7 @@ class InputFilesMixin:
             return pd.read_excel(filename, keep_default_na=False, dtype=str)
         return pd.read_csv(filename, keep_default_na=False, low_memory=False, dtype=str)
 
-    def load_data_multiple(self, filenames) -> pd.DataFrame:
+    def load_data_multiple(self, filenames: Iterator) -> Union[DataFrame, None]:
         """ Load multiple Vendor report files and concatenates them in one DataFrame.
             Returns the dataframe.
         """
@@ -51,7 +52,8 @@ class InputFilesMixin:
                 pass
         return df
 
-    def load_data_for_service_usage(self, filename, skip_status_five=False) -> pd.DataFrame | None:
+    def load_data_for_service_usage(self, filename: Union[str, Iterator], skip_status_five=False)\
+            -> Union[DataFrame, None]:
         """ Loads data from a given filename or list of filenames.
             Prepares the data for service usage calculations.
             Returns a DataFrame with the prepared data.
@@ -67,7 +69,7 @@ class InputFilesMixin:
         if not df.empty:
             return self.prep_df_for_service_usage_calc(df, skip_status_five)
 
-    def load_data_for_uq_countries(self, filename, skip_status_five=True) -> iter:
+    def load_data_for_uq_countries(self, filename, skip_status_five=True) -> Iterator[NamedTuple]:
         df = self.load_data(filename)
         if 'Status' in df.columns and skip_status_five:
             df = df[df.Status != '5'][["Country receiver", "PID receiver"]].drop_duplicates()
@@ -75,7 +77,7 @@ class InputFilesMixin:
             df = df[["Country receiver", "PID receiver"]].drop_duplicates()
         return df.itertuples(index=False)
 
-    def load_data_for_uq_users(self, filename) -> list:
+    def load_data_for_uq_users(self, filename: str) -> List[str]:
         """ Returns the list of unique PID Receiver in an vendor file"""
 
         df = self.load_data(filename)
@@ -83,7 +85,7 @@ class InputFilesMixin:
             return list(df[df.Status != '5']['PID receiver'].unique())
         return list(df['PID receiver'].unique())
 
-    def prep_df_for_service_usage_calc(self, df, skip_status_five=False) -> pd.DataFrame:
+    def prep_df_for_service_usage_calc(self, df: DataFrame, skip_status_five=False) -> DataFrame:
         """ Takes a dataframe, replaces n/a with blank string, removes rows with status 5
         and converts specific columns from string to numeric representation.
         """

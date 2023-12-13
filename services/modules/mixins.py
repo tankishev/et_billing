@@ -1,6 +1,9 @@
-# CODE OK ... ADD LOGGING
+from __future__ import annotations
+from typing import Dict, List, Tuple
+from django.db.models import OuterRef, Case, When, Subquery, Exists, IntegerField, F
+
+from vendors.models import VendorService, VendorFilterOverride
 from services.models import FilterConfig, Service
-from .db_proxy import DBProxyFilters
 from .filters import FilterGroup
 
 from celery.utils.log import get_task_logger
@@ -16,31 +19,31 @@ class FiltersMixin:
         Filters are used to identify the service for each transaction in a vendor input file
     """
 
-    def load_all_service_filters(self, usage_based_only=True) -> dict:
+    def load_all_service_filters(self, usage_based_only=True) -> Dict[int, FilterGroup]:
         """ Returns a dictionary with FilterGroups for all services """
 
         celery_logger.debug("Loading service filters")
         services = Service.objects.all().filter(usage_based=usage_based_only)
-        service_filters = self.get_service_filters()
+        service_filters = self.get_filter_configs()
         return {el.service_id: FilterGroup(service_filters[el.filter_id]) for el in services}
 
-    @staticmethod
-    def load_vendor_service_filters(vendor_id, service_filters) -> dict | None:
+    def load_vendor_service_filters(self, vendor_id: int) -> Dict[int, FilterGroup] | None:
         """ Returns a dictionary with FilterGroups for each service of the given vendor.
-        :param vendor_id: vendor_id to load services for
-        :param service_filters: a dictionary with services filter functions
+            :param vendor_id: vendor_id to load services for
+            :returns : {service_id: FilterGroup}
         """
 
         celery_logger.debug(f"Loading service filters for vendor {vendor_id}")
-        dbp = DBProxyFilters()
-        db_services = dbp.get_vendor_services_filters(vendor_id)
+
+        db_services = self.get_vendor_service_filters(vendor_id)
         if db_services:
             celery_logger.debug("Services loaded. Returning filters")
+            service_filters = self.get_filter_configs()
             return {el[0]: FilterGroup(service_filters[el[1]]) for el in db_services}
         celery_logger.critical("No services found")
 
     @staticmethod
-    def get_service_filters() -> dict | None:
+    def get_filter_configs() -> Dict[int, List[Tuple[str, int]]] | None:
         """ Loads the service filters configuration from the DB and returns them in the form of a dict.
             Example: {2: [(transaction_type__eq, 1), (status__not_eq, 5)]}
         """
@@ -66,12 +69,35 @@ class FiltersMixin:
         except FilterConfig.DoesNotExist:
             return None
 
+    @staticmethod
+    def get_vendor_service_filters(vendor_id: int, usage_based_only=True) -> List[Tuple[int, int]]:
+        """ Returns the applicable filter_id for each VendorService service_id
+            :param vendor_id: ID of vendor for which to extract the filter_id
+            :param usage_based_only: return records only for usage based services
+            :return: [(service_id, filter_id), ]
+        """
+        vfo_subquery = VendorFilterOverride.objects.filter(
+            vendor_id=OuterRef('vendor_id'),
+            service_id=OuterRef('service_id')
+        ).values('filter_id')[:1]
+
+        vs = VendorService.objects.filter(vendor_id=vendor_id, service__usage_based=usage_based_only) \
+            .annotate(
+            filter_name=Case(
+                When(Exists(Subquery(vfo_subquery)), then=Subquery(vfo_subquery)),
+                default=F('service__filter_id'),
+                output_field=IntegerField()
+            )) \
+            .values_list('service_id', 'filter_name')
+
+        return list(vs)
+
 
 class ServicesMixin:
     """ A class to add methods to access Services objects """
 
     @staticmethod
-    def get_service_types_for_reports() -> dict[int: dict[str: str]] | None:
+    def get_service_types_for_reports() -> Dict[int: Dict[str: str]] | None:
         """ Returns the list of services in the DB
         :return: None or {service_id: {service, stype}}
         """

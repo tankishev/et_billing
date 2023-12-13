@@ -1,32 +1,32 @@
-# CODE OK
-from services.modules import FiltersMixin
 from services.models import Service
-from shared.modules import ServiceUsageMixin
-from .usage_calculator import ServiceUsageCalculator
+from stats.modules.calculator import BaseServicesMapper
 from ..models import VendorInputFile
 
 from datetime import datetime as dt
+from pandas import DataFrame
 import logging
 
 
 django_logger = logging.getLogger('vendors.unreconciled_vendors')
 
 
-class TransactionMapper(FiltersMixin, ServiceUsageMixin):
-    """ A simple class to map transactions to Service objects"""
+class UnreconciledTransactionsMapper(BaseServicesMapper):
+    """ A helper class that finds not configured service usage """
 
-    def __init__(self, df):
-        self.df = df
-        self.found_services = []
-        self.map_services()
+    def map(self, input_file, skip_status_five=True) -> DataFrame:
+        """ Finds service usage which cannot be mapped to vendor service configuration and guesses the service.
+        """
 
-    def map_services(self) -> dict or None:
-        services = self.load_all_service_filters()
-        self.df, _ = self.calc_usage(self.df, services)
-        found_ids = list(self.df.service_id.unique())
-        for el in found_ids:
-            service = Service.objects.get(service_id=el)
-            self.found_services.append(str(service))
+        # Load input_file/s and map services
+        _, mapped_data = self.map_service_usage(input_file, skip_status_five)
+        df = mapped_data.dataframe
+
+        # Drop mapped rows and guess unmapped ones
+        unmapped_df = df[df['service_id'].isna()][['Type', 'Status', 'Signing type', 'Cost']].drop_duplicates().copy()
+        service_filters = self.load_all_service_filters()
+        mapped_data = self.map_transactions(unmapped_df, service_filters)
+
+        return mapped_data.dataframe
 
 
 def get_vendor_unreconciled(file_id: int) -> dict:
@@ -39,13 +39,14 @@ def get_vendor_unreconciled(file_id: int) -> dict:
 
     try:
         input_file = VendorInputFile.objects.get(id=file_id)
-        calc = ServiceUsageCalculator()
-        res = calc.find_unreconciled_transactions(input_file)
-        mapper = TransactionMapper(res)
+        mapper = UnreconciledTransactionsMapper()
 
+        data = mapper.map(input_file)
+        found_ids = list(data.service_id.unique())
+        found_services = [str(el) for el in Service.objects.filter(service_id__in=found_ids)]
         return {
-            'table_values': mapper.df.values.tolist(),
-            'services': mapper.found_services
+            'table_values': data.values.tolist(),
+            'services': found_services
         }
 
     except VendorInputFile.DoesNotExist:

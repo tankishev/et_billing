@@ -1,4 +1,3 @@
-# CODE OK
 import logging
 
 logger = logging.getLogger('et_billing.services.filters')
@@ -15,6 +14,8 @@ class FieldFilter:
         self.lookup_value = lookup_value
 
     def apply(self, transaction) -> bool:
+        """ Tries to find the attribute of the transaction that matches the field_name
+            and applies the configured _match_function. """
         try:
             field_value = getattr(transaction, self.field_name)
             func = getattr(self, self.match_func)
@@ -22,14 +23,18 @@ class FieldFilter:
         except AttributeError as err:
             logger.warning(err)
 
-    @classmethod
-    def set_accepted_fields(cls, fields) -> None:
-        cls._ACCEPTED_FIELDS.clear()
-        for field_name in fields:
-            cls._ACCEPTED_FIELDS.append(field_name)
+    # @classmethod
+    # def set_accepted_fields(cls, fields) -> None:
+    #     cls._ACCEPTED_FIELDS.clear()
+    #     for field_name in fields:
+    #         cls._ACCEPTED_FIELDS.append(field_name)
 
     @classmethod
     def create_filter(cls, filter_name, filter_value):
+        """ Spits the filter_name into field and function. Returns a FieldFilter instance if
+            (i) the field is in the ACCEPTED FIELDS, and
+            (ii) the FieldFilter class has a method to support the function."""
+
         field_name, func_name = filter_name.split('__')
         match_func_name = f'_match_{func_name}'
         if field_name in cls._ACCEPTED_FIELDS and hasattr(cls, match_func_name):
@@ -67,7 +72,7 @@ class FieldFilter:
 
 
 class FilterGroup:
-    """ A class to hold a list of FieldFilters and method to apply them to a transaction """
+    """ A class holding a list of FieldFilters and method to apply them all to a transaction """
 
     def __init__(self, filters_config=None) -> None:
         self.filters = []
@@ -85,7 +90,7 @@ class FilterGroup:
         return True
 
     def _add_filters_from_config(self, filter_config) -> None:
-        """ Adds filters to the FieldGroup given the config
+        """ Adds FieldFilters to the FilterGroup given the config
         :param filter_config: a tuple of (field_name__func_name, filter_value)
         """
 

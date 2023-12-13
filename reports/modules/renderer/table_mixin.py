@@ -1,4 +1,3 @@
-# CODE OK
 import decimal
 
 from .formats_mixin import FormatMixin

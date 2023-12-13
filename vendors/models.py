@@ -1,10 +1,9 @@
-# CODE OK
 from django.db import models
+from month.models import MonthField
+import os
 
 from clients.models import Client
 from services.models import Service, Filter
-from month.models import MonthField
-import os
 
 
 class Vendor(models.Model):

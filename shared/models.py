@@ -1,4 +1,3 @@
-# CODE OK
 from django.db import models
 from shared.utils import period_validator
 

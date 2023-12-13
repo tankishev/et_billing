@@ -1,6 +1,61 @@
-# CODE OK
-from shared.modules import DBProxy
+from django.conf import settings
+import psycopg2 as pg
+
 from vendors.models import VendorInputFile
+
+
+class DBProxy:
+    """ A class used to extract data directly from the DB """
+
+    def __init__(self):
+        db_config = settings.DATABASES.get('default')
+        db_name = db_config.get('NAME')
+        self._conn = pg.connect(
+            host=db_config.get('HOST'),
+            port=db_config.get('PORT'),
+            user=db_config.get('USER'),
+            password=db_config.get('PASSWORD'),
+            database=db_name,
+        )
+
+    @property
+    def conn(self):
+        return self._conn
+
+    def close(self):
+        self.conn.close()
+
+    def exec(self, sql, data=None, commit=False, fetch=True):
+        """
+        Save data to db given sql expression
+        :param sql: valid sql expression with data placeholders
+        :param data: data tuple
+        :param commit: commit the transaction
+        :param fetch: whether to return results after the execution
+        :return: result
+        """
+
+        curr = self.conn.cursor()
+        try:
+            if data is None:
+                curr.execute(sql)
+            else:
+                curr.execute(sql, data)
+
+            if commit:
+                self.conn.commit()
+            if fetch:
+                data = curr.fetchall()  # Retrieve the result, if needed
+
+        except Exception as e:
+            self.conn.rollback()  # Rollback the transaction
+            raise e
+
+        finally:
+            curr.close()  # Close the cursor
+
+        if fetch:
+            return data
 
 
 class DBProxyReports(DBProxy):
@@ -62,7 +117,7 @@ class DBProxyReports(DBProxy):
                 report_type: 1:generic,
                 language_id: 1:BG, 2:EN,
                 skip_columns,
-                include_details: 0:false, 1:true"
+                include_details: 0:false, 1:true
                 client_id, legal_name, contract_id, contract_date
         """
 
@@ -80,7 +135,7 @@ class DBProxyReports(DBProxy):
                 report_type: 1:generic,
                 language_id: 1:BG, 2:EN,
                 skip_columns,
-                include_details: 0:false, 1:true"
+                include_details: 0:false, 1:true
                 client_id, legal_name, contract_id, contract_date
         """
 
@@ -97,7 +152,7 @@ class DBProxyReports(DBProxy):
                 report_type: 1:generic,
                 language_id: 1:BG, 2:EN,
                 skip_columns,
-                include_details: 0:false, 1:true"
+                include_details: 0:false, 1:true
                 client_id, legal_name
         """
 

@@ -1,7 +1,7 @@
-# CODE OK
 from celery import current_task
 from celery_tasks.models import FileProcessingTask
-from clients.models import Client
+
+from reports.models import Client
 from .bililng_summary import BillingSummary
 from .utils import ReportClient, Report
 

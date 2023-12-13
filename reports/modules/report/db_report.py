@@ -1,4 +1,4 @@
-# CODE OK
+from typing import List, Tuple
 from services.modules import FiltersMixin, ServicesMixin
 from shared.utils import DictToObjectMixin
 from shared.modules import ServiceUsageMixin, InputFilesMixin
@@ -94,20 +94,20 @@ class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin, ServicesMixin):
         retval.sort(key=lambda el: el[0:2])
         return [el[-1] for el in retval]
 
-    def get_report_transactions(self, report_id, hide_pids=True, skip_status_five=True) -> tuple[list, bool]:
+    def get_report_transactions(self, report_id, hide_pids=True, skip_status_five=True) -> Tuple[List, bool]:
         """ Generates a list of Transactions to be rendered in the Details sheet """
 
         service_types = self.get_service_types_for_reports()
         vendor_files = self.dba.get_vendor_files_by_report_id(report_id)
         retval = []
-        is_reconciled = True
+        fully_mapped = True
         for file in vendor_files:
+            service_filters = self.load_vendor_service_filters(file.vendor_id)
             df = self.load_data_for_service_usage(file.file.path, skip_status_five)
-            service_filters = self.get_service_filters()
-            services = self.load_vendor_service_filters(file.vendor_id, service_filters)
-            transactions, reconciled = self.calc_transactions(df, services)
-            is_reconciled *= reconciled
-            for transaction in transactions:
+            mapped_transactions = self.map_transactions(df, service_filters)
+            fully_mapped *= mapped_transactions.fully_mapped
+
+            for transaction in mapped_transactions.transactions:
                 service_id = transaction.service_id
                 if service_id is None:
                     print(f'Vendor {file.vendor_id}: transaction {transaction.transaction_id} '
@@ -127,7 +127,7 @@ class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin, ServicesMixin):
                 transaction.transaction_type = int(transaction.transaction_type)
                 transaction.render_from_headers = True
                 retval.append(transaction)
-        return retval, is_reconciled
+        return retval, fully_mapped
 
     def _get_report_order_services(self, report_id: int, order_id: int) -> list | None:
         """ Returns a list of services to be included for a given order (BillingSummary) """

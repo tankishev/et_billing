@@ -1,10 +1,75 @@
-# ADD LOGGERS
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from .forms import UniqueUsersForm
-from .modules import get_uqu, store_uqu_celery
+
+from .forms import UniqueUsersForm, VendorPeriodForm, PeriodForm
+from .modules.uq_users import get_uqu, store_uqu_celery
+from .modules.usage_calculations import recalc_vendor, recalc_all_vendors
+
+import logging
+logger = logging.getLogger('et_billing.stats.views')
 
 
+# SERVICE USAGE CALCULATIONS
+@login_required
+def calc_service_usage(request):
+    """ Trigger usage calculation for one account """
+
+    context = {
+        'page_title': 'Calculate Usage',
+        'form_title': 'Calculate usage for an account',
+        'form_subtitle': None,
+        'form_address': '/stats/usage/calc-account/',
+        'form': VendorPeriodForm()
+    }
+
+    if request.method == 'POST':
+        form = VendorPeriodForm(request.POST)
+        if form.is_valid():
+            period = form.cleaned_data.get('period')
+            vendor_id = form.cleaned_data.get('pk', None)
+            if vendor_id is not None:
+                async_result = recalc_vendor.delay(period, int(vendor_id))
+                context = {
+                    'list_title': f'Calculate usage for account {vendor_id}',
+                    'taskId': async_result.id
+                }
+                return render(request, 'processing_bar.html', context)
+        else:
+            context['form'] = form
+
+    return render(request, 'base_form.html', context)
+
+
+@login_required
+def calc_service_usage_all_vendors(request):
+    """ Trigger usage calculation for all vendor """
+
+    context = {
+        'page_title': 'Calculate Usage',
+        'form_title': 'Calculate usage for ALL accounts',
+        'form_subtitle': None,
+        'form_address': '/stats/usage/calc-all/',
+        'form': PeriodForm()
+    }
+
+    if request.method == 'POST':
+        form = PeriodForm(request.POST)
+        if form.is_valid():
+            period = form.cleaned_data.get('period')
+            async_result = recalc_all_vendors.delay(period)
+            context = {
+                'list_title': 'Calculate usage for ALL accounts',
+                'list_subtitle': 'This could take up to 2 minutes',
+                'taskId': async_result.id
+            }
+            return render(request, 'processing_bar.html', context)
+        else:
+            context['form'] = form
+
+    return render(request, 'base_form.html', context)
+
+
+# UNIQUE USERS CALCULATIONS
 @login_required
 def view_unique_users(request):
     """ Renders a form for generating reports on unique users """

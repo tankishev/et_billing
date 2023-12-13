@@ -1,8 +1,7 @@
-# CODE OK
 from shared.utils import DictToObjectMixin
 
 
-class KwargsTransaction(DictToObjectMixin):
+class Transaction(DictToObjectMixin):
     """ Simple class mapping dictionary values to transaction object """
 
     def __init__(self, all_data, **kwargs):
@@ -36,6 +35,7 @@ class TransactionFactory:
         'Payer': 'payer',
         'Cost EUR': 'cost',
         'Bio required': 'bio',
+        'TransValue': 'transaction_value',  # 1: 500, 2: 2k, 3: 20k, 4: 100k, 5: 250k, 6: 0 (unlimited)
     }
 
     def __init__(self, headers):
@@ -56,4 +56,4 @@ class TransactionFactory:
         if len(data) == len(headers):
             init_kwargs = {headers[i]: el for i, el in enumerate(data)}
             init_kwargs['headers'] = headers
-            return KwargsTransaction(data, **init_kwargs)
+            return Transaction(data, **init_kwargs)

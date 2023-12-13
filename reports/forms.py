@@ -1,7 +1,6 @@
 from django import forms
-from clients.models import Client
 from shared.forms import PeriodForm
-from .models import Report
+from .models import Report, Client
 
 
 class ReportPeriodForm(PeriodForm):

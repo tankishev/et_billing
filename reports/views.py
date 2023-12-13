@@ -1,18 +1,14 @@
-from django.conf import settings
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 
-from clients.models import Client
-from vendors.models import Vendor
-from vendors.modules.utils import get_vendor_services_not_in_orders as get_vs
+from vendors.models import VendorService
 from shared.modules import create_zip_file
 from shared.views import download_excel_file
 from stats.utils import get_stats_usage_not_in_vendor_services as get_su
-
 from .forms import ReportPeriodForm, ClientPeriodForm, PeriodForm
-from .models import ReportFile
+from .models import ReportFile, Client, Vendor
 from . import modules as m
 
 import os
@@ -168,6 +164,13 @@ def list_report_files(request):
 
 @login_required
 def reconciliation(request):
+    vs = VendorService.objects.filter(
+        vendor__client__is_billable=True,
+        vendor__client__is_validated=True,
+        orderservice__isnull=True
+    ).values_list('vendor_id', 'service_id', 'service__service', 'service__stype', 'service__desc_en')
+    vendor_services = [f'Vendor {el[0]} - Service {" ".join(str(x) for x in el[1:])}' for el in vs]
+
     billable_vendors = [el for el in Vendor.objects.filter(
         reports__vendors__reports__isnull=True,
         client__is_billable=True
@@ -181,7 +184,7 @@ def reconciliation(request):
         is_validated=False
     )]
     usage_stats_check = [f'{el.period} Vendor {el.vendor} - Service {el.service}' for el in get_su()]
-    vendor_services = [f'Vendor {el[0]} - Service {" ".join(str(x) for x in el[1:])}' for el in get_vs()]
+
     context = {
         'res_details': {
             (0, 'Vendors not assigned'): [el for el in Vendor.objects.filter(client_id=0)],
