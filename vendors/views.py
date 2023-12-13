@@ -16,7 +16,7 @@ logger = logging.getLogger('et_billing.vendors.views')
 
 @login_required
 def index(request):
-    return render(request, 'vendors_index.html')
+    return render(request, 'vendors/vendors_index.html')
 
 
 # PROCESSING OF VENDOR INPUT FILES
@@ -82,8 +82,8 @@ def extract_zip_view(request):
                     'report_title': 'Processed accounts',
                     'res_details': res
                 }
-                return render(request, 'results_collapse.html', context)
-        return render(request, 'result_zip_upload.html', context)
+                return render(request, 'shared/results_collapse.html', context)
+        return render(request, 'vendors/result_zip_upload.html', context)
 
 
 @login_required
@@ -108,8 +108,8 @@ def list_vendor_files(request):
                 'zip_url': reverse('download_vendor_files_all', args=[period]),
                 'list_url': 'download_vendor_file'
             }
-            return render(request, 'file_download_list.html', context)
-    return render(request, 'base_form.html', context)
+            return render(request, 'shared/file_download_list.html', context)
+    return render(request, 'shared/base_form.html', context)
 
 
 @login_required
@@ -135,4 +135,4 @@ def upload_zip_view(request):
                 request.session['upload_period'] = period
                 return redirect('vendor_zip_extract')
             context['err_message'] = f'Attached file must be a valid ZIP file.'
-    return render(request, 'base_form.html', context)
+    return render(request, 'shared/base_form.html', context)

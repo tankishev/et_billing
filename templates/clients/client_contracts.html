@@ -1,4 +1,4 @@
-{% extends 'client_base.html' %}
+{% extends 'clients/client_base.html' %}
 {% load static %}
 {% block custom_scripts %}
     <script type="module" src="{% static 'js/utils.js' %}" defer="defer"></script>
@@ -131,7 +131,7 @@
     </div>
 
     <!-- Add/Remove Service Modal -->
-    {% include 'client_service_modal.html' %}
+    {% include 'shared/client_service_modal.html' %}
 
     <!-- Fetching data modal -->
     <div class="modal" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">

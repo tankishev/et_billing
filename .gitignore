@@ -1,7 +1,6 @@
 /media/
 /static/
 .idea
-db.et_billing
 __pycache__/
 /*.log
 /logs/

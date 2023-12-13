@@ -2,7 +2,6 @@ import {api} from "./api.js";
 import {parsers} from "./utils.js"
 
 document.querySelectorAll('#clientDetailsNav a')[3].classList.add('active');
-const validatedReportsList = document.getElementById('validatedReportsList');
 const unvalidatedReportsList = document.getElementById('unvalidatedReportsList');
 const clientID = document.getElementById('reportsList').dataset.clientId;
 

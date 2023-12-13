@@ -1,0 +1,53 @@
+{% block modal_process_period %}
+<div class="modal fade" id="periodModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="periodModal" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="periodModalHeading">Calculate service usage / Generate report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-success-subtle">
+                <form id="periodModalForm" class="needs-validation g-2" novalidate>
+                    <div class="row g-2">
+                        <div class="form-floating col-4">
+                            <input type="text" id="periodModalPeriod" class="form-control" value="{% now 'Y-m' %}">
+                            <label for="periodModalPeriod">Period</label>
+                        </div>
+                        <div class="form-floating col-8">
+                            <select class="form-select" id="periodModalScopeSelect" required>
+                                <option value="0" selected>All</option>
+                                <option value="1">option 1</option>
+                                <option value="2">option 2</option>
+                            </select>
+                            <label for="periodModalScopeSelect">Select scope</label>
+                        </div>
+                    </div>
+                </form>
+                <div class="mt-2 bg-light-subtle rounded p-3">
+                    <div class="px-1 mb-3">
+                        <div class="progress">
+                            <div id="periodModalProgressBar" class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 75%">75%</div>
+                        </div>
+                    </div>
+                    <ul class="list-group p-0 overflow-y-auto" style="max-height: 39vh;" id="periodModalList">
+                        <!-- list items go here -->
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div>
+                    <span id="periodModalExecutionTime" class="">Execution time: 5m 31s</span>
+                </div>
+                <div class="actions">
+                    <button form="periodModalForm" type="submit"  class="btn btn-primary" id="periodModalSubmitButton">Submit</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" aria-label="Cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="periodModalListItem">
+    <li class="list-group-item text-success">An item</li>
+</template>
+{% endblock %}

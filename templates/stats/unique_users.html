@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends 'shared/base_body.html' %}
 {% load static %}
 {% block title %}{{ page_title }}{% endblock %}
-{% block custom_scripts %}<script src="{% static 'uniqueUsers.js' %}" defer="defer"></script>{% endblock %}
+{% block custom_scripts %}<script src="{% static 'js/unique_users.js' %}" defer="defer"></script>{% endblock %}
 {% block content %}
     {% if form_title %}
     <h2>{{ form_title }}</h2>

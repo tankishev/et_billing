@@ -20,7 +20,7 @@ logger = logging.getLogger('et_billing.reports.views')
 @login_required
 def index(request):
     """ Returns index page for the reports module """
-    return render(request, 'reports_index.html')
+    return render(request, 'reports/reports_index.html')
 
 
 # BILLING REPORTS CALCULATIONS
@@ -46,11 +46,11 @@ def render_period(request):
                 'list_subtitle': 'This could take up to 5 minutes',
                 'taskId': async_result.id
             }
-            return render(request, 'processing_bar.html', context)
+            return render(request, 'shared/processing_bar.html', context)
         else:
             context['form'] = form
 
-    return render(request, 'base_form.html', context)
+    return render(request, 'shared/base_form.html', context)
 
 
 @login_required
@@ -75,10 +75,10 @@ def render_period_client(request):
                     'list_title': f'Generating report for {client.reporting_name}',
                     'taskId': async_result.id
                 }
-                return render(request, 'processing_bar.html', context)
+                return render(request, 'shared/processing_bar.html', context)
         else:
             context['form'] = form
-    return render(request, 'base_form.html', context)
+    return render(request, 'shared/base_form.html', context)
 
 
 @login_required
@@ -102,10 +102,10 @@ def render_period_report(request):
                     'list_title': f'Generating report {report.file_name}',
                     'taskId': async_result.id
                 }
-                return render(request, 'processing_bar.html', context)
+                return render(request, 'shared/processing_bar.html', context)
         else:
             context['form'] = form
-    return render(request, 'base_form.html', context)
+    return render(request, 'shared/base_form.html', context)
 
 
 # BILLING REPORTS DOWNLOAD
@@ -158,8 +158,8 @@ def list_report_files(request):
                 'zip_url': reverse('download_billing_reports_all', args=[period]),
                 'list_url': 'download_billing_report'
             }
-            return render(request, 'file_download_list.html', context)
-    return render(request, 'base_form.html', context)
+            return render(request, 'shared/file_download_list.html', context)
+    return render(request, 'shared/base_form.html', context)
 
 
 @login_required
@@ -196,7 +196,7 @@ def reconciliation(request):
             (6, 'Billable vendors without report'): billable_vendors
         }
     }
-    return render(request, 'results_collapse.html', context)
+    return render(request, 'shared/results_collapse.html', context)
 
 
 def _download_report(filepath):

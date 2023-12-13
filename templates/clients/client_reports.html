@@ -1,0 +1,290 @@
+{% extends 'clients/client_base.html' %}
+{% load static %}
+{% block custom_scripts %}
+    <script type="module" src="{% static 'js/api.js' %}" defer="defer"></script>
+    <script type="module" src="{% static 'js/client_files.js' %}" defer="defer"></script>
+{% endblock %}
+{% block client_details_tab %}
+
+    <div class="row bg-light-subtle mt-3">
+        <div class="col p-2">
+            <!-- Heading -->
+            <div class="row p-3">
+                <div class="col h4">Client reports</div>
+                <div class="col">
+                    <button id="btnGenerateReports" class="btn btn-outline-primary float-end" data-bs-toggle="modal" data-bs-target="#periodModal">Generate</button>
+                </div>
+            </div>
+
+            <!-- Tab navigation -->
+            <div class="row mt-3 mx-3">
+
+                <!-- Tab buttons -->
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="reportFilesTab" data-bs-toggle="tab" data-bs-target="#reportFiles" type="button">Files</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="reportConfigsTab" data-bs-toggle="tab" data-bs-target="#reportConfigs" type="button">Configs</button>
+                    </li>
+                </ul>
+
+                <!-- Tab contents -->
+                <div class="mt-3 tab-content">
+
+                    <!-- Report Files -->
+                    <div class="tab-pane fade show active" id="reportFiles" role="tabpanel">
+                        <!-- Files Accordion -->
+                        <div id="reportsList" class="row p3 mb-2 list-group" data-client-id="{{ client.client_id }}">
+                            <div class="accordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUnvalidated">
+                                            <span>Generated reports</span>
+                                        </button>
+                                    </h2>
+                                    <div id="collapseUnvalidated" class="accordion-collapse collapse">
+                                        <div class="accordion-body">
+                                            <div id="unvalidatedReportsList" class="row list-group px-4 mb-2">
+                                                No data
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseValidated">
+                                            <span>Validated reports</span>
+                                        </button>
+                                    </h2>
+                                    <div id="collapseValidated" class="accordion-collapse collapse">
+                                        <div class="accordion-body">
+                                            <div id="validatedReportsList" class="row list-group px-4 mb-2">
+                                                <ul>
+                                                {% for item in client.reports.all %}
+                                                    <li>{{ item }}</li>
+                                                {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Report Configs -->
+                    <div class="tab-pane fade" id="reportConfigs" role="tabpanel">
+                        <div class="accordion" id="reportConfigAccordion">
+                            {% for report in client.reports.all %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="{{report.pk}}heading">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#{{report.pk}}collapse">
+                                        <span>{{ report }}</span>
+                                        {% if not report.is_active %}
+                                        <span class="badge rounded-pill bg-danger float-end d-none">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-dash-circle-fill" viewBox="0 0 16 16">
+                                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM4.5 7.5a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7z"></path>>
+                                            </svg>
+                                            &emsp;inactive
+                                        </span>
+                                        {% endif %}
+                                    </button>
+                                </h2>
+                                <div id="{{report.pk}}collapse" class="accordion-collapse collapse">
+                                    <div class="accordion-body">
+                                        <!-- Report description -->
+                                        <div class="row">
+                                            <div class="col-md-9">
+                                                <div class="form-floating">
+                                                    <input type="text" class="form-control" id="reportFileName" data-id="file_name" placeholder="" value="{{ report.file_name }}" disabled>
+                                                    <label for="reportFileName">Report file name</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 justify-content-end">
+                                                <div class="float-end d-none">
+                                                    <button class="btn btn-outline-success">Save</button>
+                                                    <button class="btn btn-outline-danger ms-1">Cancel</button>
+                                                </div>
+                                                <div class="">
+                                                    <button class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split rounded-start-0 float-end" type="button" data-bs-toggle="dropdown">
+                                                        <span class="visually-hidden">Report actions</span>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li><a class="dropdown-item {% if report.is_active %}d-none{% endif %}" href="#">Activate</a></li>
+                                                        <li><a class="dropdown-item {% if not report.is_active %}d-none{% endif %}" href="#">Deactivate</a></li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li><a class="dropdown-item" href="#">Remove</a></li>
+                                                    </ul>
+                                                    <button class="btn btn-outline-primary rounded-end-0 border-end-0 float-end">Edit</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Report config -->
+                                        <div class="row row-cols-auto g-2 mt-1">
+                                            <div class="col-md-2">
+                                                <div class="form-floating">
+                                                    <select class="form-select" id="reportLanguage" data-id="language" disabled>
+                                                        {% for lng in report_languages.all %}
+                                                        <option value="{{ lng.pk }}" {% if report.language == lng %}selected{% endif %}>{{ lng }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    <label for="reportLanguage">Language</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-floating">
+                                                    <select class="form-select" id="reportSkipConfig" data-id="skip_columns" disabled>
+                                                        {% for cfg in skip_configs %}
+                                                        <option value="{{ cfg.pk }}" {% if cfg == report.skip_columns %}selected{% endif %}>{{ cfg.skip_columns }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    <label for="reportSkipConfig">Columns to skip</label>
+                                                </div>
+                                            </div>
+                                            <div class="col align-content-center">
+                                                <div class="form-check form-switch">
+                                                    <input type="checkbox" class="form-check-input" id="reportIncludeDetails" data-id="include_details" {% if report.include_details %}checked{% endif %} disabled>
+                                                    <label class="form-check-label" for="reportIncludeDetails">Include details</label>
+                                                </div>
+                                                <div class="form-check form-switch">
+                                                    <input type="checkbox" class="form-check-input" id="reportIncludePID" data-id="show_pids" {% if report.show_pids %}checked{% endif %} disabled>
+                                                    <label class="form-check-label" for="reportIncludePID">Include PIDs</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row p-3">
+                                            <div class="col">
+                                                <div class="row mb-2 pe-2">
+                                                    <div class="col h5">Assigned accounts</div>
+                                                    <div class="col">
+                                                        <button id="btnRemoveServices" class="btn btn-outline-danger float-end ms-1">Remove</button>
+                                                        <button id="btnAddServices" class="btn btn-outline-primary float-end">Add</button>
+                                                    </div>
+                                                </div>
+                                                <div class="row mx-2">
+                                                    <div class="list-group">
+                                                        {% for vendor in report.vendors.all %}
+                                                            <div class="list-group-item" data-account-id="{{ vendor.vendor_id }}" id="accountListItem{{ vendor.vendor_id }}">
+                                                                <span class="badge rounded-pill bg-info">{{ vendor.vendor_id }}</span>
+                                                                <span>{{ vendor.description }}</span>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button class="btn btn-outline-primary mt-2" id="btnAddAccount" >Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Period modal -->
+    {% include 'shared/modal_process_period.html' %}
+
+    <!-- Templates -->
+    <template id="listItem">
+        <a href="#" class="list-group-item list-group-item-action">
+            <span>some text</span>
+            <span class="badge rounded-pill bg-success float-end d-none">validated</span>
+        </a>
+    </template>
+    <template id="reportAccordionItem">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="254heading">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#254collapse">
+                    <span>Report name / number</span>
+                    <span>Active / inactive span </span>
+                </button>
+            </h2>
+            <div id="254collapse" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    <!-- Report description -->
+                    <div class="row">
+                        <div class="col-md-9">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="reportFileName" data-id="fileName" placeholder="" value="10_23_29_130_Unicredit_Bulbank" disabled>
+                                <label for="reportFileName">Report file name</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3 justify-content-end">
+                            <div class="float-end d-none">
+                                <button class="btn btn-outline-success">Save</button>
+                                <button class="btn btn-outline-danger ms-1">Cancel</button>
+                            </div>
+                            <div class="">
+                                <button class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split rounded-start-0 float-end" type="button" data-bs-toggle="dropdown">
+                                    <span class="visually-hidden">Report actions</span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#">Activate</a></li>
+                                    <li><a class="dropdown-item" href="#">Deactivate</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#">Remove</a></li>
+                                </ul>
+                                <button class="btn btn-outline-primary rounded-end-0 border-end-0 float-end">Edit</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Report config -->
+                    <div class="row row-cols-auto g-2 mt-1">
+                        <div class="col-md-2">
+                            <div class="form-floating">
+                                <select class="form-select" id="reportLanguage" data-id="reportLanguage" disabled></select>
+                                <label for="reportLanguage">Language</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-floating">
+                                <select class="form-select" id="reportSkipConfig" data-id="reportSkipConfig" disabled></select>
+                                <label for="reportSkipConfig">Columns to skip</label>
+                            </div>
+                        </div>
+                        <div class="col align-content-center">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" class="form-check-input" id="reportIncludeDetails" data-id="reportIncludeDetails" checked disabled>
+                                <label class="form-check-label" for="reportIncludeDetails">Include details</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input type="checkbox" class="form-check-input" id="reportIncludePID" data-id="reportIncludePID" checked disabled>
+                                <label class="form-check-label" for="reportIncludePID">Include PIDs</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row p-3 h5">Assigned accounts</div>
+                    <div class="row px-1">
+                        <div class="list-group overflow-y-auto px-3 mb-2" id="accountsList" data-client-id="{{ client.client_id }}" style="max-height: 22vh;">
+                            <button class="btn btn-outline-primary col-1 mt-2" id="btnAddAccount" >Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <template id="accountListItem">
+        <div class="d-flex w-100 justify-content-between mb-1" data-account-id="{{ vendor.vendor_id }}" id="accountListItem{{ vendor.vendor_id }}">
+            <a href="#" class="list-group-item list-group-item-action rounded-start align-content-center">
+                <h6 class="mb-0">
+                    <span class="badge rounded-pill bg-info">{{ vendor.vendor_id }}</span>
+                    <span>{{ vendor.description }}</span>
+                </h6>
+            </a>
+            <button class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split rounded-start-0" type="button" data-bs-toggle="dropdown">
+                <span class="visually-hidden">Remove account</span>
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Remove</a></li>
+            </ul>
+        </div>
+    </template>
+{% endblock %}

@@ -1,9 +1,48 @@
-{% extends 'base.html' %}
+{% extends 'shared/base_body.html' %}
 {% block title %}Generate Reports{% endblock %}
 {% block content %}
-    <h2>Index</h2>
-    <ul>
-        <li><a href="{% url 'reports_index' %}">Reports</a></li>
-        <li><a href="{% url 'vendors_index' %}">DB Operations</a></li>
-    </ul>
+    <div class="col px-3">
+        <h2>Welcome {{ user.first_name }} ...</h2>
+        <div class="row bg-light-subtle m-2 mt-3 p-3">
+            <h3 class="mb-3">... what do you want to do today?</h3>
+            <div class="col-sm-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Client records</h5>
+                        <ul class="list-group list-group-flush mb-3">
+                            <li class="list-group-item">Add, remove, update clients</li>
+                            <li class="list-group-item">Manage contracts, orders & services</li>
+                            <li class="list-group-item">Configure and download reports</li>
+                        </ul>
+                        <a href="{% url 'clients_list' %}" class="btn btn-primary">Clients</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Usage calculations</h5>
+                        <ul class="list-group list-group-flush mb-3">
+                            <li class="list-group-item">Upload usage files</li>
+                            <li class="list-group-item">Calculate usage data</li>
+                            <li class="list-group-item">Trigger report generation</li>
+                        </ul>
+                        <a href="{% url 'vendors_index' %}" class="btn btn-primary">Usage</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">DB Admin</h5>
+                        <ul class="list-group list-group-flush mb-3">
+                            <li class="list-group-item">Manage global parameters (e.g. countries, industries, report languages)</li>
+                            <li class="list-group-item">Add services, filters, configurations</li>
+                        </ul>
+                        <a href="/admin/" target="_blank" class="btn btn-primary">Admin</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

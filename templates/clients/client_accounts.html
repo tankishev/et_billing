@@ -1,4 +1,4 @@
-{% extends 'client_base.html' %}
+{% extends 'clients/client_base.html' %}
 {% load static %}
 {% block custom_scripts %}
     <script src="https://kit.fontawesome.com/94d96f4b45.js" crossorigin="anonymous"></script>
@@ -100,7 +100,7 @@
     </div>
 
     <!-- Add/Remove Service Modal -->
-    {% include 'client_service_modal.html' %}
+    {% include 'shared/client_service_modal.html' %}
 
     <!-- Copy Services from Account Modal -->
     <div class="modal fade" id="copyServicesModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">

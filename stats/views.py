@@ -34,11 +34,11 @@ def calc_service_usage(request):
                     'list_title': f'Calculate usage for account {vendor_id}',
                     'taskId': async_result.id
                 }
-                return render(request, 'processing_bar.html', context)
+                return render(request, 'shared/processing_bar.html', context)
         else:
             context['form'] = form
 
-    return render(request, 'base_form.html', context)
+    return render(request, 'shared/base_form.html', context)
 
 
 @login_required
@@ -63,11 +63,11 @@ def calc_service_usage_all_vendors(request):
                 'list_subtitle': 'This could take up to 2 minutes',
                 'taskId': async_result.id
             }
-            return render(request, 'processing_bar.html', context)
+            return render(request, 'shared/processing_bar.html', context)
         else:
             context['form'] = form
 
-    return render(request, 'base_form.html', context)
+    return render(request, 'shared/base_form.html', context)
 
 
 def view_unreconciled_transactions(request, file_id: int):
@@ -102,7 +102,7 @@ def view_unique_users(request):
             context.update({'uqu_res': f'{res:,}'})
 
     context.update({'form': form})
-    return render(request, 'unique_users.html', context)
+    return render(request, 'stats/unique_users.html', context)
 
 
 @login_required
@@ -115,4 +115,4 @@ def save_unique_users_celery(request):
         'list_subtitle': 'This could take up to 5 minutes',
         'taskId': async_result.id
     }
-    return render(request, 'processing_bar.html', context)
+    return render(request, 'shared/processing_bar.html', context)
