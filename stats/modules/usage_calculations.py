@@ -3,7 +3,8 @@ from celery_tasks.models import FileProcessingTask
 from celery.utils.log import get_task_logger
 
 from vendors.models import VendorInputFile
-from .calculator import ServiceUsageCalculator
+from .calculator import ServiceUsageCalculator, UnreconciledTransactionsMapper
+from ..models import Service
 
 from datetime import datetime as dt
 from pathlib import PurePath
@@ -132,3 +133,31 @@ def recalc_all_vendors(self, period):
     finally:
         execution_time = dt.now() - start
         celery_logger.info(f'Execution time: {execution_time}')
+
+
+def get_vendor_unreconciled(file_id: int) -> dict:
+    """ Returns a dict with unreconciled transactions and suggested service for them.
+        Used for population of Unreconciled transactions modal.
+    """
+
+    logger.info(f"Mapping transactions for VendorInputFile pk {file_id}")
+    start = dt.now()
+
+    try:
+        input_file = VendorInputFile.objects.get(id=file_id)
+        mapper = UnreconciledTransactionsMapper()
+
+        data = mapper.map(input_file)
+        found_ids = list(data.service_id.unique())
+        found_services = [str(el) for el in Service.objects.filter(service_id__in=found_ids)]
+        return {
+            'table_values': data.values.tolist(),
+            'services': found_services
+        }
+
+    except VendorInputFile.DoesNotExist:
+        logger.warning(f"No VendorInputFile with id {file_id}")
+
+    finally:
+        execution_time = dt.now() - start
+        logger.info(f"Execution time: {execution_time}")

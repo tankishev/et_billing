@@ -1,4 +1,4 @@
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
@@ -7,7 +7,6 @@ from shared.views import download_excel_file
 from shared.modules import create_zip_file
 from .forms import FileUploadForm, PeriodForm
 from .models import VendorInputFile
-from .modules.unreconciled_vendors import get_vendor_unreconciled
 from .modules.zip_archives import list_archive, handle_extract_zip, handle_uploaded_file, delete_inactive_input_files
 
 import logging
@@ -18,14 +17,6 @@ logger = logging.getLogger('et_billing.vendors.views')
 @login_required
 def index(request):
     return render(request, 'vendors_index.html')
-
-
-# VENDOR USAGE CALCULATIONS
-def view_unreconciled_transactions(request, file_id: int):
-    """ Return transactions and possible services for the Unreconciled modal """
-
-    res = get_vendor_unreconciled(file_id)
-    return JsonResponse(res, safe=False)
 
 
 # PROCESSING OF VENDOR INPUT FILES

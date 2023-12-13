@@ -64,7 +64,7 @@ async function showUnreconciledModal(ev){
     const modal = document.querySelector('.modal');
     try {
 
-      const response = await fetch(`/vendors/calc-vendor/unreconciled/${docID}/`);
+      const response = await fetch(`/stats/usage/get-unreconciled/${docID}/`);
       const data = await response.json();
       const { table_values = [], services = [] } = data;
 

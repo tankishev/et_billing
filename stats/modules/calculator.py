@@ -5,6 +5,7 @@ from ..models import UsageStats, Vendor
 
 from typing import Tuple, Union
 from collections import namedtuple
+from pandas import DataFrame
 import logging
 
 ServiceMappingResult = namedtuple("ServiceMappingResult", ["status", "data", "transactions", "all_rows_mapped"])
@@ -130,3 +131,22 @@ class ServiceUsageCalculator(BaseServicesMapper):
             usage = UsageStats.objects.create(
                 period=period, vendor_id=vendor_id, service_id=service_id, unit_count=unit_count)
             usage.save()
+
+
+class UnreconciledTransactionsMapper(BaseServicesMapper):
+    """ A helper class that finds not configured service usage """
+
+    def map(self, input_file, skip_status_five=True) -> DataFrame:
+        """ Finds service usage which cannot be mapped to vendor service configuration and guesses the service.
+        """
+
+        # Load input_file/s and map services
+        _, mapped_data = self.map_service_usage(input_file, skip_status_five)
+        df = mapped_data.dataframe
+
+        # Drop mapped rows and guess unmapped ones
+        unmapped_df = df[df['service_id'].isna()][['Type', 'Status', 'Signing type', 'Cost']].drop_duplicates().copy()
+        service_filters = self.load_all_service_filters()
+        mapped_data = self.map_transactions(unmapped_df, service_filters)
+
+        return mapped_data.dataframe

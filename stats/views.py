@@ -1,9 +1,10 @@
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
 from .forms import UniqueUsersForm, VendorPeriodForm, PeriodForm
 from .modules.uq_users import get_uqu, store_uqu_celery
-from .modules.usage_calculations import recalc_vendor, recalc_all_vendors
+from .modules.usage_calculations import recalc_vendor, recalc_all_vendors, get_vendor_unreconciled
 
 import logging
 logger = logging.getLogger('et_billing.stats.views')
@@ -67,6 +68,13 @@ def calc_service_usage_all_vendors(request):
             context['form'] = form
 
     return render(request, 'base_form.html', context)
+
+
+def view_unreconciled_transactions(request, file_id: int):
+    """ Return transactions and possible services for the Unreconciled modal """
+
+    res = get_vendor_unreconciled(file_id)
+    return JsonResponse(res, safe=False)
 
 
 # UNIQUE USERS CALCULATIONS
