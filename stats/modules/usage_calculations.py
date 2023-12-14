@@ -51,6 +51,7 @@ def recalc_vendor(self, period, vendor_id):
         input_file_path = PurePath(input_file.file.path)
         dir_name = input_file_path.parts[-2]
         task_status.processed_documents.append({
+            'fileId': input_file.id,
             'fileName': dir_name,
             'resultCode': res,
             'resultText': res_result(res)
