@@ -138,7 +138,7 @@ export async function periodModalObject(modalParams){
                 }
 
                 // Check if task is complete
-                taskComplete = (taskStatus === 'COMPLETE');
+                taskComplete = (taskStatus !== 'PROGRESS');
             }
         }
     }
