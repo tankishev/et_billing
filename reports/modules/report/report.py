@@ -1,5 +1,6 @@
 from celery import current_task
 from celery_tasks.models import FileProcessingTask
+from celery.utils.log import get_task_logger
 
 from reports.models import Client
 from .bililng_summary import BillingSummary
@@ -9,6 +10,7 @@ from datetime import timedelta as td, datetime as dt
 import logging
 
 logger = logging.getLogger('et_billing.report.DBReportFactory')
+celery_logger = get_task_logger('et_billing.report.DBReportFactory')
 
 
 class DBReportFactory:
@@ -34,6 +36,7 @@ class DBReportFactory:
         """ Generates all reports for a given client """
 
         logger.info('Called from generate_report_by_client')
+        celery_logger.info('Celery: called from generate_report_by_client')
 
         report_data = self.dbr.get_report_data(self.period, client_id=client_id)
         if len(report_data) > 0:

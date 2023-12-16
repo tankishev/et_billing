@@ -15,6 +15,8 @@ celery_logger = get_task_logger('reports.gen_reports')
 def set_up(period: str) -> DBReportFactory:
     """ Create and return report factory """
 
+    celery_logger.debug(f'Setting up layout factory for period {period}')
+
     db_proxy = DBReport()
     renderer = ReportRenderer()
     layout_factory = LayoutFactory(report_layout, new_layout=True)
