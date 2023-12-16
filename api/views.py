@@ -20,6 +20,9 @@ from reports.modules import gen_report_for_client, gen_report_by_id
 from stats.models import UsageStats
 
 from . import serializers
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # REST Framework calls
@@ -796,12 +799,23 @@ def report_render_period_client(request: Request):
 def report_render_period_report(request: Request):
 
     if request.method == 'POST':
+
+        logger.info('Received a POST request in report_render_period_report')
+
         serializer = serializers.ReportPeriodSerializer(data=request.data)
         if serializer.is_valid():
             period = serializer.validated_data.get('period').strftime('%Y-%m')
             report = serializer.validated_data.get('report')
+
+            logger.info(f"Starting report generation task for period {period} and report {report.pk}")
+
             async_result = gen_report_by_id.delay(period, report.pk)
+
+            logger.info(f"Report generation task queued with task ID {async_result.id}")
+
             return Response({'taskId': async_result.id}, status=status.HTTP_202_ACCEPTED)
+
+        logger.warning(f"Serialization errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

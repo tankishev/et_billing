@@ -183,7 +183,7 @@ LOGGING = {
     'disable_existing_loggers': False,  # retain the default loggers
     'formatters': {
         'pipe': {
-            'format': '{asctime}|{module}|{levelname}|{message}',
+            'format': '{asctime}|{name}|{module}|{levelname}|{message}',
             'style': '{',
         },
     },
