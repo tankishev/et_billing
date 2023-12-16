@@ -10,11 +10,13 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 
+from celery_tasks.models import FileProcessingTask
 from clients.models import Client, ClientCountry, Industry
 from contracts.models import Contract, Order, OrderPrice, OrderService, PaymentType, Currency
 from services.models import Service
 from vendors.models import Vendor, VendorService, VendorFilterOverride
-from reports.models import ReportFile
+from reports.models import ReportFile, Report, ReportSkipColumnConfig, ReportLanguage
+from reports.modules import gen_report_for_client, gen_report_by_id
 from stats.models import UsageStats
 
 from . import serializers
@@ -35,6 +37,15 @@ def vendors_list(request: Request):
         client_id = request.query_params.get('client_id', '')
         if client_id and client_id.isnumeric():
             vendors = vendors.filter(client_id=int(client_id))
+
+        report_id = request.query_params.get('report_id', '')
+        if report_id and report_id.isnumeric():
+            try:
+                report = Report.objects.get(pk=int(report_id))
+                report_vendors = report.values_list('vendors__vendor_id', flat=True)
+                vendors = vendors.filter(vendor_id__in=report_vendors)
+            except Report.DoesNotExist:
+                pass
 
         exclude_client_id = request.query_params.get('exclude_client_id', '')
         if exclude_client_id and exclude_client_id.isnumeric():
@@ -277,7 +288,7 @@ def client_vendors(request: Request, pk):
         serializer = serializers.VendorSerializer(vendors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    if request.method in ['POST']:
+    if request.method == 'POST':
         serializer = serializers.VendorsListSerializer(data=request.data)
         if serializer.is_valid():
             vendor_ids = serializer.data.get('ids', [])
@@ -646,6 +657,24 @@ def order_services_remove(request: Request, pk):
 @api_view(['GET'])
 def client_reports_list(request: Request, pk):
 
+    """ Returns a list of Reports for a given Client """
+
+    try:
+        client = Client.objects.get(pk=pk)
+    except Client.DoesNotExist:
+        err_message = f'Client {pk} does not exist.'
+        return Response({'message': err_message}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        reports = Report.objects.filter(client=client, is_active=True)
+        reports_serializer = serializers.ClientReportListSerializer(reports, many=True)
+        return Response(reports_serializer.data, status=status.HTTP_200_OK)
+
+
+@csrf_exempt
+@api_view(['GET'])
+def client_report_files_list(request: Request, pk):
+
     """ Returns a list of report files for the client """
 
     try:
@@ -661,6 +690,121 @@ def client_reports_list(request: Request, pk):
         return Response(rf_serializer.data, status=status.HTTP_200_OK)
 
 
+@csrf_exempt
+@api_view(['POST'])
+def client_create_report(request: Request, pk):
+
+    """
+    Creates a new Report for a given Client
+    """
+
+    try:
+        client = Client.objects.get(pk=pk)
+    except Client.DoesNotExist:
+        err_message = f'Client {pk} does not exist.'
+        return Response({'message': err_message}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'POST':
+        data = request.data.copy()
+        if 'client' not in data:
+            data['client'] = client.pk
+
+        serializer = serializers.ReportSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+@api_view(['GET', 'PATCH', 'DELETE'])
+def report_details(request: Request, pk):
+
+    """
+    Retrieves or updates the details for a given Report.
+    Deletes the Report record.
+    """
+
+    try:
+        report = Report.objects.get(pk=pk)
+    except Report.DoesNotExist:
+        err_message = f'Report {pk} does not exist.'
+        return Response({'message': err_message}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = serializers.ReportSerializer(report)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    if request.method == 'PATCH':
+        serializer = serializers.ReportSerializer(instance=report, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method == 'DELETE':
+        try:
+            report.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except RestrictedError as err:
+            message = f'Cannot delete report {report} ' \
+                      f'because it has {len(err.restricted_objects)} related objects assigned to it. ' \
+                      f'Mark it as inactive instead.'
+            return Response({'message': message}, status=status.HTTP_409_CONFLICT)
+
+
+@csrf_exempt
+@api_view(['PUT'])
+def report_update_vendors(request: Request, pk):
+
+    """
+    Updates the list of vendors for a given Report.
+    """
+
+    try:
+        report = Report.objects.get(pk=pk)
+    except Report.DoesNotExist:
+        err_message = f'Report {pk} does not exist.'
+        return Response({'message': err_message}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'PUT':
+        serializer = serializers.ReportVendorUpdateSerializer(report, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            vendors = report.vendors.values('vendor_id', 'description')
+            vendors_list_serializer = serializers.VendorSerializerBasic(vendors, many=True)
+            return Response(vendors_list_serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+@api_view(['POST'])
+def report_render_period_client(request: Request):
+
+    if request.method == 'POST':
+        serializer = serializers.ClientPeriodSerializer(data=request.data)
+        if serializer.is_valid():
+            period = serializer.validated_data.get('period').strftime('%Y-%m')
+            client = serializer.validated_data.get('client')
+            async_result = gen_report_for_client.delay(period, client.client_id)
+            return Response({'taskId': async_result.id}, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@csrf_exempt
+@api_view(['POST'])
+def report_render_period_report(request: Request):
+
+    if request.method == 'POST':
+        serializer = serializers.ReportPeriodSerializer(data=request.data)
+        if serializer.is_valid():
+            period = serializer.validated_data.get('period').strftime('%Y-%m')
+            report = serializer.validated_data.get('report')
+            async_result = gen_report_by_id.delay(period, report.pk)
+            return Response({'taskId': async_result.id}, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 # Metadata
 @csrf_exempt
 @api_view(['GET'])
@@ -674,19 +818,25 @@ def get_metadata(request: Request):
         services = Service.objects.all().order_by('service_order')
         countries = ClientCountry.objects.all().order_by('country')
         industries = Industry.objects.all().order_by('industry')
+        skip_columns = ReportSkipColumnConfig.objects.all()
+        report_language = ReportLanguage.objects.all()
 
         pmt_serializer = serializers.PaymentTypeSerializer(pmt_types, many=True)
         ccy_serializer = serializers.CurrencySerializer(ccy_types, many=True)
         services_serializer = serializers.ServiceSerializer(services, many=True)
         industries_serializer = serializers.IndustrySerializer(industries, many=True)
         countries_serializer = serializers.CountrySerializer(countries, many=True)
+        skip_columns_serializer = serializers.ReportSkipColumnsSerializer(skip_columns, many=True)
+        report_language_serializer = serializers.ReportLanguageSerializer(report_language, many=True)
 
         data = {
             'pmtTypes': pmt_serializer.data,
             'ccyTypes': ccy_serializer.data,
             'services': services_serializer.data,
             'industries': industries_serializer.data,
-            'countries': countries_serializer.data
+            'countries': countries_serializer.data,
+            'skipColumns': skip_columns_serializer.data,
+            'reportLanguages': report_language_serializer.data
         }
         return Response(data, status=status.HTTP_200_OK)
 
@@ -705,7 +855,6 @@ def health_check(request: Request, pk):
     retval = []
 
     if request.method == 'GET':
-
         # Same vendorService in more than one active order
         vs = VendorService.objects\
             .filter(orderservice__order__is_active=True, vendor__client=client)\
@@ -758,3 +907,33 @@ def health_check(request: Request, pk):
             })
 
         return Response(data=retval, status=status.HTTP_200_OK)
+
+
+# Celery Tasks
+@csrf_exempt
+@api_view(['GET'])
+def get_task_list(request: Request):
+
+    """ Gets the list of celery tasks in the DB """
+
+    if request.method == 'GET':
+        tasks = FileProcessingTask.objects.filter(status='COMPLETE')
+        serializer = serializers.CeleryTaskSerializer(tasks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@csrf_exempt
+@api_view(['GET'])
+def get_task_progress(request: Request, task_id: str):
+
+    """ Gets the status of a Celery task provided its task_id """
+
+    try:
+        task = FileProcessingTask.objects.get(task_id=task_id)
+    except FileProcessingTask.DoesNotExist:
+        err_message = f'Celery taks with id {task_id} does not exist.'
+        return Response({'message': err_message}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = serializers.CeleryTaskSerializer(task, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)

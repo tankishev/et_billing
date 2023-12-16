@@ -24,6 +24,7 @@ export function hideElement(el, boolHide=true){
 }
 
 // Modal related
+
 /**
  * Shows a pop-up modal to confirm deletion of an object.
  * @param modalMessage message to display in the modal
@@ -100,12 +101,16 @@ export function validateForm(form){
         form.classList.remove('was-validated');
         let formData = Array.from(form.querySelectorAll('input, select'))
             .filter(el => el.value !== '')
-            .map(el=> [el.dataset.id, el.value]);
+            .map(el => {
+                const value = el.getAttribute('type')==='checkbox' ? el.checked : el.value;
+                return [el.dataset.id, value]
+            });
         return Object.fromEntries(formData);
     }
 }
 
 // Parsers
+
 function parseAccountDetails(accountsData){
     // Returns an object/ array of objects with the following structure:
     // {clientID, accountID, description, itecoName, isActive, isReconciled}
@@ -316,6 +321,32 @@ function parseServiceProps(data){
     console.warn(`Expected Object, received ${typeof data} instead!`)
 }
 
+/**
+ * Returns an object with Report data attributes
+ * @param data reportData returned by the API call
+ * @return {{fileName, clientID, reportID, skipColumns, language, isActive, includeDetails, showPIDs, vendorsList}}
+ */
+function parseReportData(data){
+    if (typeof data === "object"){
+        const {
+            'id': reportID,
+            'client': clientID,
+            'file_name':fileName,
+            'is_active': isActive,
+            'include_details': includeDetails,
+            'show_pids': showPIDs,
+            'language':language,
+            'skip_columns': skipColumns,
+            'vendors': vendorsList,
+
+        } = data;
+        const output = {reportID, clientID, fileName, isActive, includeDetails, showPIDs, language, skipColumns, vendorsList};
+        if (debug) {console.log(output)}
+        return output;
+    }
+    console.warn(`Expected Object, received ${typeof data} instead!`)
+}
+
 export const parsers = {
     parseAccountDetails,
     parseClientReportFiles,
@@ -325,5 +356,18 @@ export const parsers = {
     parseOrderData,
     parseOrderServices,
     parseOrderPrices,
-    parseServiceProps
+    parseServiceProps,
+    parseReportData
+}
+
+// Other
+
+export function getPreviousPeriod() {
+    const today = new Date();
+    const previousMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const year = previousMonth.getFullYear();
+    const month = previousMonth.getMonth() + 1;
+    const formattedMonth = month.toString().padStart(2, '0');
+
+    return `${year}-${formattedMonth}`;
 }

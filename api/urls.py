@@ -21,7 +21,11 @@ urlpatterns = [
                 path('', views.client_details),
                 path('accounts/', views.client_vendors),
                 path('issues/', views.health_check),
-                path('reports/', views.client_reports_list),
+                path('reports/', include([
+                    path('create/', views.client_create_report),
+                    path('files/', views.client_report_files_list),
+                    path('list/', views.client_reports_list),
+                ])),
                 path('services/', views.client_services),
             ])),
         ])),
@@ -46,6 +50,20 @@ urlpatterns = [
             ])),
         ])),
         path('order-service/<int:pk>/', views.order_service_edit),
+        path('reports/', include([
+            path('<int:pk>/', include([
+                path('', views.report_details),
+                path('assign-accounts/', views.report_update_vendors),
+            ])),
+            path('generate/', include([
+                path('client/', views.report_render_period_client),
+                path('report/', views.report_render_period_report),
+            ])),
+        ])),
+        path('tasks/', include([
+            path('', views.get_task_list),
+            path('<str:task_id>/', views.get_task_progress),
+        ])),
         path('metadata/', views.get_metadata),
     ])),
 ]

@@ -1,6 +1,7 @@
 import {api} from "./api.js";
 import {modalClose, modalShow, hideElement, parsers} from "./utils.js";
 import {servicesModalObject} from "./services_modal.js";
+import {accountsModalObject} from "./accounts_modal.js";
 
 // Set const for DOM elements
 const accountsList = document.getElementById('accountsList');
@@ -17,7 +18,10 @@ async function setUp(){
     void await api.readMetadata();
     document.querySelectorAll('#clientDetailsNav a')[2].classList.add('active');
     const clientID = accountsList.dataset.clientId;
-    accountsModal = accountsModalObject(clientID);
+    accountsModal = accountsModalObject({
+        'clientID': clientID,
+        'modalTitle': `Assign accounts to Client ${clientID}`
+    });
     servicesModal = servicesModalObject();
 
     // Assign listeners
@@ -387,89 +391,6 @@ function renderAccountServices(servicesData){
         return item;
     });
 }
-
-// Modals
-function accountsModalObject(clientID) {
-    // Set-up modal
-    const modal = document.getElementById('modalAddAccount');
-    const addAccountsList = modal.querySelector('#modalAddAccountsList');
-    const accountsListTemplate = document.getElementById('accountModalListItemTemplate');
-    const btnAssignAccounts = modal.querySelector('#btnAssignAccounts');
-    const searchBox = modal.querySelector('#searchBox');
-    const btnSearch = modal.querySelector('#searchGroup span');
-    const unassignedCheck = modal.querySelector('#checkUnassigned');
-    modal.querySelector('.modal-title').textContent = `Assign accounts to Client ${clientID}`;
-    unassignedCheck.checked = true;
-
-    // Set-up listeners
-    modal.querySelectorAll('.modal-footer li a').forEach((btn, i)=>{
-        btn.addEventListener('click', (ev)=>{
-           ev.preventDefault();
-           addAccountsList.querySelectorAll('input').forEach(el=>el.checked = i===0)
-        });
-    });
-    btnSearch.addEventListener('click', accountSearch)
-    searchBox.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter') {void accountSearch()}
-    });
-
-    return async (callBack) => {
-        const initialList = await api.accounts.readAccountsList({'client_id': 0});
-        if (initialList !== undefined){
-            updateAccountModalList(initialList)
-            btnAssignAccounts.addEventListener('click', ()=>{
-            const accountsList = Array.from(addAccountsList.querySelectorAll('input'))
-                .filter(el=>el.checked)
-                .map(el=>el.dataset.id);
-            modalClose(modal.id);
-            void callBack({clientID, accountsList});
-        },{once: true})
-
-            modalShow(modal.id)
-        }
-    }
-
-    // Private functions
-    async function accountSearch(){
-        const searchValue = searchBox.value.trim()
-        let searchParams = searchValue !== '' ? {'description' : searchBox.value} : {};
-        if (unassignedCheck.checked){
-            searchParams['client_id'] = 0;
-        } else {
-            searchParams['exclude_client_id'] = clientID;
-        }
-
-        const data = await api.accounts.readAccountsList(searchParams);
-        if (data !== undefined){
-            updateAccountModalList(data);
-        }
-    }
-    function updateAccountModalList(data){
-        const searchList = data.map(el=>{
-            const {'vendor_id': accountID, description, 'is_reconciled': isReconciled, 'is_active': isActive} = el;
-            const item = accountsListTemplate.content.cloneNode(true);
-            item.querySelector('input').setAttribute('data-id', accountID);
-            const spans = item.querySelectorAll('span');
-            spans[0].textContent = description
-            spans[1].textContent = accountID;
-            spans[2].textContent = isReconciled ? undefined : 'unreconciled';
-            spans[3].textContent = isActive ? undefined : 'inactive';
-            return item;
-            });
-        addAccountsList.replaceChildren(...searchList)
-        addAccountsList.querySelectorAll('a').forEach(el=>{
-            el.addEventListener('click', (ev) => {
-                if (ev.target.tagName !== 'INPUT'){
-                    ev.preventDefault();
-                    const chkBox = ev.currentTarget.querySelector('input');
-                    chkBox.checked = !chkBox.checked;
-                }
-            });
-        });
-    }
-}
-
-
 
 // Other
 async function getAccountDetails(accountID){

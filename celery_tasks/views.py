@@ -1,4 +1,3 @@
-# CODE OK
 from django.http import JsonResponse
 from .models import FileProcessingTask
 import logging

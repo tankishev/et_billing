@@ -23,7 +23,8 @@
                         </div>
                     </div>
                 </form>
-                <div class="mt-2 bg-light-subtle rounded p-3">
+                <div class="mt-2 bg-light-subtle rounded p-3 d-none" id="progressSection">
+                    <p>Processed files 100/200</p>
                     <div class="px-1 mb-3">
                         <div class="progress">
                             <div id="periodModalProgressBar" class="progress-bar progress-bar-striped bg-success" role="progressbar" style="width: 75%">75%</div>
@@ -36,11 +37,10 @@
             </div>
             <div class="modal-footer justify-content-between">
                 <div>
-                    <span id="periodModalExecutionTime" class="">Execution time: 5m 31s</span>
+                    <span id="periodModalExecutionTime" class="d-none">Execution time: 0m 0s</span>
                 </div>
                 <div class="actions">
-                    <button form="periodModalForm" type="submit"  class="btn btn-primary" id="periodModalSubmitButton">Submit</button>
-                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" aria-label="Cancel">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="periodModalStartButton">Start</button>
                 </div>
             </div>
         </div>
@@ -48,6 +48,6 @@
 </div>
 
 <template id="periodModalListItem">
-    <li class="list-group-item text-success">An item</li>
+    <li class="list-group-item">An item</li>
 </template>
 {% endblock %}

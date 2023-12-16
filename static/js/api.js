@@ -1,6 +1,7 @@
 import { getCookie } from "./utils.js";
 
 // Accounts
+
 async function createAccountService(data){
     // Assigns Services to Accounts
     // data: {accountID, [ids]}
@@ -226,12 +227,72 @@ async function deleteOrderService(data){
     return await sendRecords(url, 'POST', rest)
 }
 
-async function readClientReports(clientID){
-    const url = `/api/clients/${clientID}/reports`
-    return await getRecords(url)
+async function readClientReportFiles(clientID){
+    const url = `/api/clients/${clientID}/reports/files`;
+    return await getRecords(url);
+}
+
+async function readClientReportsList(clientID){
+    const url = `/api/clients/${clientID}/reports/list`
+    return await getRecords(url);
+}
+
+// Reports
+
+async function createReport(reportData){
+    // Create new report
+
+    const {'client': clientID} = reportData;
+    const url = `/api/clients/${clientID}/reports/create/`;
+    return await sendRecords(url,'POST', reportData);
+}
+
+async function readReportDetails(reportID){
+    // Read details for a given Report
+
+    const url = `/api/reports/${reportID}`
+    return await getRecords(url);
+}
+
+async function updateReportAccountsList(reportData){
+    // Updates the list of Accounts associated with a given Report
+
+    const {reportID, accountsList} = reportData;
+    const url = `/api/reports/${reportID}/assign-accounts/`;
+    return await sendRecords(url, 'PUT', accountsList);
+}
+
+async function updateReportDetails(reportData){
+    // Partial update of Report details
+
+    const {'report_id': reportID, ...data} = reportData
+    const url = `/api/reports/${reportID}/`
+    return await sendRecords(url, 'PATCH', data);
+}
+
+async function deleteReport(reportID){
+    // Deletes a report record
+
+    const url = `/api/reports/${reportID}/`;
+    return await deleteRecords(url);
+}
+
+async function generateClientReports(params){
+    // Trigger generation of all reports for a given client
+
+    const url = `/api/reports/generate/client/`;
+    return await sendRecords(url, 'POST', params);
+}
+
+async function generateReports(params){
+    // Trigger generation of a single report for a given client
+
+    const url = `/api/reports/generate/report/`;
+    return await sendRecords(url, 'POST', params);
 }
 
 // Utils
+
 async function getWithSearch(endpoint, searchParams){
 
     let url = endpoint;
@@ -331,6 +392,13 @@ async function errorHandler(response, endpoint, method='GET'){
     console.warn(error_message);
 }
 
+async function readTaskStatus(taskID){
+    // Reads the progress of a Celery task
+
+    const url = `/tasks/task_status/${taskID}/`;
+    return await getRecords(url);
+}
+
 export const api = {
     accounts: {
         createAccountService,
@@ -348,7 +416,8 @@ export const api = {
         readClientDetails,
         readClientIssues,
         readClientServices,
-        readClientReports,
+        readClientReportFiles,
+        readClientReportsList,
         updateClientDetailsRecord,
         deleteClient
     },
@@ -369,5 +438,14 @@ export const api = {
         deleteOrder,
         deleteOrderService
     },
-    readMetadata
+    reports: {
+        createReport,
+        readReportDetails,
+        updateReportAccountsList,
+        updateReportDetails,
+        deleteReport,
+        generateClientReports,
+        generateReports
+    },
+    readMetadata, readTaskStatus
 }

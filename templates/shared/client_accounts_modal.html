@@ -1,0 +1,65 @@
+{% block client_accounts_modal %}
+    <!-- Modal -->
+    <div class="modal fade" id="modalAddAccount" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign accounts to client</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body bg-success-subtle">
+                    <div class="col">
+                        <div id="searchGroup" class="row rounded bg-light mx-0 mb-2 py-2">
+                            <div class="input-group mx-0 py-1">
+                                <input id="searchBox" type="text" class="form-control" placeholder="Account description">
+                                <label class="form-check-label d-none" for="searchBox"></label>
+                                <span class="input-group-text"><i class="fa fa-search"></i></span>
+                            </div>
+                            <div class="form-check mx-0 py-1 ps-5">
+                                <input class="form-check-input" type="checkbox" value="" id="checkUnassigned" checked>
+                                <label class="form-check-label" for="checkUnassigned">
+                                    Filter unassigned only
+                                </label>
+                            </div>
+                        </div>
+                        <div class="row rounded bg-light mx-0">
+                            <div class="list-group p-0 overflow-y-auto" id="modalAddAccountsList" style="max-height: 40vh;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btnAssignAccounts" type="button" class="btn btn-primary rounded-end-0 border-end-0 me-0">Assign selected</button>
+                    <button class="btn btn-primary dropdown-toggle dropdown-toggle-split rounded-start-0 ms-0" type="button" data-bs-toggle="dropdown">
+                        <span class="visually-hidden">Select services</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">Select all</a></li>
+                        <li><a class="dropdown-item" href="#">Clear selection</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LitItem template -->
+    <template id="accountModalListItemTemplate">
+        <a href="" class="list-group-item">
+            <div class="row">
+                <div class="col-1 align-self-center">
+                    <input id="listCheckbox" class="form-check-input me-1" type="checkbox" value="">
+                    <label for="listCheckbox" class="d-none"></label>
+                </div>
+                <div class="col">
+                    <div class="row">
+                        <span></span>
+                    </div>
+                    <label>
+                        <span class="badge rounded-pill bg-info"></span>
+                        <span class="badge rounded-pill bg-warning"></span>
+                        <span class="badge rounded-pill bg-danger"></span>
+                    </label>
+                </div>
+            </div>
+        </a>
+    </template>
+{% endblock %}
