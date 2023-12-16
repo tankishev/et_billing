@@ -45,7 +45,14 @@ class DBReportFactory:
     def generate_report_by_report_id(self, report_id: int):
         """ Generates a specific report given its report_id """
 
+        logger.info('Called from generate_report_by_report_id')
+        celery_logger.info('Celery: called from generate_report_by_report_id')
+
         report_data = self.dbr.get_report_data(self.period, report_id=report_id)
+
+        logger.debug(f'Len report_data: {report_data}')
+        celery_logger.debug(f'Celery: Len report_data: {report_data}')
+
         if len(report_data) > 0:
             self.generate_reports(report_data)
 
