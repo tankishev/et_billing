@@ -43,7 +43,8 @@ class DBReportFactory:
         report_data = self.dbr.get_report_data(self.period, report_id=report_id)
         if len(report_data) > 0:
             self.generate_reports(report_data)
-        logger.warning(f'No report data for report_id {report_id} for {self.period}')
+        else:
+            logger.warning(f'No report data for report_id {report_id} for {self.period}')
 
     def generate_reports(self, report_data=None):
         """ Generates a specific report given its DB data or all reports if report_data is None """
