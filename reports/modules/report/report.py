@@ -36,6 +36,9 @@ class DBReportFactory:
         report_data = self.dbr.get_report_data(self.period, client_id=client_id)
         if len(report_data) > 0:
             self.generate_reports(report_data)
+        else:
+            logger.warning(f'No report data for client {client_id} for {self.period}')
+            mark_task_failed(current_task.request.id)
 
     def generate_report_by_report_id(self, report_id: int):
         """ Generates a specific report given its report_id """
@@ -45,6 +48,7 @@ class DBReportFactory:
             self.generate_reports(report_data)
         else:
             logger.warning(f'No report data for report_id {report_id} for {self.period}')
+            mark_task_failed(current_task.request.id)
 
     def generate_reports(self, report_data=None):
         """ Generates a specific report given its DB data or all reports if report_data is None """
@@ -54,7 +58,10 @@ class DBReportFactory:
         if report_data is None:
             report_data = self.dbr.get_report_data(self.period)
 
-        if report_data is not None:
+        if report_data is None:
+            logger.warning(f'No report data for for {self.period}')
+            mark_task_failed(current_task.request.id)
+        else:
             retval = []
 
             # Get the number of reports
@@ -163,3 +170,10 @@ class DBReportFactory:
             'fileId': report_file.id
         })
         task_status.save()
+
+
+def mark_task_failed(task_id):
+    task_status = FileProcessingTask.objects.get(task_id=task_id)
+    task_status.status = 'FAILED'
+    task_status.progress = 100
+    task_status.save()

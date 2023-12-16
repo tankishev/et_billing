@@ -35,7 +35,7 @@ class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin, ServicesMixin):
         :param report_id: if not none will filter the results only for this report_id
         """
 
-        logger.debug(f'Extracting report data from DB')
+        logger.debug(f'Starting generation of ReportData list')
 
         # Generate temp_table
         self.dba.create_temp_data_table(period)

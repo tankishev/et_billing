@@ -795,7 +795,7 @@ def report_render_period_client(request: Request):
             logger.info(f"Starting report generation task for period {period} and client {client.pk}")
 
             async_result = gen_report_for_client.delay(period, client.client_id)
-            logger.info(f"Report generation task queued with task ID {async_result.id}")
+            logger.info(f"Report generation task queued with task_id {async_result.id}")
 
             return Response({'taskId': async_result.id}, status=status.HTTP_202_ACCEPTED)
 
@@ -818,7 +818,7 @@ def report_render_period_report(request: Request):
             logger.info(f"Starting report generation task for period {period} and report {report.pk}")
 
             async_result = gen_report_by_id.delay(period, report.pk)
-            logger.info(f"Report generation task queued with task ID {async_result.id}")
+            logger.info(f"Report generation task queued with task_id {async_result.id}")
 
             return Response({'taskId': async_result.id}, status=status.HTTP_202_ACCEPTED)
 

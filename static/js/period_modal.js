@@ -126,6 +126,7 @@ export async function periodModalObject(modalParams){
                 }
                 progressStatusField.textContent = progressStatus;
                 progressBar.style.width = `${taskProgress}%`;
+                progressBar.textContent = `${taskProgress}%`;
 
                 // Update file list
                 for (const file of fileList){
@@ -139,6 +140,9 @@ export async function periodModalObject(modalParams){
 
                 // Check if task is complete
                 taskComplete = (taskStatus !== 'PROGRESS');
+                if (taskComplete){
+                    progressBar.classList.remove('progress-bar-striped');
+                }
             }
         }
     }

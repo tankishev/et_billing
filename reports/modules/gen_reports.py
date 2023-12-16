@@ -39,10 +39,7 @@ def gen_report_by_id(self, period: str, report_id: int):
     logger.info(f'Starting report generation task for period {period} and report {report_id}')
 
     # Create report processing task
-    task_status = FileProcessingTask.objects.create(
-        task_id=self.request.id, status='PROGRESS', progress=0, number_of_files=1)
-    task_status.save()
-    logger.debug(f'Created report processing task with ID {task_status.pk}')
+    create_file_processing_task(self.request.id)
 
     # Generate report
     dbf = set_up(period)
@@ -61,10 +58,7 @@ def gen_report_for_client(self, period: str, client: int):
     logger.info(f'Starting report generation for client_id {client}')
 
     # Create report processing task
-    task_status = FileProcessingTask.objects.create(
-        task_id=self.request.id, status='PROGRESS', progress=0, number_of_files=1)
-    task_status.save()
-    logger.debug(f'Created report processing task with ID {task_status.pk}')
+    create_file_processing_task(self.request.id)
 
     # Generate reports
     dbf = set_up(period)
@@ -83,10 +77,7 @@ def gen_reports(self, period: str):
     logger.info(f"Starting billing report generation for ALL clients for {period}")
 
     # Create report processing task
-    task_status = FileProcessingTask.objects.create(
-        task_id=self.request.id, status='PROGRESS', progress=0, number_of_files=1)
-    task_status.save()
-    logger.debug(f'Created report processing task with ID {task_status.pk}')
+    create_file_processing_task(self.request.id)
 
     # Generate reports
     dbf = set_up(period)
@@ -95,3 +86,12 @@ def gen_reports(self, period: str):
 
     execution_time = dt.now() - start
     logger.info(f'Execution time: {execution_time}')
+
+
+def create_file_processing_task(task_id):
+    task_status = FileProcessingTask.objects.create(
+        task_id=task_id, status='PROGRESS', progress=0, number_of_files=1
+    )
+    logger.debug(f'Created FileProcessingTask with ID {task_status.pk}')
+    task_status.save()
+    return task_status
