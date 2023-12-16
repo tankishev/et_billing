@@ -76,7 +76,10 @@ export async function periodModalObject(modalParams){
         scopeSelector.replaceChildren(...scopeOptions);
         progressSection.classList.add('d-none');
         progressStatusField.textContent = '';
+        progressBar.classList.add('bg-success');
+        progressBar.classList.remove('bg-warning');
         progressBar.style.width = `0%`;
+        progressBar.textContent = `0%`;
         periodModalList.replaceChildren();
         processedFiles.length = 0;
         resetCounter();
@@ -142,6 +145,11 @@ export async function periodModalObject(modalParams){
                 taskComplete = (taskStatus !== 'PROGRESS');
                 if (taskComplete){
                     progressBar.classList.remove('progress-bar-striped');
+                    if (taskStatus === 'FAILED'){
+                        progressBar.textContent = 'Report generation failed';
+                        progressBar.classList.remove('bg-success');
+                        progressBar.classList.add('bg-warning');
+                    }
                 }
             }
         }

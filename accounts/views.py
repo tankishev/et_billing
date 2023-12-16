@@ -33,7 +33,7 @@ def login_view(request):
                 logger.warning(f'User {username} is suspended')
                 error_message = 'Authentication failed or account suspended.'
                 return JsonResponse({'success': False, 'error_message': error_message}, status=401)
-            logger.debug(f'User {username} is not susspended')
+            logger.debug(f'User {username} is not suspended')
 
             # Authenticate users that are not blocked
             authenticated_user = authenticate(request, username=username, password=password)
