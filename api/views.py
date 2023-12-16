@@ -785,12 +785,21 @@ def report_update_vendors(request: Request, pk):
 def report_render_period_client(request: Request):
 
     if request.method == 'POST':
+
+        logger.info('Received a POST request')
+
         serializer = serializers.ClientPeriodSerializer(data=request.data)
         if serializer.is_valid():
             period = serializer.validated_data.get('period').strftime('%Y-%m')
             client = serializer.validated_data.get('client')
+            logger.info(f"Starting report generation task for period {period} and client {client.pk}")
+
             async_result = gen_report_for_client.delay(period, client.client_id)
+            logger.info(f"Report generation task queued with task ID {async_result.id}")
+
             return Response({'taskId': async_result.id}, status=status.HTTP_202_ACCEPTED)
+
+        logger.warning(f"Serialization errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -800,17 +809,15 @@ def report_render_period_report(request: Request):
 
     if request.method == 'POST':
 
-        logger.info('Received a POST request in report_render_period_report')
+        logger.info('Received a POST request')
 
         serializer = serializers.ReportPeriodSerializer(data=request.data)
         if serializer.is_valid():
             period = serializer.validated_data.get('period').strftime('%Y-%m')
             report = serializer.validated_data.get('report')
-
             logger.info(f"Starting report generation task for period {period} and report {report.pk}")
 
             async_result = gen_report_by_id.delay(period, report.pk)
-
             logger.info(f"Report generation task queued with task ID {async_result.id}")
 
             return Response({'taskId': async_result.id}, status=status.HTTP_202_ACCEPTED)
@@ -931,6 +938,8 @@ def get_task_list(request: Request):
     """ Gets the list of celery tasks in the DB """
 
     if request.method == 'GET':
+        logger.info('Received a GET request')
+
         tasks = FileProcessingTask.objects.filter(status='COMPLETE')
         serializer = serializers.CeleryTaskSerializer(tasks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -941,11 +950,14 @@ def get_task_list(request: Request):
 def get_task_progress(request: Request, task_id: str):
 
     """ Gets the status of a Celery task provided its task_id """
+    logger.info(f'Received a {request.method} request for task {task_id}')
 
     try:
         task = FileProcessingTask.objects.get(task_id=task_id)
     except FileProcessingTask.DoesNotExist:
-        err_message = f'Celery taks with id {task_id} does not exist.'
+        err_message = f'No records for file processing task {task_id}. ' \
+                      f'Server might be busy. Please wait before you resubmit the request.'
+        logger.warning(err_message)
         return Response({'message': err_message}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':

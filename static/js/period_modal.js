@@ -48,7 +48,7 @@ export async function periodModalObject(modalParams){
                 reportParams['report'] = scopeSelector.value;
                 response = await api.reports.generateReports(reportParams);
             }
-            const {taskID} = response;
+            const {'taskId': taskID} = response;
 
             try {
                 console.log('in try block')
@@ -101,6 +101,11 @@ export async function periodModalObject(modalParams){
         let taskComplete = false;
         while (!taskComplete && seconds <= maxSecondsToUpdate){
 
+            // Delay before the start of loop cycle
+            if (!taskComplete){
+                await new Promise(resolve => setTimeout(resolve, refreshInterval));
+            }
+
             // Fetch task status data
             const response = await api.readTaskStatus(taskID);
             console.log(response)
@@ -134,11 +139,6 @@ export async function periodModalObject(modalParams){
 
                 // Check if task is complete
                 taskComplete = (taskStatus === 'COMPLETE');
-
-                // Recursive call
-                if (!taskComplete){
-                    await new Promise(resolve => setTimeout(resolve, refreshInterval));
-                }
             }
         }
     }

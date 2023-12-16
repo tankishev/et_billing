@@ -374,6 +374,13 @@ async function readMetadata(){
     sessionStorage.setItem('services', JSON.stringify(services));
 }
 
+async function readTaskStatus(taskID){
+    // Reads the progress of a Celery task
+
+    const url = `/api/tasks/${taskID}`;
+    return await getRecords(url);
+}
+
 async function errorHandler(response, endpoint, method='GET'){
     let responseCopy = response.clone()
     console.log(await responseCopy.json())
@@ -390,13 +397,6 @@ async function errorHandler(response, endpoint, method='GET'){
     }
     window.alert( error_message);
     console.warn(error_message);
-}
-
-async function readTaskStatus(taskID){
-    // Reads the progress of a Celery task
-
-    const url = `/tasks/task_status/${taskID}/`;
-    return await getRecords(url);
 }
 
 export const api = {
@@ -447,5 +447,6 @@ export const api = {
         generateClientReports,
         generateReports
     },
-    readMetadata, readTaskStatus
+    readMetadata,
+    readTaskStatus
 }
