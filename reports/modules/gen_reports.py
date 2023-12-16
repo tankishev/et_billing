@@ -9,13 +9,13 @@ from .report_layouts import layout as report_layout
 
 from datetime import datetime as dt
 
-celery_logger = get_task_logger('reports.gen_reports')
+logger = get_task_logger(f'et_billing.{__name__}')
 
 
 def set_up(period: str) -> DBReportFactory:
     """ Create and return report factory """
 
-    celery_logger.debug(f'Setting up layout factory for period {period}')
+    logger.debug(f'Setting up ReportFactory for period {period}')
 
     db_proxy = DBReport()
     renderer = ReportRenderer()
@@ -30,15 +30,17 @@ def set_up(period: str) -> DBReportFactory:
 
 @shared_task(bind=True)
 def gen_report_by_id(self, period: str, report_id: int):
+
     """ Generate a single report for a given its report_id and a period """
 
     start = dt.now()
-    celery_logger.info(f'Starting report generation for report_id {report_id}')
+    logger.info(f'Starting report generation task for period {period} and report {report_id}')
 
     # Create report processing task
     task_status = FileProcessingTask.objects.create(
         task_id=self.request.id, status='PROGRESS', progress=0, number_of_files=1)
     task_status.save()
+    logger.debug(f'Created report processing task with ID {task_status.pk}')
 
     # Generate report
     dbf = set_up(period)
@@ -46,7 +48,7 @@ def gen_report_by_id(self, period: str, report_id: int):
     dbf.close()
 
     execution_time = dt.now() - start
-    celery_logger.info(f'Execution time: {execution_time}')
+    logger.info(f'Execution time: {execution_time}')
 
 
 @shared_task(bind=True)
@@ -54,12 +56,13 @@ def gen_report_for_client(self, period: str, client: int):
     """ Generate the report for a given client for a given period """
 
     start = dt.now()
-    celery_logger.info(f'Starting report generation for client_id {client}')
+    logger.info(f'Starting report generation for client_id {client}')
 
     # Create report processing task
     task_status = FileProcessingTask.objects.create(
         task_id=self.request.id, status='PROGRESS', progress=0, number_of_files=1)
     task_status.save()
+    logger.debug(f'Created report processing task with ID {task_status.pk}')
 
     # Generate reports
     dbf = set_up(period)
@@ -67,7 +70,7 @@ def gen_report_for_client(self, period: str, client: int):
     dbf.close()
 
     execution_time = dt.now() - start
-    celery_logger.info(f'Execution time: {execution_time}')
+    logger.info(f'Execution time: {execution_time}')
 
 
 @shared_task(bind=True)
@@ -75,12 +78,13 @@ def gen_reports(self, period: str):
     """ Creates a DBReportFactory instance and calls it to generate reports for a given period """
 
     start = dt.now()
-    celery_logger.info(f"Starting billing report generation for ALL clients for {period}")
+    logger.info(f"Starting billing report generation for ALL clients for {period}")
 
     # Create report processing task
     task_status = FileProcessingTask.objects.create(
         task_id=self.request.id, status='PROGRESS', progress=0, number_of_files=1)
     task_status.save()
+    logger.debug(f'Created report processing task with ID {task_status.pk}')
 
     # Generate reports
     dbf = set_up(period)
@@ -88,4 +92,4 @@ def gen_reports(self, period: str):
     dbf.close()
 
     execution_time = dt.now() - start
-    celery_logger.info(f'Execution time: {execution_time}')
+    logger.info(f'Execution time: {execution_time}')

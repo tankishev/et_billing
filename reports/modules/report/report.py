@@ -1,6 +1,5 @@
 from celery import current_task
 from celery_tasks.models import FileProcessingTask
-from celery.utils.log import get_task_logger
 
 from reports.models import Client
 from .bililng_summary import BillingSummary
@@ -9,8 +8,7 @@ from .utils import ReportClient, Report
 from datetime import timedelta as td, datetime as dt
 import logging
 
-logger = logging.getLogger('et_billing.report.DBReportFactory')
-celery_logger = get_task_logger('et_billing.report.DBReportFactory')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 class DBReportFactory:
@@ -35,9 +33,6 @@ class DBReportFactory:
     def generate_report_by_client(self, client_id: int):
         """ Generates all reports for a given client """
 
-        logger.info('Called from generate_report_by_client')
-        celery_logger.info('Celery: called from generate_report_by_client')
-
         report_data = self.dbr.get_report_data(self.period, client_id=client_id)
         if len(report_data) > 0:
             self.generate_reports(report_data)
@@ -45,22 +40,19 @@ class DBReportFactory:
     def generate_report_by_report_id(self, report_id: int):
         """ Generates a specific report given its report_id """
 
-        logger.info('Called from generate_report_by_report_id')
-        celery_logger.info('Celery: called from generate_report_by_report_id')
-
         report_data = self.dbr.get_report_data(self.period, report_id=report_id)
-
-        logger.debug(f'Len report_data: {report_data}')
-        celery_logger.debug(f'Celery: Len report_data: {report_data}')
-
         if len(report_data) > 0:
             self.generate_reports(report_data)
+        logger.warning(f'No report data for report_id {report_id} for {self.period}')
 
     def generate_reports(self, report_data=None):
         """ Generates a specific report given its DB data or all reports if report_data is None """
 
+        logger.debug(f'Starting report/s generation')
+
         if report_data is None:
             report_data = self.dbr.get_report_data(self.period)
+
         if report_data is not None:
             retval = []
 
@@ -70,6 +62,7 @@ class DBReportFactory:
 
             # Get task to be updated
             task_id = current_task.request.id
+            logger.debug(f'Updating queued task {task_id}')
             task_status = FileProcessingTask.objects.get(task_id=task_id)
             task_status.number_of_files = number_of_reports
             task_status.save()
@@ -93,6 +86,7 @@ class DBReportFactory:
                     logger.info(f'{report_file.filename} - Complete')
 
             # Mark task as complete
+            logger.debug(f'Marking task {task_id} as COMPLETE')
             task_status.progress = 100
             task_status.status = 'COMPLETE'
             task_status.save()

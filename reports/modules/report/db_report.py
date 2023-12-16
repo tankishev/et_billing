@@ -6,7 +6,7 @@ from .db_proxy import DBProxyReports
 
 import logging
 
-logger = logging.getLogger('et_billing.report.DBReport')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 class ReportData(DictToObjectMixin):
@@ -35,7 +35,7 @@ class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin, ServicesMixin):
         :param report_id: if not none will filter the results only for this report_id
         """
 
-        logger.info('Generating report data')
+        logger.debug(f'Extracting report data from DB')
 
         # Generate temp_table
         self.dba.create_temp_data_table(period)
@@ -68,6 +68,8 @@ class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin, ServicesMixin):
                 'contract_id': contract_id,
                 'contract_date': contract_date
             }))
+
+        logger.debug(f'Returning list with {len(retval)} ReportData object/s')
         return retval
 
     def get_report_order_details(self, report_id: int, report_language: str) -> list:

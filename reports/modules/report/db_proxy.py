@@ -2,6 +2,9 @@ from django.conf import settings
 import psycopg2 as pg
 
 from vendors.models import VendorInputFile
+import logging
+
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 class DBProxy:
@@ -70,6 +73,7 @@ class DBProxyReports(DBProxy):
         :return:
         """
 
+        logger.debug(f'Generating tmp_report_data table for {period}')
         sql = """
             create temp table if not exists tmp_report_data as
             select distinct
@@ -120,7 +124,7 @@ class DBProxyReports(DBProxy):
                 include_details: 0:false, 1:true
                 client_id, legal_name, contract_id, contract_date
         """
-
+        logger.debug(f'Reading DB.tmp_report_data records for client {client_id}')
         sql = "select distinct report_id, file_name, report_type, language, skip_columns, include_details, show_pids, "
         sql += "client_id, legal_name, contract_id, contract_date from tmp_report_data where client_id = %s"
         data = self.exec(sql, (client_id,))
@@ -139,6 +143,7 @@ class DBProxyReports(DBProxy):
                 client_id, legal_name, contract_id, contract_date
         """
 
+        logger.debug(f'Reading DB.tmp_report_data records for report_id {report_id}')
         sql = "select distinct report_id, file_name, report_type, language, skip_columns, include_details, show_pids, "
         sql += "client_id, legal_name, contract_id, contract_date from tmp_report_data where report_id = %s"
         data = self.exec(sql, (report_id,))
@@ -155,7 +160,7 @@ class DBProxyReports(DBProxy):
                 include_details: 0:false, 1:true
                 client_id, legal_name
         """
-
+        logger.debug(f'Reading DB.tmp_report_data records for all clients & reports')
         sql = "select distinct report_id, file_name, report_type, language, skip_columns, include_details, show_pids,"
         sql += " client_id, legal_name, contract_id, contract_date from tmp_report_data order by client_id"
         data = self.exec(sql)

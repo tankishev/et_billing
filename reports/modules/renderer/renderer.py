@@ -11,7 +11,7 @@ import tempfile
 import os
 import logging
 
-logger = logging.getLogger('et_billing.report.renderer')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 class BaseReportRenderer(FormatMixin):

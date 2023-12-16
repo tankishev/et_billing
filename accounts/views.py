@@ -8,7 +8,7 @@ from .modules import authorise_user
 
 import logging
 
-logger = logging.getLogger('et_billing.accounts.views')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 @csrf_protect
@@ -30,7 +30,7 @@ def login_view(request):
 
             # User exists, check if user is blocked
             if not user.is_active:
-                logger.debug(f'User {username} is suspended')
+                logger.warning(f'User {username} is suspended')
                 error_message = 'Authentication failed or account suspended.'
                 return JsonResponse({'success': False, 'error_message': error_message}, status=401)
             logger.debug(f'User {username} is not susspended')
@@ -52,7 +52,7 @@ def login_view(request):
                 is_authorised, message = authorise_user(user, timeout=30)
                 if is_authorised:
                     login(request, user)
-                    logger.debug(f'Login successful for {username}')
+                    logger.info(f'Login successful for {username}')
                     return JsonResponse({'success': True, 'message': 'Success'})
                 else:
                     return JsonResponse({'success': False, 'error_message': message}, status=401)
@@ -60,7 +60,7 @@ def login_view(request):
                 # User was not authenticated
                 user.profile.failed_attempts += 1
                 user.profile.save()
-                logger.debug(
+                logger.warning(
                     f'Failed django authentication for {username}. Failed attempts: {user.profile.failed_attempts}')
 
                 # Suspend user if too many failed attempts
@@ -74,7 +74,7 @@ def login_view(request):
                 return JsonResponse({'success': False, 'error_message': error_message}, status=401)
 
         except User.DoesNotExist:
-            logger.debug(f'User {username} does not exist')
+            logger.warning(f'User {username} does not exist')
             error_message = 'Authentication failed or user suspended.'
             return JsonResponse({'success': False, 'error_message': error_message}, status=401)
     else:

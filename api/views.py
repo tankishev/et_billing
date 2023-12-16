@@ -22,7 +22,7 @@ from stats.models import UsageStats
 from . import serializers
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 # REST Framework calls
