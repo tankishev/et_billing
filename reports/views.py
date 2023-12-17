@@ -171,10 +171,10 @@ def reconciliation(request):
     ).values_list('vendor_id', 'service_id', 'service__service', 'service__stype', 'service__desc_en')
     vendor_services = [f'Vendor {el[0]} - Service {" ".join(str(x) for x in el[1:])}' for el in vs]
 
-    billable_vendors = [el for el in Vendor.objects.filter(
-        reports__vendors__reports__isnull=True,
-        client__is_billable=True
-    )]
+    billable_vendors = set(el.vendor for el in VendorService.objects.filter(
+        vendor__client__is_billable=True,
+        vendor__reports__isnull=True
+    ))
     billable_clients_no_report = [el for el in Client.objects.filter(
         is_billable=True,
         reports__isnull=True
@@ -187,13 +187,13 @@ def reconciliation(request):
 
     context = {
         'res_details': {
-            (0, 'Vendors not assigned'): [el for el in Vendor.objects.filter(client_id=0)],
-            (1, 'Vendors not reconciled'): [el for el in Vendor.objects.filter(is_reconciled=False)],
-            (2, 'UsageStats not in VendorServices'): usage_stats_check,
-            (3, 'VendorServices not in orders'): vendor_services,
-            (4, 'Billable client not-validated'): billable_clients_not_validated,
-            (5, 'Billable clients without reports'): billable_clients_no_report,
-            (6, 'Billable vendors without report'): billable_vendors
+            (0, 'Accounts not assigned to clients'): [el for el in Vendor.objects.filter(client_id=0)],
+            (1, 'Accounts not reconciled'): [el for el in Vendor.objects.filter(is_reconciled=False)],
+            (2, 'Accounts with usage that are not assigned to reports'): billable_vendors,
+            (3, 'UsageStats without corresponding AccountService configuration'): usage_stats_check,
+            (4, 'AccountService configuration not assigned to orders'): vendor_services,
+            (5, 'Billable clients marked as not-validated'): billable_clients_not_validated,
+            (6, 'Billable clients without reports'): billable_clients_no_report,
         }
     }
     return render(request, 'shared/results_collapse.html', context)
