@@ -9,7 +9,7 @@
 {% endblock %}
 {% block client_details_tab %}
 
-    <!-- Assigned Accounts -->
+    <!-- Accounts List -->
     <div class="row bg-light-subtle mt-3">
         <div class="col p-2">
             <div class="row p-3">
@@ -43,6 +43,7 @@
                             <span class="visually-hidden">Edit account</span>
                         </button>
                         <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Calculate usage</a></li>
                             <li><a class="dropdown-item{% if vendor.is_active %} d-none{% endif %}" href="#">Activate</a></li>
                             <li><a class="dropdown-item{% if not vendor.is_active %} d-none{% endif %}" href="#">Deactivate</a></li>
                             <li><hr class="dropdown-divider"></li>
@@ -57,6 +58,9 @@
 
     <!-- Account Details -->
     <div id="accountDetails"></div>
+
+    <!-- Period modal -->
+    {% include 'shared/modal_process_period.html' %}
 
     <!-- Assign Accounts Modal -->
     {% include 'shared/client_accounts_modal.html' %}
@@ -88,6 +92,26 @@
     </div>
 
     <!-- Templates -->
+    <template id="accountListTemplate">
+        <div class="d-flex w-100 justify-content-between mb-1">
+            <a href="#" class="list-group-item list-group-item-action rounded-start align-content-center">
+                <h6 class="mb-0">
+                    <span class="badge rounded-pill bg-info">{{ vendor.vendor_id }}</span>
+                    <span></span>
+                </h6>
+            </a>
+            <button class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split rounded-start-0" type="button" data-bs-toggle="dropdown">
+                <span class="visually-hidden">Edit accounts</span>
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Calculate usage</a></li>
+                <li><a class="dropdown-item d-none" href="#">Activate</a></li>
+                <li><a class="dropdown-item d-none" href="#">Deactivate</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#">Remove</a></li>
+            </ul>
+        </div>
+    </template>
     <template id="accountDetailsTemplate">
         <div class="row bg-light-subtle mt-3">
             <div class="col p-2">
@@ -151,25 +175,6 @@
                 <span class="badge rounded-pill bg-secondary"></span>
                 <span class="badge rounded-pill bg-warning"></span>
             </label>
-        </div>
-    </template>
-    <template id="accountListTemplate">
-        <div class="d-flex w-100 justify-content-between mb-1">
-            <a href="#" class="list-group-item list-group-item-action rounded-start align-content-center">
-                <h6 class="mb-0">
-                    <span class="badge rounded-pill bg-info">{{ vendor.vendor_id }}</span>
-                    <span></span>
-                </h6>
-            </a>
-            <button class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split rounded-start-0" type="button" data-bs-toggle="dropdown">
-                <span class="visually-hidden">Edit accounts</span>
-            </button>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item d-none" href="#">Activate</a></li>
-                <li><a class="dropdown-item d-none" href="#">Deactivate</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">Remove</a></li>
-            </ul>
         </div>
     </template>
     <template id="unreconciledTagTemplate">

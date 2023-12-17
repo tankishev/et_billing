@@ -9,7 +9,7 @@ import base64
 import logging
 import os
 
-logger = logging.getLogger('ETAPi')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 class ETApi:

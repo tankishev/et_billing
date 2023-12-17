@@ -10,8 +10,8 @@ from .report_layouts import layout as report_layout
 from datetime import datetime as dt
 import logging
 
-# logger = get_task_logger(f'et_billing.{__name__}')
-logger = logging.getLogger(f'et_billing.{__name__}')
+logger = get_task_logger(f'et_billing.{__name__}')
+# logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 def set_up(period: str) -> DBReportFactory:

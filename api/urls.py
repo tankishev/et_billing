@@ -4,15 +4,16 @@ from . import views
 urlpatterns = [
     path('', include([
         path('accounts/', include([
+            path('calculate-usage/', views.vendor_calculate_usage),
             path('list/', views.vendors_list),
             path('<int:pk>/', include([
                 path('', views.vendor_details),
+                path('duplicate-services/', views.vendor_services_duplicate),
                 path('services/', include([
                     path('', views.vendor_services, name='get_vendor_services'),
                     path('add/', views.vendor_services_add),
                     path('remove/', views.vendor_services_remove),
                 ])),
-                path('duplicate-services/', views.vendor_services_duplicate),
             ])),
         ])),
         path('clients/', include([

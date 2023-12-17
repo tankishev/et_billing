@@ -1,4 +1,4 @@
-import {modalShow, getPreviousPeriod} from "./utils.js";
+import {modalShow, getPreviousPeriod, modalClose} from "./utils.js";
 import {api} from "./api.js";
 
 const refreshInterval = 2000;
@@ -7,7 +7,7 @@ const maxSecondsToUpdate = 300;
 export async function periodModalObject(modalParams){
 
     // Set constants for easy access
-    const {modalTitle, modalScopeFunc, clientID} = modalParams
+    const {modalTitle, modalScopeFunc, clientID, accountID, programScope} = modalParams
     const modal = document.getElementById('periodModal');
     const periodSelector = modal.querySelector('#periodModalPeriod');
     const scopeSelector = modal.querySelector('#periodModalScopeSelect');
@@ -34,38 +34,76 @@ export async function periodModalObject(modalParams){
         await refreshModal();
 
         // Set the Start button listener
-        startButton.addEventListener('click',async () => {
-            startButton.classList.add('d-none');
-            progressSection.classList.remove('d-none');
-            const counter = startCounter();
+        startButton.addEventListener('click',onStartButtonClick,{once: true});
+        modal.querySelector('div.modal-header button').addEventListener('click', () => {
+            startButton.removeEventListener('click', onStartButtonClick);
+            modalClose(modal.id);
+        }, {once: true})
 
-            let response;
-            let reportParams = {'period': periodSelector.value};
-            if (scopeSelector.value === '0'){
-                reportParams['client'] = clientID;
-                response = await api.reports.generateClientReports(reportParams);
-            } else {
-                reportParams['report'] = scopeSelector.value;
-                response = await api.reports.generateReports(reportParams);
-            }
-            const {'taskId': taskID} = response;
-
-            try {
-                console.log('in try block')
-                await updateTaskProgress(taskID)
-            } catch (err) {
-                console.error('Error in updateTaskProgress:', err);
-            } finally {
-                clearInterval(counter);
-                callBack('Finished execution can do some stuff now');
-            }
-        },{once: true});
         modalShow(modal.id);
+
+        async function onStartButtonClick() {
+            await buttonClick(callBack);
+        }
     }
 
     // Support functions
+    async function buttonClick(callBack){
+        // This function is assigned to the event listener of the Start button
+
+        // Hide button after click, show progress and start counter
+        startButton.classList.add('d-none');
+        progressSection.classList.remove('d-none');
+        const counter = startCounter();
+
+        // Get the async call task_id
+        let response;
+        if (programScope === 'reports' && clientID !== undefined){
+            response = await generateReport();
+        } else if (programScope === 'usage' && accountID !== undefined) {
+            response = await calculateUsage();
+        } else {
+            throw Error ('Wrong modal configuration');
+        }
+        const {'taskId': taskID} = response
+
+        // Start the task update loop and once finished call the callBack
+        try {
+            await updateTaskProgress(taskID);
+        } catch (err) {
+            console.error('Error in updateTaskProgress:', err);
+        } finally {
+            clearInterval(counter);
+            if (callBack !== undefined){
+                callBack();
+            }
+        }
+    }
+
+    async function calculateUsage(){
+        const scopeParams = {
+            'period': periodSelector.value,
+            'vendor': scopeSelector.value
+        };
+        return await api.accounts.calculateUsage(scopeParams);
+    }
+
+    async function generateReport(){
+        let scopeParams = {'period': periodSelector.value};
+        if (scopeSelector.value === '0'){
+            scopeParams['client'] = clientID;
+            return await api.reports.generateClientReports(scopeParams);
+        } else {
+            scopeParams['report'] = scopeSelector.value;
+            return await api.reports.generateReports(scopeParams);
+        }
+    }
+
     async function refreshModal(){
-        const scopeData = await modalScopeFunc();
+        let scopeData = modalScopeFunc();
+        if (scopeData instanceof Promise) {
+            scopeData = await scopeData;
+        }
         const scopeOptions = scopeData.map(el => {
             const {id, description} = el;
             let opt = document.createElement('option');
@@ -85,6 +123,7 @@ export async function periodModalObject(modalParams){
         resetCounter();
         startButton.classList.remove('d-none');
     }
+
     function resetCounter(){
         seconds = 0;
         executionTime.classList.add('d-none');
@@ -111,7 +150,6 @@ export async function periodModalObject(modalParams){
 
             // Fetch task status data
             const response = await api.readTaskStatus(taskID);
-            console.log(response)
             if (response === undefined) {
                 throw new Error('API response is undefined');
             } else {
@@ -120,6 +158,7 @@ export async function periodModalObject(modalParams){
                     'number_of_files': fileCount,
                     'progress': taskProgress,
                     'processed_documents': fileList = [],
+                    'note': note
                 } = response;
 
                 // Update task status
@@ -146,9 +185,10 @@ export async function periodModalObject(modalParams){
                 if (taskComplete){
                     progressBar.classList.remove('progress-bar-striped');
                     if (taskStatus === 'FAILED'){
+                        progressStatusField.textContent = note;
                         progressBar.textContent = 'Report generation failed';
                         progressBar.classList.remove('bg-success');
-                        progressBar.classList.add('bg-warning');
+                        progressBar.classList.add('bg-danger');
                     }
                 }
             }
@@ -159,12 +199,16 @@ export async function periodModalObject(modalParams){
 
         const { fileId, fileName, resultCode, resultText } = data;
         const item = document.getElementById('periodModalListItem').content.cloneNode(true);
-        const listItem = item.querySelector('li');
+        const listItem = item.querySelector('a');
 
         listItem.textContent = `${fileName} (${resultText})`;
         listItem.setAttribute('data-id', fileId);
         if (resultCode === 0) {
             listItem.classList.add('text-success');
+            // If modal used for report generation provide download link
+            if (programScope === 'reports'){
+                listItem.href = `/reports/download/billing/file/${fileId}/`;
+            }
         } else if (resultCode === 3) {
             listItem.classList.add('text-secondary');
         } else if (resultCode === 4) {

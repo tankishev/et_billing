@@ -175,6 +175,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = None
 CELERY_HIJACK_ROOT_LOGGER = False
+CELERY_TASK_IGNORE_RESULT = True
 
 # Settings for logging
 LOG_DIR = os.environ.get('DJANGO_LOGS_DIR', os.path.join(BASE_DIR, 'logs'))
@@ -183,11 +184,11 @@ LOGGING = {
     'disable_existing_loggers': False,  # retain the default loggers
     'formatters': {
         'pipe': {
-            'format': '{asctime}|{name}|{module}|{levelname}|{message}',
+            'format': '{asctime}|{levelname}|{name}|{module}|{message}',
             'style': '{',
         },
         'pipe_debug': {
-            'format': '{asctime}|{name}|{funcName}|{levelname}|{message}',
+            'format': '{asctime}|{levelname}|{name}|{funcName}|{message}',
             'style': '{',
         },
     },

@@ -11,7 +11,7 @@ from .modules.zip_archives import list_archive, handle_extract_zip, handle_uploa
 
 import logging
 
-logger = logging.getLogger('et_billing.vendors.views')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 @login_required

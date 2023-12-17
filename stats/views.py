@@ -7,7 +7,7 @@ from .modules.uq_users import get_uqu, store_uqu_celery
 from .modules.usage_calculations import recalc_vendor, recalc_all_vendors, get_vendor_unreconciled
 
 import logging
-logger = logging.getLogger('et_billing.stats.views')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 # SERVICE USAGE CALCULATIONS

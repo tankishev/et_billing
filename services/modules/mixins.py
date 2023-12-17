@@ -10,8 +10,8 @@ from celery.utils.log import get_task_logger
 import logging
 
 
-logger = logging.getLogger('et_billing.services.mixins')
-celery_logger = get_task_logger('services.mixins')
+logger = logging.getLogger(f'et_billing.{__name__}')
+celery_logger = get_task_logger(f'et_billing.celery.{__name__}')
 
 
 class FiltersMixin:

@@ -9,7 +9,7 @@ from pandas import DataFrame
 import logging
 
 ServiceMappingResult = namedtuple("ServiceMappingResult", ["status", "data", "transactions", "all_rows_mapped"])
-logger = logging.getLogger('et_billing.stats.usage_calculator')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 class BaseServicesMapper(FiltersMixin, InputFilesMixin, ServiceUsageMixin):
@@ -21,23 +21,23 @@ class BaseServicesMapper(FiltersMixin, InputFilesMixin, ServiceUsageMixin):
         """
 
         period, vendor_id = input_file.period, input_file.vendor_id
-        logger.debug(f"Starting usage calcs for vendor {vendor_id} for {period}.")
+        logger.debug(f"Starting mapping of usage data for account {vendor_id} for {period}.")
 
         # Load dataframe and convert all numbers
-        logger.debug(f"Loading transactions for vendor {vendor_id} for {period}.")
+        logger.debug(f"Loading transactions for account {vendor_id} for {period}.")
         df = self.load_data_for_service_usage(input_file.file.path, skip_status_five)  # FromInputMixin
         if df is None:
-            logger.info(f'vendor_id: {vendor_id}, period_id: {period}, return: No transactions')
+            logger.info(f'Account: {vendor_id}, period: {period}, return: No transactions')
             return 3, None
 
         # Load service filter groups
         service_filters = self.load_vendor_service_filters(vendor_id)  # From FilterMixin
         if service_filters is None:
-            logger.info(f'vendor_id: {vendor_id}, period_id {period}, return: No services configured')
+            logger.info(f'Account: {vendor_id}, period {period}, return: No services configured')
             return 1, None
 
         # Map vendor services to dataframe
-        logger.debug("Calculating transaction based stats")
+        logger.debug("Mapping transactions")
         mapped_data = self.map_transactions(df, service_filters)  # from ServiceUsageMixin
         return 0, mapped_data
 
@@ -53,16 +53,18 @@ class ServiceUsageCalculator(BaseServicesMapper):
         """ Calculates and saves service usage """
 
         period, vendor_id = input_file.period, input_file.vendor_id
+        logger.debug(f'Starting usage calculations for account {vendor_id} for {period}')
 
         # Load transactions and map vendor services
         status, mapped_data = self.map_service_usage(input_file, skip_status_five)
         if status != 0:
             return status
+        logger.debug(f'Mapped usage data')
 
         # Update vendor status
         self._update_vendor_is_reconciled(vendor_id, mapped_data.fully_mapped)
         if not mapped_data.fully_mapped:
-            logger.info(f'vendor_id: {vendor_id}, period_id: {period}, return : Not reconciled')
+            logger.info(f'Account: {vendor_id}, period: {period}, return : Not reconciled')
             return 4
 
         # Get transaction based stats
@@ -72,6 +74,7 @@ class ServiceUsageCalculator(BaseServicesMapper):
 
         # Update calculations for Legal Person eID (type 19)
         if data:
+            logger.debug(f'Calculating legal person eID usages')
             for record in data:
                 service_id, count = record
                 if service_id == self._LEGAL_PERSONS_SERVICE_ID:
@@ -81,7 +84,7 @@ class ServiceUsageCalculator(BaseServicesMapper):
 
         # Get aggregation based stats
         if data and "Bio required" in df.columns:
-            logger.debug("Calculating BioID stats")
+            logger.debug("Calculating BioID usage")
             df_bio = df[df["Bio required"] == 'yes'][["ThreadID"]].copy()
             df_bio = df_bio.drop_duplicates()
             n = len(df_bio)
@@ -110,12 +113,12 @@ class ServiceUsageCalculator(BaseServicesMapper):
         try:
             vendor = Vendor.objects.get(vendor_id=vendor_id)
             if vendor.is_reconciled != is_reconciled:
-                logger.debug(f"Updating vendor is_reconciled - set status {is_reconciled}")
+                logger.debug(f"Updating Vendor is_reconciled - set status {is_reconciled}")
                 vendor.is_reconciled = is_reconciled
                 vendor.save()
 
         except Vendor.DoesNotExist:
-            logger.warning(f"No vendor object with vendor_id {vendor_id}")
+            logger.warning(f"Vendor with id {vendor_id} does not exists")
 
     @staticmethod
     def _save_service_usage(period: str, vendor_id: int, service_id: int, unit_count: int) -> None:

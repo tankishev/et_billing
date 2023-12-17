@@ -10,8 +10,8 @@ from datetime import datetime as dt
 from pathlib import PurePath
 import logging
 
-logger = logging.getLogger('et_billing.stats_vendors_calc')
-celery_logger = get_task_logger('stats.vendors_calc')
+logger = logging.getLogger(f'et_billing.{__name__}')
+celery_logger = get_task_logger(f'et_billing.{__name__}')
 
 
 def res_result(res_id):
@@ -46,6 +46,7 @@ def recalc_vendor(self, period, vendor_id):
         # Process file
         calc = ServiceUsageCalculator()
         res = calc.save_service_usage_period_vendor(input_file)
+        celery_logger.debug("Service usage calculated. Saving results.")
 
         # Update the task to add the filename
         input_file_path = PurePath(input_file.file.path)
@@ -60,15 +61,20 @@ def recalc_vendor(self, period, vendor_id):
         task_status.progress = 100
         task_status.status = 'COMPLETE'
         task_status.save()
+        celery_logger.debug("Completed service usage calculations")
 
     except VendorInputFile.DoesNotExist:
-        celery_logger.warning(f"No usage file for vendor {vendor_id} in {period}.")
+        message = f"No usage file for vendor {vendor_id} in {period}."
+        celery_logger.warning(message)
+        task_status.note = message
         task_status.status = 'FAILED'
         task_status.save()
         return 2, vendor_id
 
     except Exception as e:
-        celery_logger.error(f"An unexpected error occurred: {e}")
+        message = f"An unexpected error occurred: {e}"
+        celery_logger.error(message)
+        task_status.note = message
         task_status.status = 'FAILED'
         task_status.save()
         raise
@@ -83,6 +89,7 @@ def recalc_all_vendors(self, period):
     """ Calculate vendor usage for all vendors for a given period """
 
     start = dt.now()
+
     logger.info(f"Starting usage calcs for ALL vendors for {period}.")
 
     # Create file processing task
@@ -95,7 +102,9 @@ def recalc_all_vendors(self, period):
         number_of_files = len(input_files)
         task_status.number_of_files = number_of_files
         task_status.save()
+
         logger.debug(f'{number_of_files} input files loaded')
+
         prior_vendors_list = list(
             VendorInputFile.objects.filter(period__lt=period).values_list('vendor_id', flat=True).distinct()
         )
@@ -127,7 +136,9 @@ def recalc_all_vendors(self, period):
         task_status.save()
 
     except VendorInputFile.DoesNotExist:
-        celery_logger.warning("No input files found")
+        message = "No input files found"
+        celery_logger.warning(message)
+        task_status.note = message
         task_status.status = 'FAILED'
         task_status.save()
 

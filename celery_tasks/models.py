@@ -48,6 +48,7 @@ class FileProcessingTask(models.Model):
     number_of_files = models.IntegerField(default=0)
     progress = models.IntegerField(default=0)
     processed_documents = ProcessedDocumentsList()
+    note = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         db_table = 'celery_tasks_file_processing'

@@ -2,6 +2,14 @@ import { getCookie } from "./utils.js";
 
 // Accounts
 
+async function calculateUsage(scopeParams){
+    // Triggers calculation of service usage for a given Account
+    // Returns task_id
+
+    const url =`/api/accounts/calculate-usage/`;
+    return await sendRecords(url, 'POST', scopeParams);
+}
+
 async function createAccountService(data){
     // Assigns Services to Accounts
     // data: {accountID, [ids]}
@@ -10,12 +18,14 @@ async function createAccountService(data){
     const url = `/api/accounts/${accountID}/services/add/`;
     return await sendRecords(url, 'POST', rest);
 }
+
 async function readAccountDetails(accountID){
     // Returns the details for an account
 
     const url = `/api/accounts/${accountID}`;
     return await getRecords(url);
 }
+
 async function readAccountsList(searchParams) {
     // Search for accounts
     // searchParams: Search parameters
@@ -401,6 +411,7 @@ async function errorHandler(response, endpoint, method='GET'){
 
 export const api = {
     accounts: {
+        calculateUsage,
         createAccountService,
         readAccountDetails,
         readAccountServices,

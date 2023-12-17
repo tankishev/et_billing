@@ -18,6 +18,7 @@ from vendors.models import Vendor, VendorService, VendorFilterOverride
 from reports.models import ReportFile, Report, ReportSkipColumnConfig, ReportLanguage
 from reports.modules import gen_report_for_client, gen_report_by_id
 from stats.models import UsageStats
+from stats.modules.usage_calculations import recalc_vendor
 
 from . import serializers
 import logging
@@ -26,7 +27,9 @@ logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 # REST Framework calls
+
 # Vendors (Accounts)
+
 @csrf_exempt
 @api_view(['GET'])
 def vendors_list(request: Request):
@@ -60,6 +63,29 @@ def vendors_list(request: Request):
 
         serializer = serializers.VendorSerializer(vendors, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@csrf_exempt
+@api_view(['POST'])
+def vendor_calculate_usage(request: Request):
+
+    if request.method == 'POST':
+
+        logger.info('Received a POST request')
+
+        serializer = serializers.VendorPeriodSerializer(data=request.data)
+        if serializer.is_valid():
+            period = serializer.validated_data.get('period').strftime('%Y-%m')
+            vendor = serializer.validated_data.get('vendor')
+            logger.info(f"Starting usage calculation task for period {period} and account {vendor.vendor_id}")
+
+            async_result = recalc_vendor.delay(period, vendor.vendor_id)
+            logger.info(f"Report generation task queued with task_id {async_result.id}")
+
+            return Response({'taskId': async_result.id}, status=status.HTTP_202_ACCEPTED)
+
+        logger.warning(f"Serialization errors: {serializer.errors}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @csrf_exempt

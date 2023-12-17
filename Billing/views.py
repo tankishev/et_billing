@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 import logging
 
-logger = logging.getLogger('et_billing.index')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 @login_required

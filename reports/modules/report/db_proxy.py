@@ -77,10 +77,10 @@ class DBProxyReports(DBProxy):
         sql = """
             create temp table if not exists tmp_report_data as
             select distinct
-                r.id report_id, r.file_name, r.report_type, r.language_id, rl.language
+                r.id as report_id, r.file_name, r.report_type, r.language_id, rl.language
                 , rsc.skip_columns, r.include_details, r.show_pids
-                ,cd.client_id, cd.legal_name, cd.reporting_name, c.contract_id contract_id, c.start_date contract_date
-                ,os.order_id, o.description order_descr, o.ccy_type, p.type payment_type, o.tu_price
+                ,cd.client_id, cd.legal_name, cd.reporting_name, c.contract_id as contract_id, c.start_date contract_date
+                ,os.order_id, o.description order_descr, o.ccy_type, p.type as payment_type, o.tu_price
                 ,vs.service_id, s.service service_group
                 ,case when s.stype is null then '' else stype end service_type
                 ,case when r.language_id = 1 then s.desc_bg else s.desc_en end service_descr

@@ -2,6 +2,7 @@ import {api} from "./api.js";
 import {modalClose, modalShow, hideElement, parsers} from "./utils.js";
 import {servicesModalObject} from "./services_modal.js";
 import {accountsModalObject} from "./accounts_modal.js";
+import {periodModalObject} from "./period_modal.js";
 
 // Set const for DOM elements
 const accountsList = document.getElementById('accountsList');
@@ -10,6 +11,7 @@ const accountDetailsTemplate = document.getElementById('accountDetailsTemplate')
 
 let servicesModal;
 let accountsModal;
+let periodModal;
 void setUp();
 
 async function setUp(){
@@ -35,7 +37,7 @@ async function setUp(){
 // Accounts list
 
 function accountsListListeners(){
-    // Set the event listeners for teh buttons on the accounts list.
+    // Set the event listeners for the buttons on the accounts list.
 
     // List items -> trigger showAccountDetails
     accountsList.querySelectorAll('div a.list-group-item').forEach(btn => {
@@ -49,19 +51,20 @@ function accountsListListeners(){
     // List items menu -> action on Activate, Deactivate, Remove
     accountsList.querySelectorAll('div ul').forEach(ul=>{
         const buttons = ul.querySelectorAll('a');
-        buttons[0].addEventListener('click', async (ev) => {
+        buttons[0].addEventListener('click', async (ev) => void accountCalculateUsage(ev));
+        buttons[1].addEventListener('click', async (ev) => {
             ev.preventDefault();
             const accountID = ev.target.closest('div').dataset.accountId;
             void updateAccountSetActive(accountID, true)
             toggleAccountDetailsButtons(true)
         });
-        buttons[1].addEventListener('click', async (ev) => {
+        buttons[2].addEventListener('click', async (ev) => {
             ev.preventDefault();
             const accountID = ev.target.closest('div').dataset.accountId;
             void updateAccountSetActive(accountID, false);
             toggleAccountDetailsButtons(false)
         });
-        buttons[2].addEventListener('click', async (ev) => {
+        buttons[3].addEventListener('click', async (ev) => {
             ev.preventDefault();
             const accountID = ev.target.closest('div').dataset.accountId;
             void removeAccount(accountID);
@@ -83,6 +86,25 @@ async function assignAccounts(data){
         accountsList.replaceChildren(...accountsListItems);
         accountsListListeners();
     }
+}
+
+async function accountCalculateUsage(ev){
+    ev.preventDefault();
+    const listItem = ev.target.closest('div');
+    const accountID = listItem.dataset.accountId;
+    periodModal = await periodModalObject({
+        'modalTitle': 'Calculate usage',
+        'accountID': accountID,
+        'modalScopeFunc': () => [{'id': accountID, 'description': `Account ${accountID}`}],
+        'programScope': 'usage'
+    });
+    await periodModal(async () => {
+        const response = await api.accounts.readAccountDetails(accountID);
+        if (response !== undefined ){
+            const accountData = parsers.parseAccountDetails(response);
+            updateAccountListItem(listItem, accountData);
+        }
+    });
 }
 
 async function removeAccount(accountID){
@@ -138,8 +160,8 @@ function updateAccountListItem(accountItem, accountData){
 
     // Update menu
     const buttons = accountItem.querySelectorAll('ul li a');
-    hideElement(buttons[0], isActive);
-    hideElement(buttons[1], !isActive);
+    hideElement(buttons[1], isActive);
+    hideElement(buttons[2], !isActive);
 }
 
 function renderAccounts(accountsData){

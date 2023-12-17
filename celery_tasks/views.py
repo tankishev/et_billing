@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from .models import FileProcessingTask
 import logging
 
-logger = logging.getLogger('et_billing.celery_tasks.view')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 def get_task_progress(request, task_id: str) -> JsonResponse:

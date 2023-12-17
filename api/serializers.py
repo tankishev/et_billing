@@ -292,7 +292,6 @@ class YearMonthField(serializers.CharField):
 
 
 class ClientPeriodSerializer(serializers.Serializer):
-    # Assuming the fields in ClientPeriodForm are 'period' and 'client'
     period = YearMonthField()
     client = serializers.PrimaryKeyRelatedField(queryset=Client.objects.all())
 
@@ -304,9 +303,19 @@ class ClientPeriodSerializer(serializers.Serializer):
 
 
 class ReportPeriodSerializer(serializers.Serializer):
-    # Assuming the fields in ClientPeriodForm are 'period' and 'client'
     period = YearMonthField()
     report = serializers.PrimaryKeyRelatedField(queryset=Report.objects.all())
+
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+        pass
+
+
+class VendorPeriodSerializer(serializers.Serializer):
+    period = YearMonthField()
+    vendor = serializers.PrimaryKeyRelatedField(queryset=Vendor.objects.all())
 
     def update(self, instance, validated_data):
         pass

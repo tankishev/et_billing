@@ -9,7 +9,7 @@ from ..models import UniqueUser, UquStatsPeriodClient, UquStatsPeriodVendor, Uqu
 
 import logging
 
-logger = logging.getLogger('et_billing.stats.uq_users')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 def get_uqu(client_id=None, start_period=None, end_period=None) -> int:

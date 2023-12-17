@@ -14,7 +14,7 @@ from . import modules as m
 import os
 import logging
 
-logger = logging.getLogger('et_billing.reports.views')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 @login_required

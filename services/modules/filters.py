@@ -1,6 +1,6 @@
 import logging
 
-logger = logging.getLogger('et_billing.services.filters')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 class FieldFilter:

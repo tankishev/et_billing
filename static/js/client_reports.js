@@ -23,6 +23,7 @@ async function setUp(){
     periodModal = await periodModalObject({
         'modalTitle': 'Generate report',
         'clientID': clientID,
+        'programScope': 'reports',
         'modalScopeFunc': async () => {
             let list = [{'id': 0, 'description': 'All reports'}];
             const clientReports = await api.clients.readClientReportsList(clientID);
@@ -66,7 +67,7 @@ function assignListeners(){
     reportConfigAccordion.querySelectorAll('.accordion-item').forEach(el => addListenersReportConfig(el));
     document.getElementById('newReportForm').addEventListener('submit', ev => reportAdd(ev));
     document.getElementById('btnGenerateReports').addEventListener('click', () => {
-        periodModal(console.log)
+        periodModal(() => loadFiles(clientID))
     });
 }
 

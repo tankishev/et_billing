@@ -5,7 +5,7 @@ import logging
 import zipfile
 import io
 
-logger = logging.getLogger('et_billing.shared.zip_archives')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 def create_zip_file(queryset, zip_file_name) -> HttpResponse:

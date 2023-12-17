@@ -8,7 +8,7 @@ import zipfile as z
 import os
 import logging
 
-logger = logging.getLogger('et_billing.vendors.zip_archives')
+logger = logging.getLogger(f'et_billing.{__name__}')
 CLEAN_FILE_ENCODING = False  # Set to true if running in Windows environment
 TEMP_ZIP_FILENAME = settings.BASE_DIR / 'media/temp_upload.zip'
 

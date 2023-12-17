@@ -2,7 +2,7 @@ from .et import ETApi, SigningUser
 import time
 import logging
 
-logger = logging.getLogger('et_billing.accounts.et_auth')
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 def authorise_user(user, timeout=30) -> tuple[bool, str]:
