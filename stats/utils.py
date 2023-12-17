@@ -12,4 +12,4 @@ def get_stats_usage_not_in_vendor_services():
         service_id=OuterRef('service_id')
     ).values('service_id')[:1]
 
-    return UsageStats.objects.annotate(vs_service_id=Subquery(vs_subquery)).filter(vs_service_id__is_null=True)
+    return UsageStats.objects.annotate(vs_service_id=Subquery(vs_subquery)).filter(vs_service_id=None)

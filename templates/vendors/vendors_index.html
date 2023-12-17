@@ -1,16 +1,24 @@
 {% extends 'shared/base_body.html' %}
 {% block title %}DB Operations{% endblock %}
 {% block content %}
-    <h2>DB Update Index</h2>
+    <h2>Service usage</h2>
+    <h5>Generate usage reports</h5>
+    <ul>
+        <li><a href="{% url 'period_report_id' %}">Generate single usage report</a></li>
+        <li><a href="{% url 'period_client_report' %}">Generate all <b>Client's</b> reports</a></li>
+        <li><a href="{% url 'period_report' %}">Generate <b>ALL</b> usage reports</a></li>
+        <li><a href="{% url 'list_report_files' %}">View report files</a></li>
+    </ul>
     <h5>Account operations</h5>
     <ul>
         <li><a href="{% url 'calc_vendor_usage' %}">Calculate usage for specific <b>account</b></a></li>
-        <li><a href="{% url 'calc_usage_all' %}">Calculate usage for <b>all</b> accounts</a></li>
-        <li><a href="{% url 'list_vendor_files' %}">View account files</a></li>
+        <li><a href="{% url 'calc_usage_all' %}">Calculate usage for <b>ALL</b> accounts</a></li>
+        <li><a href="{% url 'uqu_save' %}">Save unique users</a></li>
     </ul>
     <h5>Handle Iteco ZIP files</h5>
     <ul>
         <li><a href="{% url 'vendor_zip_upload' %}">Upload Iteco ZIP</a></li>
         <li><a href="{% url 'vendor_zip_extract' %}">Extract Iteco ZIP</a></li>
+        <li><a href="{% url 'list_vendor_files' %}">View Iteco files</a></li>
     </ul>
 {% endblock %}

@@ -8,19 +8,26 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
               {% if user.is_authenticated and user.is_staff %}
-              <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Billing reports
-                  </a>
-                  <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" href="{% url 'period_report_id' %}">Single report</a></li>
-                      <li><a class="dropdown-item" href="{% url 'period_client_report' %}">Client's reports</a></li>
-                      <li><a class="dropdown-item" href="{% url 'period_report' %}">All reports</a></li>
-                      <li><hr class="dropdown-divider"></li>
-                      <li><a class="dropdown-item" href="{% url 'list_report_files' %}">View report files</a></li>
-                  </ul>
-              </li>
+                  <li class="nav-item">
+                    <a class="nav-link" href="{% url 'clients_list' %}">Client records</a>
+                  </li>
                   <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Service usage
+                      </a>
+                      <ul class="dropdown-menu">
+                          <li><a class="dropdown-item" href="{% url 'vendor_zip_upload' %}">Upload Iteco ZIP</a></li>
+                          <li><a class="dropdown-item" href="{% url 'vendor_zip_extract' %}">Extract Iteco ZIP</a></li>
+                          <li><a class="dropdown-item" href="{% url 'list_vendor_files' %}">View raw usage files</a></li>
+                          <li><hr class="dropdown-divider"></li>
+                          <li><a class="dropdown-item" href="{% url 'calc_usage_all' %}">Calc usage ALL accounts</a></li>
+                          <li><a class="dropdown-item" href="{% url 'uqu_save' %}">Save unique users</a></li>
+                          <li><hr class="dropdown-divider"></li>
+                          <li><a class="dropdown-item" href="{% url 'period_report' %}">Generate ALL usage reports</a></li>
+                          <li><a class="dropdown-item" href="{% url 'list_report_files' %}">View report files</a></li>
+                      </ul>
+                  </li>
+                  <li class="nav-item dropdown border-end">
                       <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Other reports
                       </a>
@@ -28,24 +35,6 @@
                           <li><a class="dropdown-item" href="{% url 'db_reconciliation' %}">(DB) Reconciliation report</a></li>
                           <li><a class="dropdown-item" href="{% url 'uqu_view' %}">(DB) View unique users</a></li>
                       </ul>
-                  </li>
-                  <li class="nav-item dropdown border-end">
-                      <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Accounts update
-                      </a>
-                      <ul class="dropdown-menu">
-                          <li><a class="dropdown-item" href="{% url 'calc_vendor_usage' %}">Calc one account usage</a></li>
-                          <li><a class="dropdown-item" href="{% url 'calc_usage_all' %}">Calc usage ALL accounts</a></li>
-                          <li><a class="dropdown-item" href="{% url 'uqu_save' %}">Save unique users</a></li>
-                          <li><hr class="dropdown-divider"></li>
-                          <li><a class="dropdown-item" href="{% url 'vendor_zip_upload' %}">Upload Iteco ZIP</a></li>
-                          <li><a class="dropdown-item" href="{% url 'vendor_zip_extract' %}">Extract Iteco ZIP</a></li>
-                          <li><hr class="dropdown-divider"></li>
-                          <li><a class="dropdown-item" href="{% url 'list_vendor_files' %}">View raw usage files</a></li>
-                      </ul>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="{% url 'clients_list' %}">Clients</a>
                   </li>
                   <li class="nav-item">
                     <a class="nav-link" href="/admin/" target="_blank">DB Admin</a>
