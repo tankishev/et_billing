@@ -1,66 +1,63 @@
-from stats.modules.calculator import BaseServicesMapper
-from ..models import RatedTransaction
-from vendors.models import Vendor, VendorService
-from services.models import Service
-from contracts.models import OrderService, Client
+
+from contracts.models import Client, Contract
+from stats.models import UsageTransaction
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+import logging
+import re
+
+logger = logging.getLogger(f'et_billing.{__name__}')
 
 
-class RatingCalculator(BaseServicesMapper):
-    """ A helper class use to map services rate and store transactions """
+class BaseRater:
 
-    _PRO_SIGN_VENDORS = [52]
-
-    def __init__(self):
+    def __init__(self, period='2023-11'):
+        self.period_start = None
+        self.period_end = None
+        self.period = period
         self.transactions = []
-        self.vendor = None
-        self.client = None
-        self.service_costs = None
+        self._dev_setup()
 
-    def load_transactions(self, input_file):
+    def _dev_setup(self):
+        self.client = Client.objects.get(pk=7)
 
-        # Set globals
-        self._set_globals(input_file.vendor)
+    @property
+    def period(self):
+        return self._period
 
-        # Load data and map vendor services
-        status, mapped_data = self.map_service_usage(input_file)
-        if status != 0:
-            return status
+    @period.setter
+    def period(self, value):
+        try:
+            pattern = r'^\d{4}-\d{2}$'
+            if isinstance(value, str) and re.match(pattern, value):
+                self.period_start = datetime.strptime(value, '%Y-%m')
+                self.period_end = self.period_start + relativedelta(months=1)
+                self._period = value
+            else:
+                logger.warning(f'Period {value} is not in format YYYY-MM')
 
-        # Save transactions
-        for transaction in mapped_data.transactions:
-            charge_user = transaction.payer == 'Client'
-            print('\n'.join(str(el) for el in [
-                transaction.date_created,
-                self.client,
-                self.vendor,
-                transaction.service_id,
-                self._get_service_cost(transaction.service_id),
-                charge_user
-            ]))
-            # rated_transaction = RatedTransaction(
-            #     timestamp=transaction.date_created,
-            #     client=self._get_client(),
-            #     vendor=self.vendor,
-            #     service=transaction.service,
-            #     cost=self._get_service_cost(transaction.service),
-            #     charge_user=transaction.payer
-            # )
+        except Exception as e:
+            logger.error(f'Error: {e}')
+            raise
 
-    def _set_globals(self, vendor):
-        self.vendor = vendor
-        self.client = self._get_client()
-        self.transactions.clear()
-        self.service_costs = self._get_service_costs()
+    @property
+    def client(self):
+        return self._client
 
-    def _get_client(self):
-        if self.vendor.vendor_id in self._PRO_SIGN_VENDORS:
-            return Client.objects.get(pk=0)
-        return self.vendor.client
+    @client.setter
+    def client(self, value):
+        try:
+            self.transactions.clear()
+            if isinstance(value, Client):
+                usage_transactions = UsageTransaction.objects.filter(
+                    vendor__client=value,
+                    timestamp__gte=self.period_start,
+                    timestamp__lt=self.period_end
+                )
+                if usage_transactions.exists():
+                    transactions_list = list(usage_transactions)
+                    self.transactions = sorted(transactions_list, key=lambda x: x.timestamp)
 
-    def _get_service_costs(self):
-        os = OrderService.objects.filter(
-            order__contract__client=self.client,
-            order__is_active=True,
-            order__contract__is_active=True
-        )
-
+        except Exception as e:
+            logger.error('Error: {e}')
+            raise
