@@ -1,4 +1,3 @@
-from django.db.models import Count
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
@@ -184,13 +183,7 @@ def reconciliation(request):
         is_billable=True,
         is_validated=False
     )]
-    usage_stats_check = [f'{el.period} Account {el.vendor} - Service {el.service}' for el in get_su()]
-
-    duplicated_vendor_services = True
-    duplicated_vendor_services = [
-        f'Account {el.vendor_id} - Service {el.service_id}' for el in
-        VendorService.objects.values('vendor_id', 'service_id').annotate(count=Count('id')).filter(count__gt=1)
-    ]
+    usage_stats_check = [f'{el.period} Vendor {el.vendor} - Service {el.service}' for el in get_su()]
 
     context = {
         'res_details': {
@@ -199,9 +192,8 @@ def reconciliation(request):
             (2, 'Accounts with usage that are not assigned to reports'): billable_vendors,
             (3, 'UsageStats without corresponding AccountService configuration'): usage_stats_check,
             (4, 'AccountService configuration not assigned to orders'): vendor_services,
-            (5, 'AccountService configurations that are duplicated'): duplicated_vendor_services,
-            (6, 'Billable clients marked as not-validated'): billable_clients_not_validated,
-            (7, 'Billable clients without reports'): billable_clients_no_report,
+            (5, 'Billable clients marked as not-validated'): billable_clients_not_validated,
+            (6, 'Billable clients without reports'): billable_clients_no_report,
         }
     }
     return render(request, 'shared/results_collapse.html', context)
