@@ -38,6 +38,7 @@ class VendorService(models.Model):
     class Meta:
         db_table = 'vendor_services'
         ordering = ('service__service_order',)
+        unique_together = ('vendor', 'service')
 
 
 class VendorFilterOverride(models.Model):
