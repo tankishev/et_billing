@@ -110,12 +110,3 @@ class ReportFile(models.Model):
 
     class Meta:
         db_table = 'report_files'
-
-
-class TransactionStatus(models.Model):
-    """ !!! NOT USED """
-    status_type = models.IntegerField(primary_key=True)
-    description = models.CharField(max_length=50)
-
-    class Meta:
-        db_table = 'transaction_statuses'
