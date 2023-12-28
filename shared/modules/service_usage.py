@@ -1,7 +1,10 @@
 from .transactions import TransactionFactory
 from collections import namedtuple
+import logging
 
+logger = logging.getLogger(f'et_billing.{__name__}')
 MappedTransactions = namedtuple("MappedTransactions", ["dataframe", "transactions", "fully_mapped"])
+TRANSACTION_STATUS_ERROR = 5
 
 
 class ServiceUsageMixin:
@@ -9,30 +12,42 @@ class ServiceUsageMixin:
 
     @staticmethod
     def map_transactions(df, service_filters: dict) -> MappedTransactions:
-        """ Maps service_filters dictionary to each row in a dataframe to calculate service usage.
+        """ Generates Transaction objects for each row in the dataframe.
+            If service_filters are provided, tries to map each transaction to a service.
             :param df: Pandas dataframe from Vendor Input File
             :param service_filters: {service_id: FilterGroup} dictionary for mapping transaction based services
             :returns : named tuple ("dataframe": DataFrame, "transactions": list, "fully_mapped": bool)
         """
 
-        transactions_list = []
-        headers = df.columns.tolist()
-        transactions_factory = TransactionFactory(headers)
-        df['service_id'] = None
-        for row in df.itertuples():
-            i, data = row[0], row[1:-1]
+        try:
+            transactions_list = []
+            headers = df.columns.tolist()
+            transactions_factory = TransactionFactory(headers)
+            df['service_id'] = None
+            for row in df.itertuples():
+                i, data = row[0], row[1:-1]
 
-            if data:
-                # Generate transaction from data
-                transaction = transactions_factory.gen_transaction(data)
+                if data:
+                    # Generate transaction from data
+                    transaction = transactions_factory.gen_transaction(data)
+                    transaction.service_id = None
 
-                # Apply filters to map service
-                filter_result = next((k for k, v in service_filters.items() if v.apply_all(transaction)), None)
+                    # Apply filters to map service, update dataframe and transaction, and add to output
+                    if service_filters:
+                        filter_result = next((k for k, v in service_filters.items() if v.apply_all(transaction)), None)
+                        transaction.service_id = filter_result
+                        df.at[i, 'service_id'] = filter_result
 
-                # Update dataframe and transaction and add to output
-                df.at[i, 'service_id'] = filter_result
-                transaction.service_id = filter_result
-                transactions_list.append(transaction)
+                    transactions_list.append(transaction)
 
-        fully_mapped = sum(df.service_id.value_counts()) == len(df)
-        return MappedTransactions(dataframe=df, transactions=transactions_list, fully_mapped=fully_mapped)
+            fully_mapped = True
+            for el in transactions_list:
+                if el.transaction_status != TRANSACTION_STATUS_ERROR and el.service_id is None:
+                    fully_mapped = False
+                    break
+            # fully_mapped = sum(df.service_id.value_counts()) == len(df)
+            return MappedTransactions(dataframe=df, transactions=transactions_list, fully_mapped=fully_mapped)
+
+        except Exception as e:
+            logger.error("Error: %s", e)
+            raise

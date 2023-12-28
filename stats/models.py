@@ -1,6 +1,5 @@
 from django.db import models
 from month.models import MonthField
-
 from clients.models import Client
 from services.models import Service
 from vendors.models import Vendor
@@ -88,3 +87,32 @@ class UquStatsPeriodCountries(models.Model):
     class Meta:
         db_table = 'stats_uqu_period_country'
         unique_together = ('period', 'country')
+
+
+class TransactionStatus(models.Model):
+    status_type = models.IntegerField(primary_key=True)
+    description = models.CharField(max_length=50)
+
+    class Meta:
+        db_table = 'stats_transaction_statuses'
+
+
+class UsageTransaction(models.Model):
+    timestamp = models.DateTimeField()
+    vendor = models.ForeignKey(
+        Vendor, on_delete=models.RESTRICT, db_column='vendor_id', related_name='usage_transactions')
+    thread_id = models.CharField(max_length=12)
+    transaction_id = models.BigIntegerField()
+    transaction_status = models.ForeignKey(
+        TransactionStatus, on_delete=models.RESTRICT, db_column='status_id')
+    service = models.ForeignKey(
+        Service, on_delete=models.RESTRICT, db_column='service_id', related_name='usage_transactions', null=True)
+    charge_user = models.BooleanField(default=False)
+    bio_pin = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'stats_usage_transactions'
+
+    @property
+    def period(self):
+        return self.timestamp.strftime("%Y-%m")
