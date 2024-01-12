@@ -232,6 +232,7 @@ function parseOrderData(orderData){
         const {
             "order_id": orderID,
             "start_date": startDate,
+            "end_date": endDate,
             "description": description,
             "currency": ccyDescription,
             "ccy_type": ccyTypeID,
@@ -240,7 +241,7 @@ function parseOrderData(orderData){
             "tu_price": tuPrice,
             "is_active": isActive
         } = data;
-        return {orderID, startDate, description, ccyDescription, ccyTypeID, pmtDescription, pmtTypeID, tuPrice, isActive};
+        return {orderID, startDate, endDate, description, ccyDescription, ccyTypeID, pmtDescription, pmtTypeID, tuPrice, isActive};
     }
 
 }

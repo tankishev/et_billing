@@ -59,6 +59,7 @@ class Order(models.Model):
     contract = models.ForeignKey(
         Contract, on_delete=models.RESTRICT, db_column='contract_id', related_name='orders')
     start_date = models.DateField()
+    end_date = models.DateField(null=True)
     description = models.TextField()
     ccy_type = models.ForeignKey(
         Currency, on_delete=models.RESTRICT, db_column='ccy_type', related_name='orders')
