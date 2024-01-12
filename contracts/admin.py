@@ -76,7 +76,7 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ['contract__client__reporting_name', 'contract__client__client_id']
     list_select_related = True
 
-    fields = ['contract', 'start_date', 'description', 'ccy_type', 'tu_price', 'payment_type', 'is_active']
+    fields = ['contract', 'start_date', 'end_date', 'description', 'ccy_type', 'tu_price', 'payment_type', 'is_active']
     readonly_fields = ['contract']
     inlines = [OrderPriceInline, OrderServiceInline]
     formfield_overrides = {models.TextField: {'widget': Textarea(attrs={'rows': 4, 'cols': 60})}}

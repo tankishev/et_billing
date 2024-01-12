@@ -58,6 +58,7 @@ class OrderSerializerVerbose(serializers.ModelSerializer):
         model = Order
         fields = ["order_id",
                   "start_date",
+                  "end_date",
                   "description",
                   "currency",
                   "ccy_type",
@@ -156,6 +157,7 @@ class OrderRelated(OrderSerializerVerbose):
                   "payment",
                   "payment_type",
                   "start_date",
+                  "end_date",
                   "description",
                   "tu_price",
                   "is_active",
