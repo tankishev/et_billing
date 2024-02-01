@@ -253,7 +253,7 @@ def clients_list(request: Request):
         if search_value_is_integer:
             clients = clients.filter(pk=search_value)
         else:
-            threshold = 0.5
+            threshold = 0.2
             clients = clients.annotate(
                 similarity=TrigramSimilarity('legal_name', search_value) +
                            TrigramSimilarity('reporting_name', search_value)
