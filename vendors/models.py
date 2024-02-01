@@ -10,7 +10,7 @@ class Vendor(models.Model):
     """ A Vendor is an object in Iteco to link a client to an API key """
 
     vendor_id = models.IntegerField(primary_key=True, verbose_name='Vendor ID')
-    description = models.CharField(max_length=100, verbose_name='Description EN', unique=True)
+    description = models.CharField(max_length=100, verbose_name='Description EN')
     is_reconciled = models.BooleanField(default=False)
     client = models.ForeignKey(
         Client, on_delete=models.RESTRICT, verbose_name='Client', related_name='vendors')
