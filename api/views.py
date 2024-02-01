@@ -1,6 +1,8 @@
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.postgres.search import SearchVector
+from django.contrib.postgres.search import SearchVector, TrigramSimilarity
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_integer
 from django.db.models import RestrictedError, Count, Subquery, Q, Exists, OuterRef
 from django.db import transaction
 
@@ -68,7 +70,6 @@ def vendors_list(request: Request):
 @csrf_exempt
 @api_view(['POST'])
 def vendor_calculate_usage(request: Request):
-
     if request.method == 'POST':
 
         logger.info('Received a POST request')
@@ -116,7 +117,6 @@ def vendor_details(request: Request, pk):
 @csrf_exempt
 @api_view(['GET'])
 def vendor_services(request: Request, pk):
-
     """
     Retrieves or updates the list of Services assigned to a given Vendor.
     """
@@ -150,7 +150,7 @@ def vendor_services_add(request: Request, pk):
         serializer = serializers.ServiceIDListSerializer(data=request.data)
         if serializer.is_valid():
             ids = serializer.data.get('ids', [])
-            existing_ids = VendorService.objects.filter(vendor=vendor, service_id__in=ids)\
+            existing_ids = VendorService.objects.filter(vendor=vendor, service_id__in=ids) \
                 .values_list('service_id', flat=True)
             objs = [VendorService(vendor=vendor, service_id=el) for el in ids if el not in list(existing_ids)]
             if objs:
@@ -162,7 +162,6 @@ def vendor_services_add(request: Request, pk):
 @csrf_exempt
 @api_view(['POST'])
 def vendor_services_remove(request: Request, pk):
-
     """
     Removes Services from a given Vendor.
     """
@@ -177,7 +176,7 @@ def vendor_services_remove(request: Request, pk):
         serializer = serializers.VendorServiceIDsSerializer(data=request.data)
         if serializer.is_valid():
             ids = serializer.data.get('ids', [])
-            vs_to_delete = VendorService.objects.filter(pk__in=ids)\
+            vs_to_delete = VendorService.objects.filter(pk__in=ids) \
                 .annotate(orderservices_count=Count('orderservice')).filter(orderservices_count=0)
             services_to_delete_filters = list(vs_to_delete.values_list('service_id', flat=True))
             vs_to_delete.delete()
@@ -237,7 +236,6 @@ def vendor_services_duplicate(request: Request, pk):
 @csrf_exempt
 @api_view(['GET', 'POST'])
 def clients_list(request: Request):
-
     """
     Retrieve list of Clients or Creates new client.
     """
@@ -246,7 +244,21 @@ def clients_list(request: Request):
         clients = Client.objects.all().order_by('reporting_name')
 
         search_value = request.query_params.get('search', None)
-        if search_value:
+        try:
+            validate_integer(search_value)
+            search_value_is_integer = True
+        except ValidationError:
+            search_value_is_integer = False
+
+        if search_value_is_integer:
+            clients = clients.filter(pk=search_value)
+        else:
+            threshold = 0.5
+            clients = clients.annotate(
+                similarity=TrigramSimilarity('legal_name', search_value) +
+                           TrigramSimilarity('reporting_name', search_value)
+            ).filter(similarity__gt=threshold)
+
             search_vector = SearchVector('client_id', 'legal_name', 'reporting_name')
             clients = clients.annotate(search=search_vector).filter(search=search_value)
 
@@ -264,7 +276,6 @@ def clients_list(request: Request):
 @csrf_exempt
 @api_view(['GET', 'PUT', 'DELETE'])
 def client_details(request: Request, pk):
-
     """
     Retrieves, updates or deletes a Client record.
     """
@@ -293,14 +304,13 @@ def client_details(request: Request, pk):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except RestrictedError as err:
             err_message = f'Cannot delete client {client} ' \
-                      f'because it has {len(err.restricted_objects)} restricted objects assigned to it.'
+                          f'because it has {len(err.restricted_objects)} restricted objects assigned to it.'
             return Response({'message': err_message}, status=status.HTTP_409_CONFLICT)
 
 
 @csrf_exempt
 @api_view(['GET', 'POST'])
 def client_vendors(request: Request, pk):
-
     """
     Retrieve the Vendors list for a given Client.
     Assigns a list of vendors to the given Client.
@@ -331,7 +341,6 @@ def client_vendors(request: Request, pk):
 @csrf_exempt
 @api_view(['GET'])
 def client_services(request: Request, pk):
-
     """
     Retrieves the list of Services associated with a given Client.
     Can filter the ones already associated with active Orders.
@@ -348,9 +357,9 @@ def client_services(request: Request, pk):
 
         exclude_assigned = request.query_params.get('exclude_assigned', False)
         if exclude_assigned == 'true':
-            client_active_orders = Order.objects\
+            client_active_orders = Order.objects \
                 .filter(is_active=True, contract__client=client)
-            assigned_services = VendorService.objects\
+            assigned_services = VendorService.objects \
                 .filter(orderservice__order__in=client_active_orders).values_list('id', flat=True)
             services = services.exclude(pk__in=assigned_services)
 
@@ -379,7 +388,6 @@ def client_services(request: Request, pk):
 @csrf_exempt
 @api_view(['GET', 'POST'])
 def contracts_list(request: Request):
-
     """
     Retrieve the list of a Contracts or creates a new one.
     """
@@ -400,7 +408,6 @@ def contracts_list(request: Request):
 @csrf_exempt
 @api_view(['GET', 'PATCH', 'DELETE'])
 def contract_details(request: Request, pk):
-
     """
     Retrieve the details of a Contract including list of associated orders.
     Updates the details of the Contract or deletes the Contract instance.
@@ -436,7 +443,6 @@ def contract_details(request: Request, pk):
 @csrf_exempt
 @api_view(['GET'])
 def contract_orders(request: Request, pk):
-
     """
     Retrieves the list of Orders associated with a Contract.
     """
@@ -457,7 +463,6 @@ def contract_orders(request: Request, pk):
 @csrf_exempt
 @api_view(['POST'])
 def orders_list(request: Request):
-
     """ Create a new Order """
 
     if request.method == 'POST':
@@ -471,7 +476,6 @@ def orders_list(request: Request):
 @csrf_exempt
 @api_view(['GET', 'PATCH', 'DELETE'])
 def order_details(request: Request, pk):
-
     """
     Retrieves or updates the details for a given Order.
     Deletes the Order record.
@@ -510,7 +514,6 @@ def order_details(request: Request, pk):
 @csrf_exempt
 @api_view(['GET'])
 def order_duplicate(request: Request, pk):
-
     """ Duplicates an existing order if it is inactive
     """
 
@@ -564,7 +567,6 @@ def order_duplicate(request: Request, pk):
 @csrf_exempt
 @api_view(['GET'])
 def order_service_prices(request: Request, pk):
-
     """
     Retrieve data for OrderPrice objects associated with a given Order.
     """
@@ -584,7 +586,6 @@ def order_service_prices(request: Request, pk):
 @csrf_exempt
 @api_view(['PATCH'])
 def order_service_edit(request: Request, pk):
-
     try:
         op = OrderPrice.objects.get(pk=pk)
     except OrderPrice.DoesNotExist:
@@ -602,7 +603,6 @@ def order_service_edit(request: Request, pk):
 @csrf_exempt
 @api_view(['GET'])
 def order_services(request: Request, pk):
-
     """
     Retrieve data for the OrderService objects assigned to a given Orders.
     """
@@ -614,7 +614,7 @@ def order_services(request: Request, pk):
         return Response({'message': err_message}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        services = OrderService.objects.filter(order=order)\
+        services = OrderService.objects.filter(order=order) \
             .order_by('service__service__service_order', 'service__vendor_id')
         serializer = serializers.OrderServiceSerializerVerbose(services, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -623,7 +623,6 @@ def order_services(request: Request, pk):
 @csrf_exempt
 @api_view(['POST'])
 def order_services_add(request: Request, pk):
-
     try:
         order = Order.objects.get(pk=pk)
     except Order.DoesNotExist:
@@ -652,7 +651,6 @@ def order_services_add(request: Request, pk):
 @csrf_exempt
 @api_view(['POST'])
 def order_services_remove(request: Request, pk):
-
     try:
         order = Order.objects.get(pk=pk)
     except Order.DoesNotExist:
@@ -685,7 +683,6 @@ def order_services_remove(request: Request, pk):
 @csrf_exempt
 @api_view(['GET'])
 def client_reports_list(request: Request, pk):
-
     """ Returns a list of Reports for a given Client """
 
     try:
@@ -703,7 +700,6 @@ def client_reports_list(request: Request, pk):
 @csrf_exempt
 @api_view(['GET'])
 def client_report_files_list(request: Request, pk):
-
     """ Returns a list of report files for the client """
 
     try:
@@ -713,7 +709,7 @@ def client_report_files_list(request: Request, pk):
         return Response({'message': err_message}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        report_files = ReportFile.objects\
+        report_files = ReportFile.objects \
             .filter(report__client=client, report__is_active=True).order_by('-period', 'report__file_name')
         rf_serializer = serializers.ReportFileSerializer(report_files, many=True)
         return Response(rf_serializer.data, status=status.HTTP_200_OK)
@@ -722,7 +718,6 @@ def client_report_files_list(request: Request, pk):
 @csrf_exempt
 @api_view(['POST'])
 def client_create_report(request: Request, pk):
-
     """
     Creates a new Report for a given Client
     """
@@ -748,7 +743,6 @@ def client_create_report(request: Request, pk):
 @csrf_exempt
 @api_view(['GET', 'PATCH', 'DELETE'])
 def report_details(request: Request, pk):
-
     """
     Retrieves or updates the details for a given Report.
     Deletes the Report record.
@@ -785,7 +779,6 @@ def report_details(request: Request, pk):
 @csrf_exempt
 @api_view(['PUT'])
 def report_update_vendors(request: Request, pk):
-
     """
     Updates the list of vendors for a given Report.
     """
@@ -809,7 +802,6 @@ def report_update_vendors(request: Request, pk):
 @csrf_exempt
 @api_view(['POST'])
 def report_render_period_client(request: Request):
-
     if request.method == 'POST':
 
         logger.info('Received a POST request')
@@ -832,7 +824,6 @@ def report_render_period_client(request: Request):
 @csrf_exempt
 @api_view(['POST'])
 def report_render_period_report(request: Request):
-
     if request.method == 'POST':
 
         logger.info('Received a POST request')
@@ -856,7 +847,6 @@ def report_render_period_report(request: Request):
 @csrf_exempt
 @api_view(['GET'])
 def get_metadata(request: Request):
-
     """ Returns global configs """
 
     if request.method == 'GET':
@@ -892,7 +882,6 @@ def get_metadata(request: Request):
 @csrf_exempt
 @api_view(['GET'])
 def health_check(request: Request, pk):
-
     try:
         client = Client.objects.get(pk=pk)
     except Client.DoesNotExist:
@@ -903,9 +892,9 @@ def health_check(request: Request, pk):
 
     if request.method == 'GET':
         # Same vendorService in more than one active order
-        vs = VendorService.objects\
-            .filter(orderservice__order__is_active=True, vendor__client=client)\
-            .annotate(num_count=Count('orderservice')).filter(num_count__gt=1)\
+        vs = VendorService.objects \
+            .filter(orderservice__order__is_active=True, vendor__client=client) \
+            .annotate(num_count=Count('orderservice')).filter(num_count__gt=1) \
             .order_by('vendor_id', 'service_id')
         if vs.exists():
             retval.append({
@@ -915,8 +904,8 @@ def health_check(request: Request, pk):
 
         # VendorServices not in orders
         os_to_exclude = OrderService.objects.filter(order__contract__client=client, order__is_active=True).values('pk')
-        vs = VendorService.objects.filter(vendor__client=client)\
-            .exclude(orderservice__in=Subquery(os_to_exclude))\
+        vs = VendorService.objects.filter(vendor__client=client) \
+            .exclude(orderservice__in=Subquery(os_to_exclude)) \
             .order_by('vendor_id', 'service_id')
         if vs.exists():
             retval.append({
@@ -925,12 +914,12 @@ def health_check(request: Request, pk):
             })
 
         # Active contracts with no active orders
-        c = Contract.objects.filter(client=client, is_active=True)\
+        c = Contract.objects.filter(client=client, is_active=True) \
             .annotate(active_order_count=Count(
-                'orders',
-                filter=Q(orders__is_active=True),
-                distinct=True
-            )
+            'orders',
+            filter=Q(orders__is_active=True),
+            distinct=True
+        )
         ).filter(active_order_count=0)
         if c.exists():
             retval.append({
@@ -960,7 +949,6 @@ def health_check(request: Request, pk):
 @csrf_exempt
 @api_view(['GET'])
 def get_task_list(request: Request):
-
     """ Gets the list of celery tasks in the DB """
 
     if request.method == 'GET':
@@ -974,7 +962,6 @@ def get_task_list(request: Request):
 @csrf_exempt
 @api_view(['GET'])
 def get_task_progress(request: Request, task_id: str):
-
     """ Gets the status of a Celery task provided its task_id """
     logger.info(f'Received a {request.method} request for task {task_id}')
 
