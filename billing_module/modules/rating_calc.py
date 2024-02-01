@@ -1,5 +1,4 @@
 from contracts.models import Client, Order
-from billing_module.models import PrepaidPackageCharge
 from stats.models import UsageTransaction
 from vendors.models import Vendor
 from collections import deque
@@ -7,9 +6,11 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from typing import List
 from django.db.models import Q
+from django.db import transaction
 from .processors import add_transaction_processor
 from .transaction import RatedTransaction
 from .utils import ChargeStatus, ChargeType
+from ..models import PrepaidPackageCharge, OrderCharge
 
 import logging
 import re
@@ -34,7 +35,7 @@ class BaseRater:
         data_validated (bool): A flag indicating whether the orders data has been validated.
         unprocessed_transactions (deque): A queue of transactions that are yet to be processed.
         skipped_transactions (deque): A queue of transactions that have been skipped during processing.
-        charge_objects (List[BaseChargeObject]): A list of charge objects used to process transactions.
+        transaction_processors (List[BaseTransactionProcessor]): A list of charge objects used to process transactions.
 
     Methods:
         rate_client_transactions: Main method to initiate the rating process for a client.
@@ -56,10 +57,10 @@ class BaseRater:
         self.orders_data = []
         self.data_validated = False
 
-        # Rating data
+        # Transaction processing data
         self.unprocessed_transactions = deque()
         self.skipped_transactions = deque()
-        self.charge_objects = []
+        self.transaction_processors = []
 
     @property
     def period(self):
@@ -187,13 +188,13 @@ class BaseRater:
         Initializes different types of charge objects based on the payment type of each order.
         """
 
-        self.charge_objects.clear()
+        self.transaction_processors.clear()
         if not self.orders_data:
             logger.warning('No orders data')
         else:
             logger.info('Setting up charge objects')
             for order in self.orders_data:
-                add_transaction_processor(order, processors_list=self.charge_objects)
+                add_transaction_processor(order, processors_list=self.transaction_processors)
 
     def _load_transactions(self) -> None:
         """
@@ -217,9 +218,9 @@ class BaseRater:
                 transactions_list = list(usage_transactions)
                 transactions_list = sorted(transactions_list, key=lambda x: x.timestamp)
                 for el in transactions_list:
-                    transaction = RatedTransaction(el)
-                    transaction.set_vs(vs_list)
-                    self.unprocessed_transactions.append(transaction)
+                    rated_transaction = RatedTransaction(el)
+                    rated_transaction.set_vs(vs_list)
+                    self.unprocessed_transactions.append(rated_transaction)
             else:
                 logger.warning(f'No UsageTransactions to load')
 
@@ -237,27 +238,81 @@ class BaseRater:
 
         self.skipped_transactions.clear()
         while self.unprocessed_transactions:
-            transaction = self.unprocessed_transactions.popleft()
+            unprocessed_transaction = self.unprocessed_transactions.popleft()
             transaction_processed = False
 
-            for charge in self.charge_objects:
-                if charge.process_transaction(transaction):
+            for processor in self.transaction_processors:
+                if processor.process_transaction(unprocessed_transaction):
                     transaction_processed = True
                     break
 
             if not transaction_processed:
-                self.skipped_transactions.append(transaction)
+                self.skipped_transactions.append(unprocessed_transaction)
 
     def _print_rated_transactions_summary(self):
-        for charge in self.charge_objects:
-            print(charge.charges_summary)
+        for processor in self.transaction_processors:
+            print(processor.charges_summary)
 
-    def _save_charges(self):
-        for charge in self.charge_objects:
-            if charge.charge_type in (ChargeType.PREPAID, ChargeType.PREPAID_SHARED):
-                PrepaidPackageCharge.objects.create(
-                    charge_date=self.period_end,
-                    charge_status_id=ChargeStatus.PENDING.value,
-                    charged_units=charge.total_charges,
-                    prepaid_package=charge.prepaid_package
+    def _save_charges(self) -> None:
+        """
+        Saves the calculated charges for orders and prepaid packages to the database.
+
+        This method gathers charge details from each transaction processor and creates records for OrderCharge
+        and PrepaidPackageCharge. OrderCharge records are created for each service charge, including details like
+        charge date, order, vendor, and charged units. Existing OrderCharge records for the same period and order are
+        deleted. PrepaidPackageCharge records are prepared for charges related to prepaid or shared packages.
+        """
+
+        order_charges = []
+        prepaid_package_charges = []
+        charge_date = self.period_end.date()
+        invoice_charges = {}
+
+        for processor in self.transaction_processors:
+            order = processor.order
+            charge_type = processor.charge_type
+
+            # Prepare record for order charges
+            for vendor_id, service_charges in processor.service_charges.items():
+                for service_id, charge_data in service_charges.items():
+                    unit_count = charge_data.get('count', 0)
+                    charge_amount = charge_data.get('charge', 0)
+                    order_charges.append(
+                        OrderCharge(
+                            period=charge_date,
+                            order=order,
+                            payment_type_id=charge_type.value,
+                            vendor_id=vendor_id,
+                            service_id=service_id,
+                            service_count=unit_count,
+                            charged_units=charge_amount
+                        )
+                    )
+
+                    if charge_type == ChargeType.INVOICE:
+                        invoice_ccy = invoice_charges.setdefault(order.ccy_type, {})
+
+
+            # Prepare record for charges to prepaid packages
+            if charge_type in (ChargeType.PREPAID, ChargeType.PREPAID_SHARED):
+                prepaid_package_charges.append(
+                    PrepaidPackageCharge(
+                        charge_date=charge_date,
+                        charge_status_id=ChargeStatus.PENDING.value,
+                        charged_units=processor.total_charges,
+                        prepaid_package=processor.prepaid_package
+                    )
                 )
+
+        with transaction.atomic():
+            OrderCharge.objects\
+                .filter(order__contract__client=self.client, period=charge_date)\
+                .delete()
+            PrepaidPackageCharge.objects\
+                .filter(charge_status_id=ChargeStatus.PENDING.value, charge_date=charge_date)\
+                .delete()
+
+            if order_charges:
+                OrderCharge.objects.bulk_create(order_charges)
+            if prepaid_package_charges:
+                PrepaidPackageCharge.objects.bulk_create(prepaid_package_charges)

@@ -78,7 +78,7 @@ def transfer_balance(from_package: PrepaidPackage, to_package: PrepaidPackage, p
 
             # Save changes
             with transaction.atomic():
-                PrepaidPackageCharge.objects.bulk_create(*charges)
+                PrepaidPackageCharge.objects.bulk_create(charges)
                 to_package.save()
                 from_package.save()
 
