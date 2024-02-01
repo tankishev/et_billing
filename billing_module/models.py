@@ -1,6 +1,10 @@
 from django.db import models
 from decimal import Decimal
-from contracts.models import Currency, Order
+from month.models import MonthField
+from clients.models import Client
+from contracts.models import Currency, Order, PaymentType
+from services.models import Service
+from vendors.models import Vendor
 
 BGN_TO_EUR = Decimal('1') / Decimal('1.95583')
 
@@ -153,9 +157,44 @@ class OrderPackages(models.Model):
         prepaid_package (ForeignKey): The prepaid package associated with the order.
     """
 
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, db_column='order_id')
     prepaid_package = models.ForeignKey(PrepaidPackage, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'billing_order_packages'
         ordering = ['prepaid_package__start_date']
+
+
+class OrderCharge(models.Model):
+
+    period = MonthField()
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, db_column='order_id', related_name="order_charges")
+    payment_type = models.ForeignKey(PaymentType, on_delete=models.RESTRICT)
+    vendor = models.ForeignKey(Vendor, on_delete=models.RESTRICT, db_column='vendor_id', related_name="order_charges")
+    service = models.ForeignKey(
+        Service, on_delete=models.RESTRICT, db_column='service_id', related_name="order_charges")
+    service_count = models.IntegerField()
+    charged_units = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        db_table = 'billing_order_charges'
+
+
+class Invoice(models.Model):
+    period = MonthField()
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='invoices')
+    ccy_type = models.ForeignKey(Currency, on_delete=models.RESTRICT)
+    charge_status = models.ForeignKey(ChargeStatus, on_delete=models.RESTRICT)
+
+    class Meta:
+        db_table = 'billing_invoices'
+
+
+class InvoiceCharge(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='invoice_charges')
+    description = models.CharField(max_length=100)
+    service_count = models.IntegerField()
+    charged_units = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        db_table = 'billing_invoice_charges'
