@@ -53,6 +53,7 @@ def handle_extract_zip(period: str) -> dict:
     processed_ids = []
 
     # Process zip archive one file at a time
+    logger.debug(f'ZIP file validated; starting extraction')
     for z_obj in z_file.infolist():
         # Clean filename
         clean_name = clean_filename(z_obj.filename, clean=CLEAN_FILE_ENCODING)
@@ -63,46 +64,59 @@ def handle_extract_zip(period: str) -> dict:
             # Get vendor_id and vendor_name
             vendor_id = get_vendor_id(clean_name)
             if vendor_id is None:
+                logger.warning(f'Cannot extract vendor_id from: {clean_name}')
                 continue
             processed_ids.append(vendor_id)
             vendor_name = get_vendor_name(clean_name)
+            logger.debug(f'Extracted account with name {vendor_name} and id {vendor_id}')
 
             # Check if vendor exists and update name if changed
             try:
                 vendor = Vendor.objects.get(vendor_id=vendor_id)
+                logger.debug(f'Existing account detected: {vendor_id}; checking for name change')
                 if vendor.iteco_name != vendor_name:
                     retval[(1, 'Renamed vendors')].append(f'{vendor}: {vendor.iteco_name} -> {vendor_name}')
                     vendor.iteco_name = vendor_name
                     vendor.save()
+                    logger.debug(f'... renaming account to {vendor_name}')
                 else:
+                    logger.debug('... no change')
                     retval[(2, 'No change')].append(vendor)
 
             # If vendor does not exist create new vendor
             except Vendor.DoesNotExist:
+                logger.debug(f'New account number detected with id: {vendor_id}')
                 new_vendor = Vendor.objects.create(
                     vendor_id=vendor_id, client_id=0,
                     description=vendor_name, iteco_name=vendor_name, is_reconciled=False)
                 new_vendor.save()
+                logger.debug(f'New account created')
                 retval[(0, 'New vendors')].append(new_vendor)
 
             # Check for existing VendorInputFile and mark it inactive
             try:
                 existing_file = VendorInputFile.objects.get(period=period, vendor_id=vendor_id, is_active=True)
+                logger.debug('Deactivating existing input file')
                 existing_file.is_active = False
                 existing_file.save()
+                logger.debug('... deactivated')
             except VendorInputFile.DoesNotExist:
                 pass
 
             # Create new VendorInputFile and save it
             finally:
+                logger.debug('Creating new input file')
                 input_file = z_file.open(z_obj.filename)
                 vendor_file = File(input_file)
                 vendor_file.name = clean_name
                 new_file = VendorInputFile.objects.create(period=period, vendor_id=vendor_id, file=vendor_file)
                 new_file.save()
+                logger.debug('... created')
 
     # Add Vendors that were not in the archive in the return value
     unprocessed = Vendor.objects.exclude(vendor_id__in=processed_ids)
+    if unprocessed.exists():
+        logger.debug('Identified accounts with no files. Adding to list')
     retval[(3, 'Vendors not in archive')] = [el for el in unprocessed]
 
     logger.info(f'{len(processed_ids)} files extracted')
