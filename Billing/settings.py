@@ -91,11 +91,11 @@ WSGI_APPLICATION = 'Billing.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'HOST': os.environ.get('PG_HOST'),
+        'PORT': os.environ.get('PG_HOST_PORT'),
         'NAME': os.environ.get('PG_DB_NAME'),
         'USER': os.environ.get('PG_USERNAME'),
-        'PASSWORD': os.environ.get('PG_PASSWORD'),
-        'HOST': os.environ.get('PG_HOST'),
-        'PORT': os.environ.get('PG_HOST_PORT')
+        'PASSWORD': os.environ.get('PG_PASSWORD')
     }
 }
 
