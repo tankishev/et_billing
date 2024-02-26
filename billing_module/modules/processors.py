@@ -387,7 +387,7 @@ def add_transaction_processor(order: Order, **kwargs):
         payment_type = ChargeType(order.payment_type_id)
         processors_list = kwargs.get('processors_list', [])
 
-        if payment_type == ChargeType.NO_CHARGE:
+        if payment_type in (ChargeType.NO_CHARGE, ChargeType.SUBSCRIPTION):
             processors_list.append(NoChargeTransactionProcessor(order))
 
         elif payment_type in (ChargeType.PREPAID, ChargeType.PREPAID_SHARED):
