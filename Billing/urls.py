@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from . import views
+from billing_module.views import debug_view
 
 urlpatterns = [
     path('', views.index, name='home'),
@@ -17,5 +18,6 @@ urlpatterns = [
     path("packages/", include('packages.urls')),
     path("clients/", include('clients.urls')),
     path("api/", include('api.urls')),
+    path("debug/", debug_view),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

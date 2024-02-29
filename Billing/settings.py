@@ -45,8 +45,9 @@ INSTALLED_APPS = [
     'clients.apps.ClientsConfig',
     'services.apps.ServicesConfig',
     'vendors.apps.VendorsConfig',
-    'reports.apps.ReportsConfig',
     'contracts.apps.ContractsConfig',
+    'billing_module.apps.BillingModuleConfig',
+    'reports.apps.ReportsConfig',
     'stats.apps.StatsConfig',
     'packages.apps.PackagesConfig',
     'celery_tasks.apps.CeleryTasksConfig',
@@ -90,11 +91,11 @@ WSGI_APPLICATION = 'Billing.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'HOST': os.environ.get('PG_HOST'),
+        'PORT': os.environ.get('PG_HOST_PORT'),
         'NAME': os.environ.get('PG_DB_NAME'),
         'USER': os.environ.get('PG_USERNAME'),
-        'PASSWORD': os.environ.get('PG_PASSWORD'),
-        'HOST': os.environ.get('PG_HOST'),
-        'PORT': os.environ.get('PG_HOST_PORT')
+        'PASSWORD': os.environ.get('PG_PASSWORD')
     }
 }
 

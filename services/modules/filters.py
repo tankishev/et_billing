@@ -23,12 +23,6 @@ class FieldFilter:
         except AttributeError as err:
             logger.warning(err)
 
-    # @classmethod
-    # def set_accepted_fields(cls, fields) -> None:
-    #     cls._ACCEPTED_FIELDS.clear()
-    #     for field_name in fields:
-    #         cls._ACCEPTED_FIELDS.append(field_name)
-
     @classmethod
     def create_filter(cls, filter_name, filter_value):
         """ Spits the filter_name into field and function. Returns a FieldFilter instance if
@@ -53,6 +47,10 @@ class FieldFilter:
     def _match_lte(self, field_value) -> bool:
         """ Check if provided value is less than or equal to the lookup value """
         return field_value <= self.lookup_value
+
+    def _match_lt(self, field_value) -> bool:
+        """ Check if provided value is less than the lookup value """
+        return field_value < self.lookup_value
 
     def _match_eq(self, field_value) -> bool:
         """ Check if provided value is equal to the lookup value """
