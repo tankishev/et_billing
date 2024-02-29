@@ -11,6 +11,7 @@ class RatedTransaction:
 
     Attributes:
         TRANSACTION_STATUS_FAILED (int): Constant representing the failed transaction status.
+        date (string): The date of the transaction in format %Y-%m-%d.
         transaction (UsageTransaction): The transaction instance.
         bio_pin (bool): Was there BioID service associated with the transaction.
         service_id (int): ID of the service involved in the transaction.
@@ -24,6 +25,7 @@ class RatedTransaction:
 
     def __init__(self, transaction) -> None:
         self.transaction = transaction
+        self.date = transaction.date
         self.bio_pin = transaction.bio_pin
         self.service_id = transaction.service_id
         self.thread_id = transaction.thread_id

@@ -7,9 +7,10 @@ from dateutil.relativedelta import relativedelta
 from typing import List
 from django.db.models import Q
 from django.db import transaction
-from .processors import add_transaction_processor
+from .processors import get_transaction_processors
 from .transaction import RatedTransaction
-from ..models import OrderCharge
+from .utils import get_last_date_of_period
+from ..models import OrderCharge, PackageStatus
 
 import logging
 import re
@@ -49,6 +50,7 @@ class BaseRater:
 
         self.period_start = None
         self.period_end = None
+        self.charge_date = None
         self.period = period
 
         # DB data
@@ -80,15 +82,17 @@ class BaseRater:
         if isinstance(value, str) and re.match(pattern, value):
             self.period_start = datetime.strptime(value, '%Y-%m')
             self.period_end = self.period_start + relativedelta(months=1)
+            self.charge_date = get_last_date_of_period(value)
             self._period = value
         else:
             logger.warning(f'Period {value} is not in format YYYY-MM')
 
-    def rate_client_transactions(self, client_id: int) -> None:
+    def rate_client_transactions(self, client_id: int, verbose=False) -> None:
         """
         Rates the transactions of a given client.
 
         :param client_id: The ID of the client whose transactions are to be rated.
+        :param verbose: If TRUE the method will print processor summary to console.
         :raises Exception: Propagates any exceptions that occur during processing.
         """
 
@@ -104,7 +108,8 @@ class BaseRater:
                     self._load_transactions()
                     self._rate_transactions()
                     self._save_charges()
-                    # self._print_rated_transactions_summary()
+                    if verbose:
+                        self._print_rated_transactions_summary()
 
         except Exception as e:
             logger.error(f'Error: {e}')
@@ -157,7 +162,7 @@ class BaseRater:
         ).filter(
             Q(start_date__lte=self.period_end.date()) &
             (Q(end_date__gte=self.period_start.date()) | Q(end_date__isnull=True)) |
-            Q(orderpackages__prepaid_package__is_active=True)
+            Q(orderpackages__prepaid_package__status=PackageStatus.ACTIVE.value)
         ).prefetch_related(
             'orderpackages_set__prepaid_package',
             'orderprice_set',
@@ -167,8 +172,8 @@ class BaseRater:
 
     def _validate_orders_data(self) -> None:
         """
-        Validates the loaded orders data to ensure there are no duplicate services in more than one active order.
-        Sets the 'data_validated' attribute based on the validation result.
+        Validates the loaded orders data to ensure there are no conflicts, such as duplicate services across active
+        orders. Sets the 'data_validated' flag based on the outcome of the validation.
         """
 
         logger.info('Validating order data')
@@ -184,7 +189,7 @@ class BaseRater:
 
     def _load_charge_objects(self) -> None:
         """
-        Initializes different types of charge objects based on the payment type of each order.
+        This step prepares the transaction processors needed for the rating process.
         """
 
         self.transaction_processors.clear()
@@ -193,14 +198,16 @@ class BaseRater:
         else:
             logger.info('Adding transaction processors')
             for order in self.orders_data:
-                add_transaction_processor(order, processors_list=self.transaction_processors)
+                get_transaction_processors(order, processors_list=self.transaction_processors)
 
     def _load_transactions(self) -> None:
         """
-        Loads transactions for the current client and rating period.
-        Filters transactions based on vendor client and timestamp.
-        Processes and sorts transactions before adding them to the unprocessed transactions queue.
-        :raises Exception: For any exceptions that occur during the loading process.
+        Loads transactions for the client within the rating period.
+
+        Filters transactions by vendor client and timestamp, sorting and preparing them for processing.
+
+        Raises:
+            Exception: For any exceptions that occur during the loading of transactions.
         """
 
         logger.info(f'Loading transactions')
@@ -228,9 +235,9 @@ class BaseRater:
 
     def _rate_transactions(self) -> None:
         """
-        Processes each transaction from the unprocessed transactions queue.
-        Determines the charge object in the transaction is to be processed.
-        Appends any skipped transactions to the skipped_transactions queue.
+        Processes each transaction, determining which charge object (if any) should be applied.
+
+        Unprocessable transactions are moved to the 'skipped_transactions' queue.
         """
 
         logger.info(f'Loading transactions')
@@ -250,50 +257,30 @@ class BaseRater:
 
     def _save_charges(self) -> None:
         """
-        Saves the calculated charges for orders and prepaid packages to the database.
+        Saves the calculated charges to the database.
 
-        This method gathers charge details from each transaction processor and creates records for OrderCharge
-        and PrepaidPackageCharge. OrderCharge records are created for each service charge, including details like
-        charge date, order, vendor, and charged units. Existing OrderCharge records for the same period and order are
-        deleted. PrepaidPackageCharge records are prepared for charges related to prepaid or shared packages.
+        This includes charges for orders, prepaid packages, and invoices, applying any necessary updates or
+        deletions before saving new records.
         """
 
         logger.info(f'Saving order charges')
 
-        order_charges = []
-
-        for processor in self.transaction_processors:
-            order = processor.order
-            charge_type = processor.charge_type
-
-            # Prepare record for order charges
-            logger.debug(f'... preparing charge records')
-
-            for vendor_id, service_charges in processor.service_charges.items():
-                for service_id, charge_data in service_charges.items():
-                    unit_count = charge_data.get('count', 0)
-                    charge_amount = charge_data.get('charge', 0)
-                    order_charges.append(
-                        OrderCharge(
-                            period=self.period,
-                            order=order,
-                            payment_type_id=charge_type.value,
-                            vendor_id=vendor_id,
-                            service_id=service_id,
-                            service_count=unit_count,
-                            charged_units=charge_amount
-                        )
-                    )
-
         with transaction.atomic():
-            logger.debug(f'... saving charges')
-            OrderCharge.objects\
-                .filter(order__contract__client=self.client, period=self.period)\
-                .delete()
+            logger.debug(f'... deleting pending charge records')
+            OrderCharge.objects.filter(
+                vendor__client=self.client,
+                period=self.charge_date
+            ).delete()
 
-            if order_charges:
-                OrderCharge.objects.bulk_create(order_charges)
+            logger.debug(f'... saving charges')
+            for processor in self.transaction_processors:
+                processor.save_charges(self.charge_date)
 
     def _print_rated_transactions_summary(self):
+        """
+        (Optional) Prints a summary of the transactions processed by each transaction processor.
+
+        This method is intended for debugging or reporting purposes and may not be used in production environments.
+        """
         for processor in self.transaction_processors:
-            print(processor.charges_summary)
+            print(processor.transactions_summary)

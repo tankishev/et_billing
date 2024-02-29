@@ -116,3 +116,7 @@ class UsageTransaction(models.Model):
     @property
     def period(self):
         return self.timestamp.strftime("%Y-%m")
+
+    @property
+    def date(self):
+        return self.timestamp.strftime("%Y-%m-%d")

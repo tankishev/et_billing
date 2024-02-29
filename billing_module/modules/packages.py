@@ -1,10 +1,30 @@
+from __future__ import annotations
+from datetime import date
+from dateutil.relativedelta import relativedelta
 from django.db import transaction
 from .utils import ChargeStatus
-from ..models import PrepaidPackage, PrepaidPackageCharge
-from datetime import date
+from ..models import PrepaidPackage, PrepaidPackageCharge, PackageStatus
+
 import logging
 
 logger = logging.getLogger(f'et_billing.{__name__}')
+
+
+def renew_package(package: PrepaidPackage, renew_date) -> PrepaidPackage | None:
+
+    description = f'{package.description} RENEWED' if package.description else f'Package {package.pk} RENEWED'
+    end_date = renew_date + relativedelta(months=1)
+    new_package = PrepaidPackage.objects.create(
+        start_date=renew_date,
+        expiry_date=end_date,
+        description=description,
+        original_balance=package.original_balance,
+        currency=package.currency,
+        original_rate=package.original_rate
+    )
+
+    if transfer_balance(package, new_package, post_transaction=False):
+        return new_package
 
 
 def transfer_balance(from_package: PrepaidPackage, to_package: PrepaidPackage, post_transaction=True, **kwargs) -> bool:
@@ -40,53 +60,64 @@ def transfer_balance(from_package: PrepaidPackage, to_package: PrepaidPackage, p
 
     logger.info(f'Call to transfer balance between packages: {from_package.id} --> {to_package.id}')
 
-    if from_package.currency == to_package.currency and from_package.is_active and to_package.is_active:
-        from_balance, to_balance = from_package.balance, to_package.balance
-        if from_balance > 0:
-
-            # Calculating new_rate
-            from_value = from_balance * from_package.average_rate
-            to_value = to_balance * to_package.average_rate
-            new_balance = from_balance + to_balance
-            new_value = from_value + to_value
-            new_rate = new_value / new_balance
-
-            # Saving charges
-            charge_date = kwargs.get('transfer_date', str(date.today()))
-            charge_status = ChargeStatus.POSTED.value if post_transaction else ChargeStatus.PENDING.value
-            charges = [
-                PrepaidPackageCharge(
-                    charge_date=charge_date,
-                    prepaid_package_id=from_package.id,
-                    charged_units=from_balance,
-                    is_credit=False,
-                    charge_status=charge_status
-                ),
-                PrepaidPackageCharge(
-                    charge_date=charge_date,
-                    prepaid_package_id=to_package.id,
-                    charged_units=from_balance,
-                    is_credit=True,
-                    charge_status=charge_status
-                ),
-            ]
-
-            # Update package states
-            to_package.average_rate = new_rate
-            from_package.closing_date = charge_date
-            from_package.is_active = False
-
-            # Save changes
-            with transaction.atomic():
-                PrepaidPackageCharge.objects.bulk_create(charges)
-                to_package.save()
-                from_package.save()
-
-            logger.info(f'Complete transfer of balance of {from_balance}')
-            return True
-
-        logger.warning(f'Package {from_package} does not have balance to transfer')
+    if from_package.currency != to_package.currency:
+        logger.warning('Both packages must be of the same currency type')
         return False
 
-    logger.warning('Both packages must be active and of the same currency type')
+    if not from_package.is_active:
+        logger.warning('From package is marked an inactive')
+        return False
+
+    if post_transaction and not to_package.is_active:
+        logger.warning('Can not post transaction to package not marked as active')
+        return False
+
+    if to_package.status not in (PackageStatus.PRE_ACTIVE.value, PackageStatus.ACTIVE.value):
+        logger.warning('Can not transfer to package not in active or pre_active status')
+        return False
+
+    from_balance, to_balance = from_package.balance, to_package.balance
+    if from_balance > 0:
+
+        # Calculating new_rate
+        from_value = from_balance * from_package.average_rate
+        to_value = to_balance * to_package.average_rate
+        new_balance = from_balance + to_balance
+        new_value = from_value + to_value
+        new_rate = new_value / new_balance
+
+        # Posting charges
+        charge_date = kwargs.get('transfer_date', str(date.today()))
+        charge_status = ChargeStatus.POSTED.value if post_transaction else ChargeStatus.PENDING.value
+        charges = [
+            PrepaidPackageCharge(
+                charge_date=charge_date,
+                prepaid_package_id=from_package.id,
+                charged_units=from_balance,
+                is_credit=False,
+                charge_status=charge_status
+            ),
+            PrepaidPackageCharge(
+                charge_date=charge_date,
+                prepaid_package_id=to_package.id,
+                charged_units=from_balance,
+                is_credit=True,
+                charge_status=charge_status
+            ),
+        ]
+
+        # Update package states
+        to_package.average_rate = new_rate
+        from_package.closing_date = charge_date
+        from_package.status = PackageStatus.CLOSED.value if post_transaction else PackageStatus.PRE_CLOSED.value
+
+        # Save changes
+        with transaction.atomic():
+            PrepaidPackageCharge.objects.bulk_create(charges)
+            to_package.save()
+            from_package.save()
+
+        logger.info(f'Recorded transfer of balance of {from_balance} from package {from_package.id} to {to_package.id}')
+        return True
+
     return False

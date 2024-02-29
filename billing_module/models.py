@@ -1,3 +1,4 @@
+from enum import Enum
 from django.db import models
 from decimal import Decimal
 from month.models import MonthField
@@ -9,12 +10,25 @@ from vendors.models import Vendor
 BGN_TO_EUR = Decimal('1') / Decimal('1.95583')
 
 
+class PackageStatus(Enum):
+    """
+    Enumeration representing different statuses of packages not manged in the DB.
+    """
+
+    PRE_ACTIVE = 0
+    ACTIVE = 1
+    PRE_CLOSED = 2
+    CLOSED = 3
+
+
 class PrepaidPackage(models.Model):
     """
     Represents a prepaid package in the billing system.
 
     This model stores the details of prepaid packages including start, expiry,
-    and closing dates, description, balance details, and associated currency.
+    and closing dates, description, balance details, associated currency, and the
+    current status of the package. The status is managed via an enumeration that
+    represents different stages in the lifecycle of a prepaid package.
 
     Attributes:
         start_date (DateField): The starting date of the package.
@@ -25,7 +39,7 @@ class PrepaidPackage(models.Model):
         currency (ForeignKey): The currency associated with the package, linked to the Currency model.
         original_rate (DecimalField): The original conversion rate for the package.
         average_rate (DecimalField): The average conversion rate calculated for the package.
-        is_active (BooleanField): Flag indicating if the package is currently active.
+        status (IntegerField): The current status of the package, represented by the PackageStatus enum.
     """
 
     start_date = models.DateField()
@@ -36,7 +50,10 @@ class PrepaidPackage(models.Model):
     currency = models.ForeignKey(Currency, on_delete=models.RESTRICT, db_column='ccy_id')
     original_rate = models.DecimalField(max_digits=7, decimal_places=5, default=1)
     average_rate = models.DecimalField(max_digits=7, decimal_places=5, default=1)
-    is_active = models.BooleanField(default=True)
+    status = models.IntegerField(
+        choices=[(tag.value, tag.name) for tag in PackageStatus],
+        default=PackageStatus.PRE_ACTIVE.value,
+    )
 
     @property
     def available_balance(self):
@@ -72,6 +89,10 @@ class PrepaidPackage(models.Model):
         total_credits = aggregated_charges['total_credits'] or 0
         total_debits = aggregated_charges['total_debits'] or 0
         return self.original_balance + total_credits - total_debits
+
+    @property
+    def is_active(self):
+        return self.status == PackageStatus.ACTIVE.value
 
     @property
     def value(self):
@@ -166,7 +187,22 @@ class OrderPackages(models.Model):
 
 
 class OrderCharge(models.Model):
+    """
+    Represents a charge associated with an order within the billing system.
 
+    This model details the financial transactions for services rendered, categorized by
+    period, order, payment type, vendor, and service. It also includes the count of services
+    provided and the total charged units for the billing period.
+
+    Attributes:
+        period (MonthField): The billing period for the charge.
+        order (ForeignKey): The associated order for which the charge is applied, linked to the Order model.
+        payment_type (ForeignKey): The type of payment for the charge, linked to the PaymentType model.
+        vendor (ForeignKey): The vendor providing the service, linked to the Vendor model.
+        service (ForeignKey): The specific service being charged, linked to the Service model.
+        service_count (IntegerField): The quantity of the service provided.
+        charged_units (DecimalField): The total financial amount charged for the service(s) in this billing period.
+    """
     period = MonthField()
     order = models.ForeignKey(Order, on_delete=models.CASCADE, db_column='order_id', related_name="order_charges")
     payment_type = models.ForeignKey(PaymentType, on_delete=models.RESTRICT)
@@ -181,20 +217,26 @@ class OrderCharge(models.Model):
 
 
 class Invoice(models.Model):
+    """
+    Represents an invoice generated for an order over a specific billing period.
+
+    Each invoice is linked to an order and contains detailed charge information, including
+    the billing period, currency type, total charged units, and the current status of the
+    invoice, facilitating tracking and management of financial transactions.
+
+    Attributes:
+        period (MonthField): The billing period covered by the invoice.
+        order (ForeignKey): The order associated with the invoice, linked to the Order model.
+        ccy_type (ForeignKey): The currency type of the invoice, linked to the Currency model.
+        charged_units (DecimalField): The total amount charged in the invoice.
+        charge_status (ForeignKey): The status of the invoice, linked to the ChargeStatus model, indicating whether it
+            is paid, pending, etc.
+    """
     period = MonthField()
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='invoices')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='invoices')
     ccy_type = models.ForeignKey(Currency, on_delete=models.RESTRICT)
+    charged_units = models.DecimalField(max_digits=10, decimal_places=2)
     charge_status = models.ForeignKey(ChargeStatus, on_delete=models.RESTRICT)
 
     class Meta:
-        db_table = 'billing_invoices'
-
-
-class InvoiceCharge(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='invoice_charges')
-    description = models.CharField(max_length=100)
-    service_count = models.IntegerField()
-    charged_units = models.DecimalField(max_digits=10, decimal_places=2)
-
-    class Meta:
-        db_table = 'billing_invoice_charges'
+        db_table = 'billing_order_invoices'
