@@ -47,7 +47,7 @@ def download_vendor_file(request, pk: int):
 def download_vendor_files_all(request, period: str):
     """ Triggers the download of a ZIP archive with all vendor input files for a given period """
 
-    queryset = VendorInputFile.objects.filter(period=period)
+    queryset = VendorInputFile.objects.filter(period=period, is_active=True)
     return create_zip_file(queryset, f'{period}_vendor_files')
 
 

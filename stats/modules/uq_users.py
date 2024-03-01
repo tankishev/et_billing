@@ -145,7 +145,7 @@ def store_unique_users(purge_existing=False):
         UniqueUser.objects.all().delete()
 
     # Get a query set with VendorInputFiles and list of already processed (period, vendor_id)
-    vendor_input_files = VendorInputFile.objects.all().order_by('period', 'vendor_id')
+    vendor_input_files = VendorInputFile.objects.filter(is_active=True).order_by('period', 'vendor_id')
     uqu_data = list(UniqueUser.objects.values_list('month', 'vendor_id').distinct())
 
     for input_file in vendor_input_files:

@@ -19,7 +19,7 @@ def load_transactions_csv(period, vendor_ids=None):
     logger.info(f'Starting loading transactions for {period}')
     start_time = time.time()
 
-    vendor_files = VendorInputFile.objects.filter(period=period)
+    vendor_files = VendorInputFile.objects.filter(period=period, is_active=True)
     if vendor_ids:
         logger.info(f'... filtering only vendors {vendor_ids}')
         vendor_files = vendor_files.filter(vendor_id__in=vendor_ids)

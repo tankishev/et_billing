@@ -208,5 +208,5 @@ class DBProxyReports(DBProxy):
         # If successful return the VendorInputFiles
         if data:
             ids = [el[0] for el in data]
-            vendor_input_files = VendorInputFile.objects.filter(pk__in=ids)
+            vendor_input_files = VendorInputFile.objects.filter(pk__in=ids, is_active=True)
             return vendor_input_files
