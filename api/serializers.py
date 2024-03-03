@@ -44,6 +44,7 @@ class ServiceSerializerLimited(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    end_date = serializers.DateField(required=False)
 
     class Meta:
         model = Order

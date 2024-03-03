@@ -215,8 +215,8 @@ function parseContractData(contractData){
 /**
  * Returns an object/ sorted array of objects
  * @param orderData - orderData object or an array of objects
- * @return {{orderID: number, startDate: string, description: string, ccyDescription: string, ccyTypeID: number,
- * pmtDescription: string, pmtTypeID: number, tuPrice: number, isActive: boolean}}
+ * @return {{orderID: number, startDate: string, endDate: string, description: string, ccyDescription: string,
+ * ccyTypeID: number, pmtDescription: string, pmtTypeID: number, tuPrice: number, isActive: boolean}}
  */
 function parseOrderData(orderData){
     let output;
