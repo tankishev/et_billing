@@ -43,8 +43,15 @@ class ServiceSerializerLimited(serializers.ModelSerializer):
         fields = ["service_id", "service", "stype", "service_order", "desc_en"]
 
 
+class NullableDateField(serializers.DateField):
+    def to_internal_value(self, data):
+        if data == '':
+            return None
+        return super().to_internal_value(data)
+
+
 class OrderSerializer(serializers.ModelSerializer):
-    end_date = serializers.DateField(required=False)
+    end_date = NullableDateField(required=False, allow_null=True)
 
     class Meta:
         model = Order
