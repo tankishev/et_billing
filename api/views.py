@@ -530,6 +530,7 @@ def order_duplicate(request: Request, pk):
                 new_order = Order.objects.create(
                     contract=order.contract,
                     start_date=order.start_date,
+                    end_date=order.end_date,
                     description=order.description,
                     ccy_type=order.ccy_type,
                     tu_price=order.tu_price,

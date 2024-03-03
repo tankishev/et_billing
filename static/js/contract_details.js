@@ -312,6 +312,7 @@ async function orderDuplicate(orderID){
  */
 function orderEditDetails(orderID){
     document.getElementById(`${orderID}startDate`).disabled = false;
+    document.getElementById(`${orderID}endDate`).disabled = false;
     document.getElementById(`${orderID}tuPrice`).disabled = false;
     document.getElementById(`${orderID}pmtTypeID`).disabled = false;
     document.getElementById(`${orderID}ccyTypeID`).disabled = false;
@@ -326,6 +327,7 @@ async function orderSaveDetails(orderID){
     const orderData = {
         'order_id': orderID,
         'start_date': document.getElementById(`${orderID}startDate`).value,
+        'end_date': document.getElementById(`${orderID}endDate`).value,
         'tu_price': document.getElementById(`${orderID}tuPrice`).value,
         'payment_type': document.getElementById(`${orderID}pmtTypeID`).value,
         'ccy_type': document.getElementById(`${orderID}ccyTypeID`).value,
@@ -357,7 +359,8 @@ function orderHeadingSetActiveStatus(orderAccordion, isActive=true){
 /**
  * Fills in the Order Details section of an accordion body
  * @param orderAccordion {HTMLElement} order accordion element
- * @param orderData {{orderID: number|string, startDate: string, description: string, isActive: boolean}} parsed order details data
+ * @param orderData {{orderID: number|string, startDate: string, endDate: string, description: string,
+ * isActive: boolean}} parsed order details data
  */
 function orderDetailsSetValues(orderAccordion, orderData){
     const {orderID, startDate, description, isActive} = orderData;
@@ -535,8 +538,9 @@ async function renderOrdersList(contractID){
 
 /**
  * Renders and returns an orderAccordion element for the ordersList
- * @param orderData {{orderID: number|string, startDate: string, description: string, ccyDescription: string, ccyTypeID: number,
- * pmtDescription: string, pmtTypeID: number, tuPrice: number, isActive: boolean}} - oderData object
+ * @param orderData {{orderID: number|string, startDate: string, endDate: string, description: string,
+ * ccyDescription: string, ccyTypeID: number, pmtDescription: string, pmtTypeID: number, tuPrice: number,
+ * isActive: boolean}} - oderData object
  * @return {DocumentFragment} - an element to be appended to ordersList
  */
 async function renderOrder(orderData){
@@ -560,18 +564,26 @@ async function renderOrder(orderData){
     const accordionCollapse = item.querySelector('.accordion-collapse');
     accordionCollapse.id = `${orderID}collapse`;
     const labels = accordionCollapse.querySelectorAll('.accordion-body label');
+
     accordionCollapse.querySelector('.accordion-body textarea').id = `${orderID}description`;
     labels[0].setAttribute('for', `${orderID}description`);
+
     item.querySelector('#startDate').id = `${orderID}startDate`;
     labels[1].setAttribute('for', `${orderID}startDate`);
+
+    item.querySelector('#endDate').id = `${orderID}endDate`;
+    labels[2].setAttribute('for', `${orderID}endDate`);
+
     const orderPaymentType = item.querySelector('#paymentType');
     orderPaymentType.id = `${orderID}pmtTypeID`;
-    labels[2].setAttribute('for', `${orderID}pmtTypeID`);
+    labels[3].setAttribute('for', `${orderID}pmtTypeID`);
+
     const orderCcyType = item.querySelector('#ccyType');
     orderCcyType.id = `${orderID}ccyTypeID`;
-    labels[3].setAttribute('for', `${orderID}ccyTypeID`);
+    labels[4].setAttribute('for', `${orderID}ccyTypeID`);
+
     item.querySelector('#tuPrice').id = `${orderID}tuPrice`;
-    labels[4].setAttribute('for', `${orderID}tuPrice`);
+    labels[5].setAttribute('for', `${orderID}tuPrice`);
 
     // Set dropdown menus of Order Details
     const {pmtTypes, ccyTypes} = JSON.parse(sessionStorage.getItem('configData'));
