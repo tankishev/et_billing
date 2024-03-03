@@ -686,7 +686,7 @@ async function renderOrderPrices(orderID){
             div.setAttribute('data-id', orderPriceID);
             const spans = item.querySelectorAll('label span');
             spans[0].textContent = serviceID;
-            spans[1].textContent = `${serviceName} ${serviceType}`;
+            spans[1].textContent = serviceType === null ? serviceName : `${serviceName} ${serviceType}`;
             const input = div.querySelector('input');
             input.value = unitPrice;
             input.setAttribute('data-value', unitPrice)
