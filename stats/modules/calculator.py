@@ -21,7 +21,7 @@ class BaseServicesMapper(FiltersMixin, InputFilesMixin, ServiceUsageMixin):
 
     def map_service_usage(self, input_file, skip_status_five=True) -> Tuple[int, Union[None, MappedTransactions]]:
         """ Reads the input file and maps used services
-            :returns namedtuple: (status: int, transactions: dataframe, is_reconciled: Boolean)
+            :returns tuple: Tuple[int, Union[None, MappedTransactions]]
         """
 
         try:

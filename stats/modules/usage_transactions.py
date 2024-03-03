@@ -61,6 +61,10 @@ def load_transactions_csv(period, vendor_ids=None):
                 continue
 
             logger.debug(f'Writing {len(mapped_transactions.transactions)} transactions to temp CSV file')
+            first_transaction = mapped_transactions.transactions[0]
+            has_thread_id = hasattr(first_transaction, 'thread_id')
+            has_bio = hasattr(first_transaction, 'bio')
+
             with open(csv_filename, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
 
@@ -69,15 +73,19 @@ def load_transactions_csv(period, vendor_ids=None):
                         logger.warning(f'Transaction status {item.transaction_status} is not defined')
                         continue
 
+                    thread_id = item.thread_id if has_thread_id else ''
+                    payer_boolean = item.payer == 'Client'
+                    bio_boolean = item.bio == 'yes' if has_bio else False
+
                     writer.writerow([
                         item.date_created,
                         input_file.vendor_id,
-                        item.thread_id,
+                        thread_id,
                         item.transaction_id,
                         item.transaction_status,
                         item.service_id if item.service_id is not None else '',
-                        item.payer == 'Client',
-                        item.bio == 'yes'
+                        payer_boolean,
+                        bio_boolean
                     ])
 
             # Import new transactions from CSV
