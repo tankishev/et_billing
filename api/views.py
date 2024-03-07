@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.postgres.search import SearchVector, TrigramSimilarity
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_integer
-from django.db.models import RestrictedError, Count, Subquery, Q, Exists, OuterRef
+from django.db.models import RestrictedError, Count
 from django.db import transaction
 
 from rest_framework.decorators import api_view
@@ -19,7 +19,7 @@ from services.models import Service
 from vendors.models import Vendor, VendorService, VendorFilterOverride
 from reports.models import ReportFile, Report, ReportSkipColumnConfig, ReportLanguage
 from reports.modules import gen_report_for_client, gen_report_by_id
-from stats.models import UsageStats
+from reports.modules.report import health_check as hc
 from stats.modules.usage_calculations import recalc_vendor
 
 from . import serializers
@@ -893,53 +893,45 @@ def health_check(request: Request, pk):
 
     if request.method == 'GET':
         # Same vendorService in more than one active order
-        vs = VendorService.objects \
-            .filter(orderservice__order__is_active=True, vendor__client=client) \
-            .annotate(num_count=Count('orderservice')).filter(num_count__gt=1) \
-            .order_by('vendor_id', 'service_id')
-        if vs.exists():
+        vs_qs = hc.get_duplicated_account_services_in_active_orders(client.client_id)
+        if vs_qs.exists():
             retval.append({
                 'description': 'Account services present in more than one active orders',
-                'values': [f'Account {el.vendor_id}: service {el.service_id}' for el in vs]
+                'values': [f'Account {el.vendor_id}: service {el.service_id}' for el in vs_qs]
             })
 
         # VendorServices not in orders
-        os_to_exclude = OrderService.objects.filter(order__contract__client=client, order__is_active=True).values('pk')
-        vs = VendorService.objects.filter(vendor__client=client) \
-            .exclude(orderservice__in=Subquery(os_to_exclude)) \
-            .order_by('vendor_id', 'service_id')
-        if vs.exists():
+        vs_qs = hc.get_account_service_not_in_active_orders(client.client_id)
+        if vs_qs.exists():
             retval.append({
                 'description': 'Account services not included in active orders',
-                'values': [f'Account {el.vendor_id}: service {el.service_id}' for el in vs]
+                'values': [f'Account {el.vendor_id}: service {el.service_id}' for el in vs_qs]
             })
 
         # Active contracts with no active orders
-        c = Contract.objects.filter(client=client, is_active=True) \
-            .annotate(active_order_count=Count(
-            'orders',
-            filter=Q(orders__is_active=True),
-            distinct=True
-        )
-        ).filter(active_order_count=0)
-        if c.exists():
+        contracts_qs = hc.get_active_contracts_without_active_orders(client.client_id)
+        if contracts_qs.exists():
             retval.append({
                 'description': 'Active contracts with no active orders',
-                'values': [str(el) for el in c]
+                'values': [str(el) for el in contracts_qs]
             })
 
         # Usage data with no accounts service
-        vs_set = VendorService.objects.filter(
-            vendor=OuterRef('vendor'),
-            service=OuterRef('service')
-        )
-        unmatched_us = UsageStats.objects.filter(vendor__client=client).exclude(
-            Exists(vs_set)
-        ).order_by('period', 'vendor_id', 'service_id')
+        unmatched_us = hc.get_usage_data_without_account_service(client.client_id)
         if unmatched_us.exists():
             values = [f'{el.period}: account {el.vendor_id} service {el.service_id}' for el in unmatched_us]
             retval.append({
                 'description': 'Service usage without associated account',
+                'values': values
+            })
+
+        # Usage data with no OrderService
+        report_data = hc.get_usage_without_orders(client.client_id)
+        if report_data:
+            report_data = sorted(report_data, key=lambda x: x[0])
+            values = [f'{el[0]}: account {el[1][0]} service {el[1][1]}' for el in report_data]
+            retval.append({
+                'description': 'Service usage not included in active orders',
                 'values': values
             })
 
