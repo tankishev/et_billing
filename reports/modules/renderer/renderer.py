@@ -46,7 +46,7 @@ class ReportRenderer(TableRenderMixin, BaseReportRenderer):
     _DETAILS_COLUMN_HEADERS = [
         'Date created', 'VendorID', 'Vendor name', 'ThreadID', 'TransactionID',	'GroupTransactionID', 'Description',
         'Country sender', 'PID sender', 'Names sender', 'Country receiver', 'PID receiver', 'Names receiver', 'Type',
-        'Status', 'Signing type', 'Cost EUR', 'Payer', 'Bio ID', 'Service', 'Type'
+        'Status', 'Signing type', 'Cost EUR', 'Payer', 'Bio ID', 'TransactionValueID', 'Service', 'Type',
     ]
     _DETAILS_FLOAT_COLS = ['Cost', 'Cost EUR']
     _DETAILS_SHEET_NAME = 'Details'
