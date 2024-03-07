@@ -16,4 +16,5 @@ urlpatterns = [
     # Processing of zip files
     path('extract/', views.extract_zip_view, name='vendor_zip_extract'),
     path('upload/', views.upload_zip_view, name='vendor_zip_upload'),
+    path('upload-file/', views.upload_single_file, name='vendor_file_upload'),
 ]

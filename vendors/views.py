@@ -1,11 +1,12 @@
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.core.files import File
 from django.urls import reverse
 
 from shared.views import download_excel_file
 from shared.modules import create_zip_file
-from .forms import FileUploadForm, PeriodForm
+from .forms import FileUploadForm, PeriodForm, VendorFileUploadForm
 from .models import VendorInputFile
 from .modules.zip_archives import list_archive, handle_extract_zip, handle_uploaded_file, delete_inactive_input_files
 
@@ -135,4 +136,45 @@ def upload_zip_view(request):
                 request.session['upload_period'] = period
                 return redirect('vendor_zip_extract')
             context['err_message'] = f'Attached file must be a valid ZIP file.'
+    return render(request, 'shared/base_form.html', context)
+
+
+@login_required
+def upload_single_file(request):
+    """ Load form for uploading a single Vendor Input and storing the file """
+
+    context = {
+        'page_title': 'Account Usage File Upload',
+        'form_title': 'Single File Upload',
+        'form_subtitle': 'Upload a single report file with account usage files for a given period',
+        'form_address': '/vendors/upload-file/',
+        'form_enctype': "multipart/form-data",
+        'form': VendorFileUploadForm()
+    }
+    if request.method == 'POST':
+        form = VendorFileUploadForm(request.POST, request.FILES)
+        context['form'] = form
+        if form.is_valid():
+            file = request.FILES['file']
+            period = form.cleaned_data.get('period')
+            vendor = form.cleaned_data.get('vendor')
+
+            # Check for existing VendorInputFile and mark it inactive
+            try:
+                existing_file = VendorInputFile.objects.get(period=period, vendor=vendor, is_active=True)
+                logger.debug('Deactivating existing input file')
+                existing_file.is_active = False
+                existing_file.save()
+                logger.debug('... deactivated')
+            except VendorInputFile.DoesNotExist:
+                pass
+
+            # Create new VendorInputFile and save it
+            finally:
+                logger.debug('Creating new input file')
+                new_file = VendorInputFile.objects.create(period=period, vendor=vendor, file=file)
+                new_file.save()
+                logger.debug('... created')
+
+                return redirect('reports_index')
     return render(request, 'shared/base_form.html', context)
