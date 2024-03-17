@@ -15,7 +15,6 @@ urlpatterns = [
     path("vendors/", include('vendors.urls')),
     path("stats/", include('stats.urls')),
     path("tasks/", include('celery_tasks.urls')),
-    path("packages/", include('packages.urls')),
     path("clients/", include('clients.urls')),
     path("api/", include('api.urls')),
     path("debug/", debug_view),

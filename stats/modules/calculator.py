@@ -187,7 +187,8 @@ class UnreconciledTransactionsMapper(BaseServicesMapper):
             df = mapped_data.dataframe
 
             # Drop mapped rows and guess unmapped ones
-            unmapped_df = df[df['service_id'].isna()][['Type', 'Status', 'Signing type', 'Cost']].drop_duplicates().copy()
+            unmapped_df = df[df['service_id'].isna()][['Type', 'Status', 'Signing type', 'Cost']]\
+                .drop_duplicates().copy()
             service_filters = self.load_all_service_filters()
             mapped_data = self.map_transactions(unmapped_df, service_filters)
 

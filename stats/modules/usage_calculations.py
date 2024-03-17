@@ -106,7 +106,10 @@ def recalc_all_vendors(self, period):
         logger.debug(f'{number_of_files} input files loaded')
 
         prior_vendors_list = list(
-            VendorInputFile.objects.filter(period__lt=period, is_active=True).values_list('vendor_id', flat=True).distinct()
+            VendorInputFile.objects.filter(
+                period__lt=period,
+                is_active=True
+            ).values_list('vendor_id', flat=True).distinct()
         )
 
         # Process files
