@@ -49,7 +49,6 @@ INSTALLED_APPS = [
     'billing_module.apps.BillingModuleConfig',
     'reports.apps.ReportsConfig',
     'stats.apps.StatsConfig',
-    'packages.apps.PackagesConfig',
     'celery_tasks.apps.CeleryTasksConfig',
     'accounts.apps.AccountsConfig'
 ]
