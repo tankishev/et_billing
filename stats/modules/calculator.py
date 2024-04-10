@@ -197,3 +197,16 @@ class UnreconciledTransactionsMapper(BaseServicesMapper):
         except Exception as e:
             logger.error("Error: %s", e)
             raise
+
+
+def res_result(res_id):
+    """ Return verbose names for the results of the calc_vendor functions """
+
+    update_vendor_legend = {
+        0: 'Complete',
+        1: 'No services configured',
+        2: 'No input file',
+        3: 'No transactions',
+        4: 'Not reconciled'
+    }
+    return update_vendor_legend.get(res_id, 'Not defined')

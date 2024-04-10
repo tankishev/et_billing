@@ -3,7 +3,7 @@ from celery_tasks.models import FileProcessingTask
 from celery.utils.log import get_task_logger
 
 from vendors.models import VendorInputFile
-from .calculator import ServiceUsageCalculator, UnreconciledTransactionsMapper
+from .calculator import ServiceUsageCalculator, UnreconciledTransactionsMapper, res_result
 from ..models import Service
 
 from datetime import datetime as dt
@@ -12,19 +12,6 @@ import logging
 
 logger = logging.getLogger(f'et_billing.{__name__}')
 celery_logger = get_task_logger(f'et_billing.{__name__}')
-
-
-def res_result(res_id):
-    """ Return verbose names for the results of the calc_vendor functions """
-
-    update_vendor_legend = {
-        0: 'Complete',
-        1: 'No services configured',
-        2: 'No input file',
-        3: 'No transactions',
-        4: 'Not reconciled'
-    }
-    return update_vendor_legend.get(res_id, 'Not defined')
 
 
 @shared_task(bind=True)

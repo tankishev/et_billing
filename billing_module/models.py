@@ -3,7 +3,7 @@ from django.db import models
 from decimal import Decimal
 from month.models import MonthField
 from clients.models import Client
-from contracts.models import Currency, Order, PaymentType
+from contracts.models import Currency, Order, PaymentType, Contract
 from services.models import Service
 from vendors.models import Vendor
 
@@ -42,6 +42,7 @@ class PrepaidPackage(models.Model):
         status (IntegerField): The current status of the package, represented by the PackageStatus enum.
     """
 
+    contract = models.ForeignKey(Contract, on_delete=models.RESTRICT, db_column='contract_id', related_name='packages')
     start_date = models.DateField()
     expiry_date = models.DateField()
     closing_date = models.DateField(blank=True, null=True)
@@ -139,6 +140,9 @@ class ChargeStatus(models.Model):
     class Meta:
         db_table = 'billing_charge_statuses'
 
+    def __str__(self):
+        return self.description
+
 
 class PrepaidPackageCharge(models.Model):
     """
@@ -184,6 +188,9 @@ class OrderPackages(models.Model):
     class Meta:
         db_table = 'billing_order_packages'
         ordering = ['prepaid_package__start_date']
+
+    def __str__(self):
+        return f'{self.order.contract.client.reporting_name} - order {self.order.pk}'
 
 
 class OrderCharge(models.Model):

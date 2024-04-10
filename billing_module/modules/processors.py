@@ -327,14 +327,15 @@ class InvoiceTransactionProcessor(ChargeableTransactionProcessor):
 
         :param charge_date: Charge_date for which the invoice needs to be created
         """
+
+        Invoice.objects.filter(
+            order=self.order,
+            charge_status_id=ChargeStatus.PENDING.value,
+            period=charge_date
+        ).delete()
+
         if self.transactions:
             self._save_order_charges(charge_date)
-
-            Invoice.objects.filter(
-                order=self.order,
-                charge_status_id=ChargeStatus.PENDING.value,
-                period=charge_date
-            ).delete()
 
             Invoice.objects.create(
                 period=charge_date,
@@ -390,7 +391,7 @@ class PrepaidPackageProcessor(ChargeableTransactionProcessor):
 
         super().__init__(order, ChargeType.PREPAID_PACKAGE, **kwargs)
         self.prepaid_package = package
-        self.balance = package.available_balance
+        self.balance = package.balance
 
     def save_charges(self, charge_date) -> None:
         """
@@ -399,14 +400,14 @@ class PrepaidPackageProcessor(ChargeableTransactionProcessor):
         :param charge_date: charge_date for which to save the charge.
         """
 
+        PrepaidPackageCharge.objects.filter(
+            prepaid_package__orderpackages__order=self.order,
+            charge_status_id=ChargeStatus.PENDING.value,
+            charge_date=charge_date
+        ).delete()
+
         if self.transactions:
             self._save_order_charges(charge_date)
-
-            PrepaidPackageCharge.objects.filter(
-                prepaid_package__orderpackages__order=self.order,
-                charge_status_id=ChargeStatus.PENDING.value,
-                charge_date=charge_date
-            ).delete()
 
             PrepaidPackageCharge.objects.create(
                 charge_date=charge_date,

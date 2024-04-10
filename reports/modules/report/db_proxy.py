@@ -8,6 +8,7 @@ logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 class DBProxy:
+
     """ A class used to extract data directly from the DB """
 
     def __init__(self):
@@ -60,12 +61,6 @@ class DBProxy:
         if fetch:
             return data
 
-
-class DBProxyReports(DBProxy):
-    """ A class to create and access complex a complex temp_data_table created for report generation.
-        All methods in this class access the DB directly.
-    """
-
     def create_temp_data_table(self, period: str) -> None:
         """ Generate a temporary table with data for all reports
 
@@ -112,7 +107,7 @@ class DBProxyReports(DBProxy):
         sql = "drop table if exists tmp_report_data"
         self.exec(sql).close()
 
-    def get_report_data_by_client(self, client_id: int) -> list:
+    def get_reports_list_by_client(self, client_id: int) -> list:
         """ Returns a list of reports data for all reports in the tmp_report_data table
             :param client_id: client for which data should be returned
             :return: list with tuples of:
@@ -130,7 +125,7 @@ class DBProxyReports(DBProxy):
         data = self.exec(sql, (client_id,))
         return data
 
-    def get_report_data_by_report_id(self, report_id: int) -> list:
+    def get_reports_list_by_report_id(self, report_id: int) -> list:
         """ Returns a list of reports data for all reports in the tmp_report_data table
             :param report_id: report for which data should be returned
             :return: list with tuples of:
@@ -149,7 +144,7 @@ class DBProxyReports(DBProxy):
         data = self.exec(sql, (report_id,))
         return data
 
-    def get_report_data(self) -> list:
+    def get_reports_list(self) -> list:
         """ Returns a list of reports data for all reports in the tmp_report_data table
             :return: list with tuples of:
                 report_id,

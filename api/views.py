@@ -71,7 +71,6 @@ def vendors_list(request: Request):
 @api_view(['POST'])
 def vendor_calculate_usage(request: Request):
     if request.method == 'POST':
-
         logger.info('Received a POST request')
 
         serializer = serializers.VendorPeriodSerializer(data=request.data)

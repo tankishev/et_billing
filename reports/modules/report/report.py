@@ -13,6 +13,7 @@ logger = logging.getLogger(f'et_billing.{__name__}')
 
 class DBReportFactory:
     """ A class that generates usage reports """
+
     def __init__(self, period: str, db_report, layout_factory, renderer) -> None:
         """ Class that generates billing reports
 
@@ -33,7 +34,7 @@ class DBReportFactory:
     def generate_report_by_client(self, client_id: int):
         """ Generates all reports for a given client """
 
-        report_data = self.dbr.get_report_data(self.period, client_id=client_id)
+        report_data = self.dbr.get_reports_data(self.period, client_id=client_id)
         if len(report_data) > 0:
             self.generate_reports(report_data)
         else:

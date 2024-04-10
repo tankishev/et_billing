@@ -51,6 +51,7 @@ async function updateTaskProgress(taskId) {
           }, 1000);
         } else if (taskStatus === 'COMPLETE') {
             progressBar.classList.remove('progress-bar-striped');
+            taskProgressStatus.textContent = 'Finished';
         }
 
     } catch (error) {

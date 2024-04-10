@@ -2,9 +2,11 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
+from billing_module.modules.rate_transactions import rate_transactions
 from .forms import UniqueUsersForm, VendorPeriodForm, PeriodForm
 from .modules.uq_users import get_uqu, store_uqu_celery
 from .modules.usage_calculations import recalc_vendor, recalc_all_vendors, get_vendor_unreconciled
+from .modules.usage_transactions import load_transactions
 
 import logging
 logger = logging.getLogger(f'et_billing.{__name__}')
@@ -75,6 +77,65 @@ def view_unreconciled_transactions(request, file_id: int):
 
     res = get_vendor_unreconciled(file_id)
     return JsonResponse(res, safe=False)
+
+
+# USAGE TRANSACTIONS CALCULATIONS
+@login_required
+def load_usage_transactions_all(request):
+    """ Load usage transactions for all clients """
+
+    context = {
+        'page_title': 'Load Usage Transactions',
+        'form_title': 'Load usage transactions for ALL accounts',
+        'form_subtitle': None,
+        'form_address': '/stats/usage/load-all/',
+        'form': PeriodForm()
+    }
+
+    if request.method == 'POST':
+        form = PeriodForm(request.POST)
+        if form.is_valid():
+            period = form.cleaned_data.get('period')
+            async_result = load_transactions.delay(period)
+            context = {
+                'list_title': 'Load usage transactions for ALL accounts',
+                'list_subtitle': 'This could take up to 2 minutes',
+                'taskId': async_result.id
+            }
+            return render(request, 'shared/processing_bar.html', context)
+        else:
+            context['form'] = form
+
+    return render(request, 'shared/base_form.html', context)
+
+
+@login_required
+def rate_usage_transactions_all_accounts(request):
+    """ Load usage transactions for all clients """
+
+    context = {
+        'page_title': 'Rate Usage Transactions',
+        'form_title': 'Rate usage transactions for ALL accounts',
+        'form_subtitle': None,
+        'form_address': '/stats/usage/rate-all/',
+        'form': PeriodForm()
+    }
+
+    if request.method == 'POST':
+        form = PeriodForm(request.POST)
+        if form.is_valid():
+            period = form.cleaned_data.get('period')
+            async_result = rate_transactions.delay(period)
+            context = {
+                'list_title': 'Rate usage transactions for ALL accounts',
+                'list_subtitle': 'This could take up to 2 minutes',
+                'taskId': async_result.id
+            }
+            return render(request, 'shared/processing_bar.html', context)
+        else:
+            context['form'] = form
+
+    return render(request, 'shared/base_form.html', context)
 
 
 # UNIQUE USERS CALCULATIONS

@@ -41,6 +41,8 @@ class BaseRater:
         rate_client_transactions: Main method to initiate the rating process for a client.
     """
 
+    _SKIP_TRANSACTIONS_CHARGED_TO_USERS = True
+
     def __init__(self, period: str) -> None:
         """
         Initializes the BaseRater with a given period.
@@ -210,7 +212,7 @@ class BaseRater:
             Exception: For any exceptions that occur during the loading of transactions.
         """
 
-        logger.info(f'Loading transactions')
+        logger.info(f'Loading transactions for client {self.client} for period {self.period_start} - {self.period_end}')
 
         try:
             self.unprocessed_transactions.clear()
@@ -219,6 +221,10 @@ class BaseRater:
                 timestamp__gte=self.period_start,
                 timestamp__lt=self.period_end
             ).order_by('timestamp', 'thread_id')
+
+            if self._SKIP_TRANSACTIONS_CHARGED_TO_USERS:
+                usage_transactions = usage_transactions.filter(charge_user=False)
+
             if usage_transactions.exists():
                 vs_list = list(set(os.service for order in self.orders_data for os in order.orderservice_set.all()))
                 transactions_list = list(usage_transactions)

@@ -7,6 +7,7 @@ from vendors.models import Vendor
 from .models import Client, Industry, ClientCountry
 
 
+# Inline admin for Vendor
 class ClientVendorInline(admin.TabularInline):
     model = Vendor
     extra = 0
@@ -15,12 +16,14 @@ class ClientVendorInline(admin.TabularInline):
     max_num = 0
 
 
+# Inline admin for Contract
 class ClientContractsInline(admin.TabularInline):
     model = Contract
     extra = 0
     show_change_link = True
 
 
+# Custom filter for clients with/ without contracts
 class HasContractFilter(SimpleListFilter):
     title = 'has contract'
     parameter_name = 'has_contract'
@@ -39,6 +42,7 @@ class HasContractFilter(SimpleListFilter):
         return queryset
 
 
+@admin.register(Client)
 class ClientAdmin(admin.ModelAdmin):
     list_display = ['client_id', 'legal_name', 'reporting_name',
                     'client_group', 'industry', 'is_billable',
@@ -48,15 +52,13 @@ class ClientAdmin(admin.ModelAdmin):
     search_fields = ['legal_name', 'reporting_name', 'client_id']
     list_per_page = 20
     list_filter = ['is_billable', HasContractFilter, 'is_validated', 'country']
-
     inlines = [ClientVendorInline, ClientContractsInline]
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(ClientAdmin, self).get_form(request, obj, **kwargs)
-        field = form.base_fields["industry"]
-        field.widget.can_add_related = False
-        field.widget.can_change_related = False
-        field.widget.can_delete_related = False
+        form.base_fields["industry"].widget.can_add_related = False
+        form.base_fields["industry"].widget.can_change_related = False
+        form.base_fields["industry"].widget.can_delete_related = False
         return form
 
     @staticmethod
@@ -69,6 +71,11 @@ class ClientAdmin(admin.ModelAdmin):
         return queryset
 
 
-admin.site.register(Client, ClientAdmin)
-admin.site.register(Industry)
-admin.site.register(ClientCountry)
+@admin.register(Industry)
+class IndustryAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(ClientCountry)
+class ClientCountryAdmin(admin.ModelAdmin):
+    pass

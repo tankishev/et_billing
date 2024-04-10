@@ -199,12 +199,6 @@ LOGGING = {
             'formatter': 'pipe_debug',
             'level': 'DEBUG'
         },
-        # 'celery_tasks_debug': {
-        #     'class': 'logging.FileHandler',
-        #     'filename': os.path.join(LOG_DIR, 'celery_debug.log'),
-        #     'formatter': 'pipe',
-        #     'level': 'DEBUG'
-        # },
         'et_billing_info': {
             'class': 'logging.FileHandler',
             'filename': os.path.join(LOG_DIR, 'et_billing_info.log'),
@@ -217,12 +211,6 @@ LOGGING = {
             'formatter': 'pipe',
             'level': 'WARNING'
         },
-        # 'celery_tasks_info': {
-        #     'class': 'logging.FileHandler',
-        #     'filename': os.path.join(LOG_DIR, 'celery_info.log'),
-        #     'formatter': 'pipe',
-        #     'level': 'INFO'
-        # },
         'db_queries': {
             'class': 'logging.FileHandler',
             'filename': os.path.join(LOG_DIR, 'db_queries_debug.log'),
@@ -236,11 +224,6 @@ LOGGING = {
             'handlers': ['et_billing_debug', 'et_billing_info', 'et_billing_warn'],
             'propagate': False
         },
-        # 'celery.task': {
-        #     'level': 'DEBUG',
-        #     'handlers': ['celery_tasks_debug', 'celery_tasks_info'],
-        #     'propagate': False
-        # },
         'django.db.backends': {
             'level': 'DEBUG',
             'handlers': ['db_queries'],

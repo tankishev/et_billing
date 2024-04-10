@@ -1,6 +1,7 @@
 from django.http import HttpResponse
+
 from rest_framework.request import Request
-from .modules.rating_calc import BaseRater
+from .modules.base_rater import BaseRater
 from clients.models import Client
 
 

@@ -2,7 +2,7 @@ from typing import List, Tuple
 from services.modules import FiltersMixin, ServicesMixin
 from shared.utils import DictToObjectMixin
 from shared.modules import ServiceUsageMixin, InputFilesMixin
-from .db_proxy import DBProxyReports
+from .db_proxy import DBProxy
 
 import logging
 
@@ -20,7 +20,7 @@ class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin, ServicesMixin):
     """ A class used to process and generate different data objects for the Report object """
 
     def __init__(self):
-        self.dba = DBProxyReports()
+        self.dba = DBProxy()
 
     def close(self):
         """ Drops the temp data table and closes the DB session connection """
@@ -42,17 +42,17 @@ class DBReport(InputFilesMixin, FiltersMixin, ServiceUsageMixin, ServicesMixin):
 
         # Choose the correct reports extract
         if report_id:
-            report_data = self.dba.get_report_data_by_report_id(report_id)
+            reports_list = self.dba.get_reports_list_by_report_id(report_id)
         elif client_id:
-            report_data = self.dba.get_report_data_by_client(client_id)
+            reports_list = self.dba.get_reports_list_by_client(client_id)
         else:
-            report_data = self.dba.get_report_data()
+            reports_list = self.dba.get_reports_list()
 
         # Prepare ReportData list
         retval = []
-        for data in report_data:
+        for report in reports_list:
             report_id, file_name, report_type, language, skip_cols, details, show_pids, \
-                client_id, legal_name, contract_id, contract_date = data
+                client_id, legal_name, contract_id, contract_date = report
 
             render_details = details == 1
             retval.append(ReportData(**{
