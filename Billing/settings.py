@@ -99,18 +99,6 @@ DATABASES = {
 }
 
 if DEBUG:
-    # from sshtunnel import SSHTunnelForwarder
-    #
-    # # Connect to a server using the ssh keys. See the sshtunnel documentation for using password authentication
-    # ssh_tunnel = SSHTunnelForwarder(
-    #     (os.environ.get('PG_SSH_HOST'), int(os.environ.get('PG_SSH_PORT'))),
-    #     ssh_pkey=os.environ.get('PG_SSH_KEY'),
-    #     ssh_private_key_password=os.environ.get('PG_SSH_PASS'),
-    #     ssh_username=os.environ.get('PG_SSH_USER'),
-    #     remote_bind_address=('127.0.0.1', int(os.environ.get('PG_HOST_PORT'))),
-    # )
-    # ssh_tunnel.start()
-    # DATABASES['default']['PORT'] = ssh_tunnel.local_bind_port
     DATABASES['default']['PORT'] = os.environ.get('PG_SSH_DB_PORT')
 
 # Password validation

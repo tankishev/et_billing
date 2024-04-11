@@ -1,26 +1,36 @@
-from datetime import date
 from rest_framework import serializers
+
 from celery_tasks.models import FileProcessingTask
 from clients.models import Client, Industry, ClientCountry
 from contracts.models import Order, Contract, OrderPrice, Service, OrderService, Currency, PaymentType
 from vendors.models import Vendor, VendorService, VendorFilterOverride
 from reports.models import ReportFile, Report, ReportType, ReportSkipColumnConfig, ReportLanguage
 
-
-class ReportSerializerBase(serializers.ModelSerializer):
-    class Meta:
-        model = Report
-        fields = ['file_name', 'vendors']
+from datetime import date
 
 
-class ReportFileSerializer(serializers.ModelSerializer):
-    report = ReportSerializerBase(many=False)
+# Shared
+class YearMonthField(serializers.CharField):
+    def to_internal_value(self, data):
+        # Validate format
+        try:
+            year, month = map(int, data.split('-'))
+            parsed_date = date(year, month, 1)
+        except ValueError:
+            raise serializers.ValidationError("Period must be in YYYY-MM format.")
 
-    class Meta:
-        model = ReportFile
-        fields = ['id', 'period', 'report', 'file', 'type_id']
+        # Validate year and month
+        if parsed_date.year < 2020:
+            raise serializers.ValidationError("Period cannot be earlier than 2020-01.")
+
+        # Check if date is in the future
+        if parsed_date > date.today():
+            raise serializers.ValidationError("Period cannot be in the future.")
+
+        return parsed_date
 
 
+# Services
 class ServiceIDListSerializer(serializers.Serializer):
     ids = serializers.PrimaryKeyRelatedField(many=True, queryset=Service.objects.all())
 
@@ -43,6 +53,46 @@ class ServiceSerializerLimited(serializers.ModelSerializer):
         fields = ["service_id", "service", "stype", "service_order", "desc_en"]
 
 
+# Clients
+class ClientPeriodSerializer(serializers.Serializer):
+    period = YearMonthField()
+    client = serializers.PrimaryKeyRelatedField(queryset=Client.objects.all())
+
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+        pass
+
+
+class ClientSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Client
+        fields = ['client_id', 'legal_name', 'reporting_name', 'client_group', 'industry', 'country']
+
+
+# Contracts
+class ContractListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contract
+        fields = '__all__'
+
+
+class ContractSerializer(ContractListSerializer):
+    orders = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Contract
+        fields = '__all__'
+
+    def get_orders(self, obj):
+        orders = obj.orders.all()
+        serializer = OrderSerializerVerbose(orders, many=True)
+        return serializer.data
+
+
+# Orders
 class NullableDateField(serializers.DateField):
     def to_internal_value(self, data):
         if data == '':
@@ -77,7 +127,18 @@ class OrderSerializerVerbose(serializers.ModelSerializer):
                   ]
 
 
-# Vendors
+# Accounts / Vendors
+class VendorPeriodSerializer(serializers.Serializer):
+    period = YearMonthField()
+    vendor = serializers.PrimaryKeyRelatedField(queryset=Vendor.objects.all())
+
+    def update(self, instance, validated_data):
+        pass
+
+    def create(self, validated_data):
+        pass
+
+
 class VendorsListSerializer(serializers.Serializer):
     ids = serializers.PrimaryKeyRelatedField(many=True, queryset=Vendor.objects.all())
 
@@ -124,13 +185,7 @@ class VendorServiceSerializer(serializers.ModelSerializer):
         return None
 
 
-class ClientSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Client
-        fields = ['client_id', 'legal_name', 'reporting_name', 'client_group', 'industry', 'country']
-
-
+# Order Services
 class OrderServiceSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -177,62 +232,37 @@ class OrderRelated(OrderSerializerVerbose):
         return serializer.data
 
 
-class ContractListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Contract
-        fields = '__all__'
-
-
-class ContractSerializer(ContractListSerializer):
-    orders = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Contract
-        fields = '__all__'
-
-    def get_orders(self, obj):
-        orders = obj.orders.all()
-        serializer = OrderSerializerVerbose(orders, many=True)
-        return serializer.data
-
-
-# Metadata related
-class CurrencySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Currency
-        fields = ['id', 'ccy_type']
-
-
-class PaymentTypeSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = PaymentType
-        fields = ['id', 'description']
-
-
-class IndustrySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Industry
-        fields = '__all__'
-
-
-class CountrySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ClientCountry
-        fields = ['id', 'country']
-
-
-class VendorServiceIDsSerializer(serializers.Serializer):
-    ids = serializers.PrimaryKeyRelatedField(many=True, queryset=VendorService.objects.all())
+# Reports
+class ReportPeriodSerializer(serializers.Serializer):
+    period = YearMonthField()
+    report = serializers.PrimaryKeyRelatedField(queryset=Report.objects.all())
 
     def update(self, instance, validated_data):
         pass
 
     def create(self, validated_data):
         pass
+
+
+class ClientReportListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Report
+        fields = ['id', 'file_name']
+
+
+class ReportSerializerBase(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = ['file_name', 'vendors']
+
+
+class ReportFileSerializer(serializers.ModelSerializer):
+    report = ReportSerializerBase(many=False)
+
+    class Meta:
+        model = ReportFile
+        fields = ['id', 'period', 'report', 'file', 'type_id']
 
 
 class ReportSerializer(serializers.ModelSerializer):
@@ -269,6 +299,35 @@ class ReportVendorUpdateSerializer(serializers.ModelSerializer):
         fields = ['vendors']
 
 
+# Metadata related
+class CountrySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ClientCountry
+        fields = ['id', 'country']
+
+
+class CurrencySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Currency
+        fields = ['id', 'ccy_type']
+
+
+class IndustrySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Industry
+        fields = '__all__'
+
+
+class PaymentTypeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = PaymentType
+        fields = ['id', 'description']
+
+
 class ReportSkipColumnsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReportSkipColumnConfig
@@ -281,64 +340,14 @@ class ReportLanguageSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class YearMonthField(serializers.CharField):
-    def to_internal_value(self, data):
-        # Validate format
-        try:
-            year, month = map(int, data.split('-'))
-            parsed_date = date(year, month, 1)
-        except ValueError:
-            raise serializers.ValidationError("Period must be in YYYY-MM format.")
-
-        # Validate year and month
-        if parsed_date.year < 2020:
-            raise serializers.ValidationError("Period cannot be earlier than 2020-01.")
-
-        # Check if date is in the future
-        if parsed_date > date.today():
-            raise serializers.ValidationError("Period cannot be in the future.")
-
-        return parsed_date
-
-
-class ClientPeriodSerializer(serializers.Serializer):
-    period = YearMonthField()
-    client = serializers.PrimaryKeyRelatedField(queryset=Client.objects.all())
+class VendorServiceIDsSerializer(serializers.Serializer):
+    ids = serializers.PrimaryKeyRelatedField(many=True, queryset=VendorService.objects.all())
 
     def update(self, instance, validated_data):
         pass
 
     def create(self, validated_data):
         pass
-
-
-class ReportPeriodSerializer(serializers.Serializer):
-    period = YearMonthField()
-    report = serializers.PrimaryKeyRelatedField(queryset=Report.objects.all())
-
-    def update(self, instance, validated_data):
-        pass
-
-    def create(self, validated_data):
-        pass
-
-
-class VendorPeriodSerializer(serializers.Serializer):
-    period = YearMonthField()
-    vendor = serializers.PrimaryKeyRelatedField(queryset=Vendor.objects.all())
-
-    def update(self, instance, validated_data):
-        pass
-
-    def create(self, validated_data):
-        pass
-
-
-class ClientReportListSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Report
-        fields = ['id', 'file_name']
 
 
 class CeleryTaskSerializer(serializers.ModelSerializer):

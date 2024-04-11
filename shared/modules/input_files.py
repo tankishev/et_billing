@@ -1,7 +1,6 @@
-from typing import Union, Iterator, NamedTuple, List
 from django.conf import settings
-
 from pandas import DataFrame
+from typing import Union, Iterator, NamedTuple, List
 import pandas as pd
 
 

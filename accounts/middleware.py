@@ -3,6 +3,8 @@ from django.urls import reverse
 
 
 class RequireLoginMiddleware:
+    """ Simple middleware to limit access to resources only after authentication """
+
     def __init__(self, get_response):
         self.get_response = get_response
 

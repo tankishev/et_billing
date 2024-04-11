@@ -1,8 +1,9 @@
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+
 from .forms import UserLoginForm
 from .modules import authorise_user
 

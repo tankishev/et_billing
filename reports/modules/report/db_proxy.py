@@ -32,6 +32,7 @@ class DBProxy:
     def exec(self, sql, data=None, commit=False, fetch=True):
         """
         Save data to db given sql expression
+
         :param sql: valid sql expression with data placeholders
         :param data: data tuple
         :param commit: commit the transaction

@@ -1,6 +1,5 @@
 from django.http import JsonResponse
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 
 from billing_module.modules.rate_transactions import rate_transactions
 from .forms import UniqueUsersForm, VendorPeriodForm, PeriodForm
@@ -13,7 +12,6 @@ logger = logging.getLogger(f'et_billing.{__name__}')
 
 
 # SERVICE USAGE CALCULATIONS
-@login_required
 def calc_service_usage(request):
     """ Trigger usage calculation for one account """
 
@@ -43,7 +41,6 @@ def calc_service_usage(request):
     return render(request, 'shared/base_form.html', context)
 
 
-@login_required
 def calc_service_usage_all_vendors(request):
     """ Trigger usage calculation for all vendor """
 
@@ -80,7 +77,6 @@ def view_unreconciled_transactions(request, file_id: int):
 
 
 # USAGE TRANSACTIONS CALCULATIONS
-@login_required
 def load_usage_transactions_all(request):
     """ Load usage transactions for all clients """
 
@@ -109,7 +105,6 @@ def load_usage_transactions_all(request):
     return render(request, 'shared/base_form.html', context)
 
 
-@login_required
 def rate_usage_transactions_all_accounts(request):
     """ Load usage transactions for all clients """
 
@@ -139,7 +134,6 @@ def rate_usage_transactions_all_accounts(request):
 
 
 # UNIQUE USERS CALCULATIONS
-@login_required
 def view_unique_users(request):
     """ Renders a form for generating reports on unique users """
 
@@ -166,7 +160,6 @@ def view_unique_users(request):
     return render(request, 'stats/unique_users.html', context)
 
 
-@login_required
 def save_unique_users_celery(request):
     """ Trigger calculation of unique users """
 

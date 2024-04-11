@@ -1,7 +1,9 @@
 from django.contrib import admin
-from .models import ReportSkipColumnConfig, Report
+
 from vendors.models import Vendor
 from shared.utils import get_parent_object_from_request
+
+from .models import ReportSkipColumnConfig, Report
 
 
 class ReportVendorsInline(admin.TabularInline):

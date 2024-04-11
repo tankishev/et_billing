@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dateutil.parser import parse
 from django.conf import settings
 from django.core.files import File

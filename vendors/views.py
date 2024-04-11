@@ -1,7 +1,5 @@
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.core.files import File
 from django.urls import reverse
 
 from shared.views import download_excel_file
@@ -15,13 +13,11 @@ import logging
 logger = logging.getLogger(f'et_billing.{__name__}')
 
 
-@login_required
 def index(request):
     return render(request, 'vendors/vendors_index.html')
 
 
 # PROCESSING OF VENDOR INPUT FILES
-@login_required
 def delete_unused_vendor_input_files(request):
     """ Triggers deletion of VendorInputFiles marked as inactive """
 
@@ -29,7 +25,6 @@ def delete_unused_vendor_input_files(request):
     return HttpResponse(deleted_files)
 
 
-@login_required
 def download_vendor_file(request, pk: int):
     """ Triggers download of a vendor file with the given pk """
 
@@ -44,7 +39,6 @@ def download_vendor_file(request, pk: int):
         return HttpResponse('No account file with such id')
 
 
-@login_required
 def download_vendor_files_all(request, period: str):
     """ Triggers the download of a ZIP archive with all vendor input files for a given period """
 
@@ -52,7 +46,6 @@ def download_vendor_files_all(request, period: str):
     return create_zip_file(queryset, f'{period}_vendor_files')
 
 
-@login_required
 def extract_zip_view(request):
     """ Extract the contents of the last uploaded vendor input ZIP archive """
 
@@ -87,7 +80,6 @@ def extract_zip_view(request):
         return render(request, 'vendors/result_zip_upload.html', context)
 
 
-@login_required
 def list_vendor_files(request):
     """ Visualize PeriodForm to trigger list of vendor files """
 
@@ -113,7 +105,6 @@ def list_vendor_files(request):
     return render(request, 'shared/base_form.html', context)
 
 
-@login_required
 def upload_zip_view(request):
     """ Load form for uploading a Vendor Input ZIP archive and trigger extraction if file is valid """
 
@@ -139,7 +130,6 @@ def upload_zip_view(request):
     return render(request, 'shared/base_form.html', context)
 
 
-@login_required
 def upload_single_file(request):
     """ Load form for uploading a single Vendor Input and storing the file """
 

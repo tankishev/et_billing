@@ -1,26 +1,25 @@
-from django.shortcuts import redirect
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib.postgres.search import SearchVector, TrigramSimilarity
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_integer
 from django.db.models import RestrictedError, Count
 from django.db import transaction
+from django.shortcuts import redirect
 
 from rest_framework.decorators import api_view
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.pagination import PageNumberPagination
 
 from celery_tasks.models import FileProcessingTask
 from clients.models import Client, ClientCountry, Industry
 from contracts.models import Contract, Order, OrderPrice, OrderService, PaymentType, Currency
 from services.models import Service
-from vendors.models import Vendor, VendorService, VendorFilterOverride
+from stats.modules.usage_calculations import recalc_vendor
 from reports.models import ReportFile, Report, ReportSkipColumnConfig, ReportLanguage
 from reports.modules import gen_report_for_client, gen_report_by_id
 from reports.modules.report import health_check as hc
-from stats.modules.usage_calculations import recalc_vendor
+from vendors.models import Vendor, VendorService, VendorFilterOverride
 
 from . import serializers
 import logging
@@ -31,8 +30,6 @@ logger = logging.getLogger(f'et_billing.{__name__}')
 # REST Framework calls
 
 # Vendors (Accounts)
-
-@csrf_exempt
 @api_view(['GET'])
 def vendors_list(request: Request):
     """
@@ -67,7 +64,6 @@ def vendors_list(request: Request):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@csrf_exempt
 @api_view(['POST'])
 def vendor_calculate_usage(request: Request):
     if request.method == 'POST':
@@ -88,7 +84,6 @@ def vendor_calculate_usage(request: Request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['GET', 'PATCH'])
 def vendor_details(request: Request, pk):
     """
@@ -113,7 +108,6 @@ def vendor_details(request: Request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['GET'])
 def vendor_services(request: Request, pk):
     """
@@ -132,7 +126,6 @@ def vendor_services(request: Request, pk):
         return Response(vs_serializer.data, status=status.HTTP_200_OK)
 
 
-@csrf_exempt
 @api_view(['POST'])
 def vendor_services_add(request: Request, pk):
     """
@@ -158,7 +151,6 @@ def vendor_services_add(request: Request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['POST'])
 def vendor_services_remove(request: Request, pk):
     """
@@ -184,7 +176,6 @@ def vendor_services_remove(request: Request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['GET'])
 def vendor_services_duplicate(request: Request, pk):
     """
@@ -232,7 +223,6 @@ def vendor_services_duplicate(request: Request, pk):
 
 
 # Clients
-@csrf_exempt
 @api_view(['GET', 'POST'])
 def clients_list(request: Request):
     """
@@ -272,7 +262,6 @@ def clients_list(request: Request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['GET', 'PUT', 'DELETE'])
 def client_details(request: Request, pk):
     """
@@ -307,7 +296,6 @@ def client_details(request: Request, pk):
             return Response({'message': err_message}, status=status.HTTP_409_CONFLICT)
 
 
-@csrf_exempt
 @api_view(['GET', 'POST'])
 def client_vendors(request: Request, pk):
     """
@@ -337,7 +325,6 @@ def client_vendors(request: Request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['GET'])
 def client_services(request: Request, pk):
     """
@@ -380,11 +367,8 @@ def client_services(request: Request, pk):
         results_page = paginator.paginate_queryset(services, request)
         serializer = serializers.VendorServiceSerializer(results_page, many=True)
         return paginator.get_paginated_response(serializer.data)
-        # serializer = serializers.VendorServiceSerializer(services, many=True)
-        # return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@csrf_exempt
 @api_view(['GET', 'POST'])
 def contracts_list(request: Request):
     """
@@ -404,7 +388,6 @@ def contracts_list(request: Request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['GET', 'PATCH', 'DELETE'])
 def contract_details(request: Request, pk):
     """
@@ -439,7 +422,6 @@ def contract_details(request: Request, pk):
             return Response({'message': message}, status=status.HTTP_409_CONFLICT)
 
 
-@csrf_exempt
 @api_view(['GET'])
 def contract_orders(request: Request, pk):
     """
@@ -459,7 +441,6 @@ def contract_orders(request: Request, pk):
 
 
 # Orders
-@csrf_exempt
 @api_view(['POST'])
 def orders_list(request: Request):
     """ Create a new Order """
@@ -472,7 +453,6 @@ def orders_list(request: Request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['GET', 'PATCH', 'DELETE'])
 def order_details(request: Request, pk):
     """
@@ -510,7 +490,6 @@ def order_details(request: Request, pk):
             return Response({'message': message}, status=status.HTTP_409_CONFLICT)
 
 
-@csrf_exempt
 @api_view(['GET'])
 def order_duplicate(request: Request, pk):
     """ Duplicates an existing order if it is inactive
@@ -564,7 +543,6 @@ def order_duplicate(request: Request, pk):
             return Response({'message': str(e)}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
-@csrf_exempt
 @api_view(['GET'])
 def order_service_prices(request: Request, pk):
     """
@@ -583,7 +561,6 @@ def order_service_prices(request: Request, pk):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@csrf_exempt
 @api_view(['PATCH'])
 def order_service_edit(request: Request, pk):
     try:
@@ -600,7 +577,6 @@ def order_service_edit(request: Request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['GET'])
 def order_services(request: Request, pk):
     """
@@ -620,7 +596,6 @@ def order_services(request: Request, pk):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@csrf_exempt
 @api_view(['POST'])
 def order_services_add(request: Request, pk):
     try:
@@ -648,7 +623,6 @@ def order_services_add(request: Request, pk):
     return Response({'message': 'Cannot make changes to inactive Orders.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['POST'])
 def order_services_remove(request: Request, pk):
     try:
@@ -680,7 +654,6 @@ def order_services_remove(request: Request, pk):
 
 
 # Reports
-@csrf_exempt
 @api_view(['GET'])
 def client_reports_list(request: Request, pk):
     """ Returns a list of Reports for a given Client """
@@ -697,7 +670,6 @@ def client_reports_list(request: Request, pk):
         return Response(reports_serializer.data, status=status.HTTP_200_OK)
 
 
-@csrf_exempt
 @api_view(['GET'])
 def client_report_files_list(request: Request, pk):
     """ Returns a list of report files for the client """
@@ -715,7 +687,6 @@ def client_report_files_list(request: Request, pk):
         return Response(rf_serializer.data, status=status.HTTP_200_OK)
 
 
-@csrf_exempt
 @api_view(['POST'])
 def client_create_report(request: Request, pk):
     """
@@ -740,7 +711,6 @@ def client_create_report(request: Request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['GET', 'PATCH', 'DELETE'])
 def report_details(request: Request, pk):
     """
@@ -776,7 +746,6 @@ def report_details(request: Request, pk):
             return Response({'message': message}, status=status.HTTP_409_CONFLICT)
 
 
-@csrf_exempt
 @api_view(['PUT'])
 def report_update_vendors(request: Request, pk):
     """
@@ -799,7 +768,6 @@ def report_update_vendors(request: Request, pk):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['POST'])
 def report_render_period_client(request: Request):
     if request.method == 'POST':
@@ -821,7 +789,6 @@ def report_render_period_client(request: Request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
 @api_view(['POST'])
 def report_render_period_report(request: Request):
     if request.method == 'POST':
@@ -844,7 +811,6 @@ def report_render_period_report(request: Request):
 
 
 # Metadata
-@csrf_exempt
 @api_view(['GET'])
 def get_metadata(request: Request):
     """ Returns global configs """
@@ -879,7 +845,6 @@ def get_metadata(request: Request):
 
 
 # HealthCheck
-@csrf_exempt
 @api_view(['GET'])
 def health_check(request: Request, pk):
     try:
@@ -938,7 +903,6 @@ def health_check(request: Request, pk):
 
 
 # Celery Tasks
-@csrf_exempt
 @api_view(['GET'])
 def get_task_list(request: Request):
     """ Gets the list of celery tasks in the DB """
@@ -951,7 +915,6 @@ def get_task_list(request: Request):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@csrf_exempt
 @api_view(['GET'])
 def get_task_progress(request: Request, task_id: str):
     """ Gets the status of a Celery task provided its task_id """
