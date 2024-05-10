@@ -67,31 +67,40 @@ class ETApi:
         return self.handle_response(response)
 
     def check_document_status(self, transaction_id: str):
-        """ Check the signing status of a document given its group_transaction_id """
+        """ Check the signing status of a document given its group_transaction_id
+
+            Responses:
+                {'status': 2, 'isProcessing': 0}
+                1 - Pending, 2 - Signed, 3 - Rejected, 4 - Expired, 5 - Failed, 6 - Withdrawn, 7 - Undeliverable,
+                8 - Failed
+                face recognition, 99 - On hold;
+                200 Document group status
+                400 Invalid data supplied
+                401 Unauthorized
+                443 Document group not found
+
+        """
 
         endpoint = '/document/status'
         response = self._transaction_id_call(endpoint, transaction_id)
-        # {'status': 2, 'isProcessing': 0}
-        # 1 - Pending, 2 - Signed, 3 - Rejected, 4 - Expired, 5 - Failed, 6 - Withdrawn, 7 - Undeliverable, 8 - Failed
-        # face recognition, 99 - On hold;
-        # 200 Document group status
-        # 400 Invalid data supplied
-        # 401 Unauthorized
-        # 443 Document group not found
         return self.handle_response(response)
 
     def check_document_group_status(self, transaction_id: str):
-        """ Check the signing status of the group of documents given their transaction_id """
+        """ Check the signing status of the group of documents given their transaction_id
+
+            Responses:
+                {'status': 2, 'isProcessing': 0}
+                1 - Pending, 2 - Signed, 3 - Rejected, 4 - Expired, 5 - Failed, 6 - Withdrawn, 7 - Undeliverable,
+                8 - Failed
+                face recognition, 99 - On hold;
+                200 Document group status
+                400 Invalid data supplied
+                401 Unauthorized
+                443 Document group not found
+        """
 
         endpoint = '/document/group/status'
         response = self._transaction_id_call(endpoint, transaction_id)
-        # {'status': 2, 'isProcessing': 0}
-        # 1 - Pending, 2 - Signed, 3 - Rejected, 4 - Expired, 5 - Failed, 6 - Withdrawn, 7 - Undeliverable, 8 - Failed
-        # face recognition, 99 - On hold;
-        # 200 Document group status
-        # 400 Invalid data supplied
-        # 401 Unauthorized
-        # 443 Document group not found
         return self.handle_response(response)
 
     def check_thread_status(self, thread_id: str):
@@ -103,24 +112,24 @@ class ETApi:
             'vendorNumber': self.VENDOR_NUMBER,
         }
         response = self.request(endpoint, data)
-        # {'statuses': [{'documents': [{'transactionID': '739603815174', 'isProcessing': 0, 'status': 2}]},
-        #               {'documents': [{'transactionID': '178894303929', 'isProcessing': 0, 'status': 3}]}]}
-
-        # {'statuses': [{'groupTransactionID': '932773182721', 'groupIsProcessing': 0, 'groupStatus': 2,
-        #                'documents': [{'transactionID': '278584612566', 'isProcessing': 0, 'status': 2},
-        #                              {'transactionID': '819960119628', 'isProcessing': 0, 'status': 2}]},
-        #               {'groupTransactionID': '540720845945', 'groupIsProcessing': 0, 'groupStatus': 2,
-        #                'documents': [{'transactionID': '967018810249', 'isProcessing': 0, 'status': 2},
-        #                              {'transactionID': '582007680454', 'isProcessing': 0, 'status': 2}]}]}
-
-        # {'statuses': [
-        #     {'groupTransactionID': '714030369254', 'groupIsProcessing': 0, 'groupStatus': 2, 'rejectReason': 'testing',
-        #      'documents': [{'transactionID': '328094704119', 'isProcessing': 0, 'status': 2},
-        #                    {'transactionID': '560373535935', 'isProcessing': 0, 'status': 3}]}]}
         return self.handle_response(response)
 
     def check_user(self, user: SigningUser, extended=False):
-        """ Checks if user exists in Evrotrust """
+        """ Checks if user exists in Evrotrust
+
+            Responses:
+                Empty response
+                204 User found
+                400 Invalid data supplied
+                401 Unauthorized
+                438 User not found
+
+                If extended check & data is valid (means you get positive response for missing user)
+                200 + json
+                'Content-Type': 'application/json'
+                {'isRegistered': 1, 'isIdentified': 1, 'isRejected': 0, 'isSupervised': 1, 'isReadyToSign': 1,
+                  'hasConfirmedPhone': 1, 'hasConfirmedEmail': 1}
+        """
 
         endpoint = '/user/check/extended' if extended else '/user/check'
         data = {
@@ -128,17 +137,6 @@ class ETApi:
             'vendorNumber': self.VENDOR_NUMBER
         }
         response = self.request(endpoint, data)
-        # Empty response
-        # 204 User found
-        # 400 Invalid data supplied
-        # 401 Unauthorized
-        # 438 User not found
-
-        # #If extended check & data is valid (means you get positive response for missing user)
-        # 200 + json
-        # 'Content-Type': 'application/json'
-        # {'isRegistered': 1, 'isIdentified': 1, 'isRejected': 0, 'isSupervised': 1, 'isReadyToSign': 1,
-        #  'hasConfirmedPhone': 1, 'hasConfirmedEmail': 1}
         return self.handle_response(response)
 
     def download_file(self, transaction_id: str):
@@ -157,7 +155,7 @@ class ETApi:
         """ Handle response from the 2FA api call
 
         Responses:
-            200 Document added success {'transactionID': '686870597320', 'threadID': '92C8BAED461F'}
+            200 Document added success
             400 Invalid data supplied
             401 Unauthorized
             438 User not found
@@ -279,6 +277,15 @@ class ETApi:
             :param file: Document object to be sent for signing
             :param users: List with SigningUser objects. The order of the list determines order of signing
             :param bio_required: Whether bio id is required for the transaction as extra security
+
+            Responses:
+                200 Document added success
+                400 Invalid data supplied
+                401 Unauthorized
+                438 User not found
+                450 File exceeds max allowed file size
+                454 Incorrect coverage
+                457 Not supported file types
         """
 
         endpoint = '/document/doc/online'
@@ -313,17 +320,6 @@ class ETApi:
             request_data['urlCallback'] = self.callback_url
 
         response = self.request(endpoint, data=request_data, files=request_file)
-        # 'Content-Type': 'application/json'
-        # {'threadID': '4FB9DCA58607',
-        #  'transactions': [{'transactionID': '739603815174', 'identificationNumber': '8203216525', 'country': 'BG'},
-        #                   {'transactionID': '178894303929', 'identificationNumber': '8203216525', 'country': 'BG'}]}
-        # 200 Document added success
-        # 400 Invalid data supplied
-        # 401 Unauthorized
-        # 438 User not found
-        # 450 File exceeds max allowed file size
-        # 454 Incorrect coverage
-        # 457 Not supported file types
         return self.handle_response(response)
 
     def send_file_group(self, files: list[Document], description: str, users: list[SigningUser], **kwargs):
@@ -365,10 +361,6 @@ class ETApi:
             request_data['urlCallback'] = self.callback_url
 
         response = self.request(endpoint, data=request_data, files=request_files)
-        # The transaction_id returned by the response is the group_transaction_id
-        # {'threadID': '037C2F14A5DE',
-        #  'transactions': [{'identificationNumber': '8203216525', 'transactionID': '932773182721'},
-        #                   {'identificationNumber': '8203216525', 'transactionID': '540720845945'}]}
         return self.handle_response(response)
 
     def deliver_file(self, file: Document, user: SigningUser, **kwargs):

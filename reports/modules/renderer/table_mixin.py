@@ -20,8 +20,6 @@ class TableRenderMixin:
             return InvoiceTable(**kwargs)
         elif billing_type == 'subscription':
             return SubscriptionTable(**kwargs)
-        # elif billing_type == 'users_summary':
-        #     return UsersSummaryTable(**kwargs)
 
 
 class BaseTableRenderer(FormatMixin):

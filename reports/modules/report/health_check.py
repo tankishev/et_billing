@@ -1,6 +1,3 @@
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
-
 from django.db.models import RestrictedError, Count, Subquery, Q, Exists, OuterRef, DateField, Value
 from django.db.models.functions import TruncMonth, Coalesce
 from django.utils import timezone
@@ -8,6 +5,9 @@ from django.utils import timezone
 from contracts.models import Contract, OrderService
 from vendors.models import VendorService
 from stats.models import UsageStats
+
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 
 def get_duplicated_account_services_in_active_orders(client_id):

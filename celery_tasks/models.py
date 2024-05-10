@@ -3,6 +3,8 @@ import json
 
 
 class ProcessedDocumentsList(models.JSONField):
+    """ Customised JSONField """
+
     def __init__(self, *args, **kwargs):
         kwargs['blank'] = True
         kwargs['null'] = True

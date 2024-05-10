@@ -1,4 +1,3 @@
-# TO DELETE TEST URLS
 from django.urls import path, include
 from . import views
 

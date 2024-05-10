@@ -1,5 +1,6 @@
-from .transactions import TransactionFactory
 from collections import namedtuple
+from .transactions import TransactionFactory
+
 import logging
 
 logger = logging.getLogger(f'et_billing.{__name__}')

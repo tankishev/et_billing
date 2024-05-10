@@ -1,5 +1,6 @@
 from django import forms
 from shared.forms import PeriodForm
+
 from .models import Report, Client
 
 

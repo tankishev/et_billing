@@ -1,4 +1,3 @@
-# CODE OK
 from django.db import models
 
 from clients.models import Client
@@ -67,9 +66,6 @@ class Order(models.Model):
     payment_type = models.ForeignKey(
         PaymentType, on_delete=models.RESTRICT, db_column='payment_type', related_name='orders')
     is_active = models.BooleanField(default=True)
-    # status = models.ForeignKey(
-    #     OrderStatus, on_delete=models.RESTRICT, db_column='status_id', related_name='orders'
-    # )
 
     @property
     def currency(self):

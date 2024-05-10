@@ -18,7 +18,7 @@ import time
 
 
 logger = logging.getLogger(f'et_billing.{__name__}')
-# logger = logging.getLogger(f'simple_test_logger')
+# logger = logging.getLogger(f'simple_test_logger') CONTINUE HERE
 celery_logger = get_task_logger(f'et_billing.{__name__}')
 
 

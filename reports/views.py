@@ -1,12 +1,12 @@
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 
-from vendors.models import VendorService
 from shared.modules import create_zip_file
 from shared.views import download_excel_file
 from stats.utils import get_stats_usage_not_in_vendor_services as get_su
+from vendors.models import VendorService
+
 from .forms import ReportPeriodForm, ClientPeriodForm, PeriodForm
 from .models import ReportFile, Client, Vendor
 from . import modules as m
@@ -17,14 +17,12 @@ import logging
 logger = logging.getLogger(f'et_billing.{__name__}')
 
 
-@login_required
 def index(request):
     """ Returns index page for the reports module """
     return render(request, 'reports/reports_index.html')
 
 
 # BILLING REPORTS CALCULATIONS
-@login_required
 def render_period(request):
     """ Triggers the rendering of reports for ALL clients for a given period """
 
@@ -53,7 +51,6 @@ def render_period(request):
     return render(request, 'shared/base_form.html', context)
 
 
-@login_required
 def render_period_client(request):
     """ Triggers the rendering of report for one client for a given period """
 
@@ -81,7 +78,6 @@ def render_period_client(request):
     return render(request, 'shared/base_form.html', context)
 
 
-@login_required
 def render_period_report(request):
     """ Triggers the rendering of a specific report for a given period """
 
@@ -109,7 +105,6 @@ def render_period_report(request):
 
 
 # BILLING REPORTS DOWNLOAD
-@login_required
 def download_billing_report(request, pk: int):
     """ Triggers download of a billing report file with the given pk """
 
@@ -126,7 +121,6 @@ def download_billing_report(request, pk: int):
         return HttpResponse('No report file with such id')
 
 
-@login_required
 def download_billing_reports_all(request, period: str):
     """ Triggers the download of a ZIP archive with all billing report files for a given period """
 
@@ -136,7 +130,6 @@ def download_billing_reports_all(request, period: str):
     return response
 
 
-@login_required
 def list_report_files(request):
     """ Visualize PeriodForm to trigger list of billing report files """
 
@@ -162,7 +155,6 @@ def list_report_files(request):
     return render(request, 'shared/base_form.html', context)
 
 
-@login_required
 def reconciliation(request):
     vs = VendorService.objects.filter(
         vendor__client__is_billable=True,

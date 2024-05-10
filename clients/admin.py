@@ -4,6 +4,7 @@ from django.db.models import Count
 
 from contracts.models import Contract
 from vendors.models import Vendor
+
 from .models import Client, Industry, ClientCountry
 
 

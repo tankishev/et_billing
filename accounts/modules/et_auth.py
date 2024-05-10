@@ -4,8 +4,11 @@ import logging
 
 logger = logging.getLogger(f'et_billing.{__name__}')
 
+AUTH_TIMEOUT = 45  # Time in seconds for the user to complete 2FA before timeout and login rejected
+TIME_BETWEEN_CHECKS = 2  # Seconds between checks with ET for successful authentication
 
-def authorise_user(user, timeout=30) -> tuple[bool, str]:
+
+def authorise_user(user, timeout=AUTH_TIMEOUT) -> tuple[bool, str]:
     """ Authorise user with 2FA of Evrotrust
         :param user: django user object
         :param timeout: Number of seconds to try to authorise before giving up and returning False
@@ -24,7 +27,6 @@ def authorise_user(user, timeout=30) -> tuple[bool, str]:
         logger.debug('Sending 2FA call to ET')
         is_successful, response = et_api.auth(et_user)
 
-        # If response was successful
         if is_successful:
             # Get transaction_id
             transaction_id = response.get('transactionID')
@@ -45,7 +47,7 @@ def authorise_user(user, timeout=30) -> tuple[bool, str]:
                         logger.info('Authorisation approved')
                         return True, 'Successful'
 
-                time.sleep(2)
+                time.sleep(TIME_BETWEEN_CHECKS)
             logger.info('Authorisation timeout')
             return False, '2FA authorisation timeout'
         else:

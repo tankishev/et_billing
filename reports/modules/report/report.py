@@ -6,6 +6,7 @@ from .bililng_summary import BillingSummary
 from .utils import ReportClient, Report
 
 from datetime import timedelta as td, datetime as dt
+
 import logging
 
 logger = logging.getLogger(f'et_billing.{__name__}')
