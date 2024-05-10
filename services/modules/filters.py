@@ -6,7 +6,15 @@ logger = logging.getLogger(f'et_billing.{__name__}')
 class FieldFilter:
     """ A factory class to generate FieldFilters from given config """
 
-    _ACCEPTED_FIELDS = ['transaction_type', 'transaction_status', 'description', 'cost', 'signing_type', 'receiver_pid']
+    _ACCEPTED_FIELDS = [
+        'transaction_type',
+        'transaction_status',
+        'description',
+        'cost',
+        'signing_type',
+        'receiver_pid',
+        'transaction_value'
+    ]
 
     def __init__(self, field_name=None, func=None, lookup_value=None) -> None:
         self.field_name = field_name
