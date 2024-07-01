@@ -36,6 +36,7 @@ class TransactionFactory:
         'Cost EUR': 'cost',
         'Bio required': 'bio',
         'TransValue': 'transaction_value',  # 1: 500, 2: 2k, 3: 20k, 4: 100k, 5: 250k, 6: 0 (unlimited)
+        'Channel': 'channel',
     }
 
     def __init__(self, headers):
